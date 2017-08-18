@@ -261,11 +261,10 @@ namespace PokemonGoRaidBot
 
             if (existing != null)
             {
-                var newEndDate = new DateTime(Math.Min(existing.EndDate.Ticks, post.EndDate.Ticks));
-                if (!newEndDate.Equals(existing.EndDate))
+                if (post.HasEndDate)
                 {
                     existing.HasEndDate = true;
-                    existing.EndDate = newEndDate;
+                    existing.EndDate = post.EndDate;
                 }
                 existing.Responses.Add(post.Responses[0]);
                 return existing;
