@@ -188,6 +188,7 @@ namespace PokemonGoRaidBot
                 var pokemon = post?.Pokemon;
 
                 var mentionPost = posts.OrderByDescending(x => x.EndDate)
+                    .FirstOrDefault(x => x.FromChannel.Id == message.Channel.Id
                         && x.Responses.Where(xx => xx.Username == mentionedUser.Username).Count() > 0
                         && x.Pokemon.Name == (pokemon ?? x.Pokemon).Name);
 
@@ -223,6 +224,7 @@ namespace PokemonGoRaidBot
             string response = string.Format("__**{0}**__ posted by {1} in <#{2}>{3}",
                         post.Pokemon.Name,
                         post.User,
+                        post.FromChannel.Id,
                         !post.HasEndDate ? "" : string.Format(", ends around {0:h: mm tt}", post.EndDate));
 
             response += MessageParser.MakeResponseString(post);
@@ -248,6 +250,7 @@ namespace PokemonGoRaidBot
         {
             var existing = posts.OrderBy(x => x.Pokemon.Name == (post.Pokemon == null ? "" : post.Pokemon.Name) ? 0 : 1)//pokemon name match takes priority if the user responded to multiple raids in the channel
                 .FirstOrDefault(x => 
+                    x.FromChannel.Id == post.FromChannel.Id//Posted in the same channel
                     && ((post.Pokemon != null && x.Pokemon.Name == post.Pokemon.Name)//Either pokemon matches OR
                         || (post.Pokemon == null && x.Responses.Where(xx => xx.Username == post.User).Count() > 0))//User already in the thread
                 );
