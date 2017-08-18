@@ -27,7 +27,7 @@ namespace PokemonGoRaidBot.Objects
             {
                 User = message.Author.Username,
                 PostDate = DateTime.Now,//uses local time for bot
-                Channel = message.Channel,
+                FromChannel = message.Channel,
                 Responses = new List<PokemonMessage>() { new PokemonMessage(message.Author.Username, message.Content) }
             };
 

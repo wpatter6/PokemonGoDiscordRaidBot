@@ -19,7 +19,6 @@ namespace PokemonGoRaidBot
         private IServiceProvider map;
         private BotConfig config;
         private List<PokemonRaidPost> posts;
-        private ISocketMessageChannel outputChannel;
 
         public CommandHandler(IServiceProvider provider, BotConfig botconfig)
         {
@@ -45,13 +44,10 @@ namespace PokemonGoRaidBot
             if (message == null || message.Author == null || message.Author.IsBot)
                 return;
 
-            var outputchannel = (SocketGuildChannel)outputChannel ?? ((SocketGuildChannel)message.Channel).Guild.Channels.FirstOrDefault(x => x.Name == config.OutputChannel);
+            var outputchannel = (ISocketMessageChannel)((SocketGuildChannel)message.Channel).Guild.Channels.FirstOrDefault(x => x.Name == config.OutputChannel);
 
-            if(outputchannel == null)//Specifically named channel doesn't exist, send message to same channel as user
-                outputchannel = (SocketGuildChannel)message.Channel;
-            else if (outputChannel == null)
-                outputChannel = (ISocketMessageChannel)outputchannel;
-
+            if (outputchannel == null) outputchannel = message.Channel;
+            
             var context = new SocketCommandContext(bot, message);
             
             var argPos = 0;
@@ -61,7 +57,7 @@ namespace PokemonGoRaidBot
             }
             else if (message.MentionedUsers.Count() > 0)
             {//possibly a response to someone who posted a raid
-                await DoResponse(message, outputchannel);
+                await DoResponse(message);
             }
             else
             {//try to see if a raid was posted
@@ -87,9 +83,8 @@ namespace PokemonGoRaidBot
 
             foreach (var post in deletedPosts)
             {
-                var channel = outputChannel ?? post.Channel;
-                var m = new IMessage[] { await channel.GetMessageAsync(post.MessageId) };
-                deleteTasks.Add(channel.DeleteMessagesAsync(m));
+                var m = new IMessage[] { await post.OutputChannel.GetMessageAsync(post.MessageId) };
+                deleteTasks.Add(post.OutputChannel.DeleteMessagesAsync(m));
             }
             if (deleteTasks.Count() > 0)
                 Task.WaitAll(deleteTasks.ToArray());
@@ -185,7 +180,7 @@ namespace PokemonGoRaidBot
                         break;*/
             }
         }
-        private async Task DoResponse(SocketUserMessage message, SocketGuildChannel outputchannel)
+        private async Task DoResponse(SocketUserMessage message)
         {
             foreach (var mentionedUser in message.MentionedUsers)
             {
@@ -193,27 +188,27 @@ namespace PokemonGoRaidBot
                 var pokemon = post?.Pokemon;
 
                 var mentionPost = posts.OrderByDescending(x => x.EndDate)
-                    .FirstOrDefault(x => x.Channel.Name == message.Channel.Name
                         && x.Responses.Where(xx => xx.Username == mentionedUser.Username).Count() > 0
                         && x.Pokemon.Name == (pokemon ?? x.Pokemon).Name);
 
                 if (mentionPost != null)
                 {
                     mentionPost.Responses.Add(new PokemonMessage(mentionedUser.Username, message.Content));
-                    await MakePost(mentionPost, outputchannel);
+                    await MakePost(mentionPost);
                 }
             }
         }
-        private async Task DoPost(SocketUserMessage message, SocketGuildChannel outputchannel)
+        private async Task DoPost(SocketUserMessage message, ISocketMessageChannel outputchannel)
         {
             var post = MessageParser.ParseMessage(message, config);
+            post.OutputChannel = outputchannel;
 
             if (post != null)
             {
                 post = AddPost(post);
 
                 if (post.Pokemon != null)
-                    await MakePost(post, outputchannel);
+                    await MakePost(post);
             }
         }
         
@@ -223,22 +218,21 @@ namespace PokemonGoRaidBot
         /// </summary>
         /// <param name="post"></param>
         /// <param name="outputchannel"></param>
-        private async Task MakePost(PokemonRaidPost post, SocketGuildChannel outputchannel)
+        private async Task MakePost(PokemonRaidPost post)
         {
-            string response = string.Format("__**{0}**__ posted by {1}{2}{3}",
+            string response = string.Format("__**{0}**__ posted by {1} in <#{2}>{3}",
                         post.Pokemon.Name,
                         post.User,
-                        outputChannel == null ? "" : $" in <#{post.Channel.Id}>",
                         !post.HasEndDate ? "" : string.Format(", ends around {0:h: mm tt}", post.EndDate));
 
             response += MessageParser.MakeResponseString(post);
 
             if (post.MessageId != default(ulong))
             {
-                var m = await ((ISocketMessageChannel)outputchannel).GetMessageAsync(post.MessageId);
-                await ((ISocketMessageChannel)outputchannel).DeleteMessagesAsync(new IMessage[] { m });
+                var m = await post.OutputChannel.GetMessageAsync(post.MessageId);
+                await post.OutputChannel.DeleteMessagesAsync(new IMessage[] { m });
             }
-            var result = await ((ISocketMessageChannel)outputchannel).SendMessageAsync(response);
+            var result = await post.OutputChannel.SendMessageAsync(response);
             post.MessageId = result.Id;
         }
         /// <summary>
@@ -254,7 +248,6 @@ namespace PokemonGoRaidBot
         {
             var existing = posts.OrderBy(x => x.Pokemon.Name == (post.Pokemon == null ? "" : post.Pokemon.Name) ? 0 : 1)//pokemon name match takes priority if the user responded to multiple raids in the channel
                 .FirstOrDefault(x => 
-                    x.Channel.Name == post.Channel.Name//Posted in the same channel
                     && ((post.Pokemon != null && x.Pokemon.Name == post.Pokemon.Name)//Either pokemon matches OR
                         || (post.Pokemon == null && x.Responses.Where(xx => xx.Username == post.User).Count() > 0))//User already in the thread
                 );
