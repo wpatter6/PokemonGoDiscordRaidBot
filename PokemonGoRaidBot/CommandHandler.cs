@@ -134,7 +134,7 @@ namespace PokemonGoRaidBot
 
                         var list = config.PokemonInfoList.Where(x => x.CatchRate > 0);
 
-                        if (Int32.TryParse(command[1], out tierCommand))
+                        if (command.Length > 0 && Int32.TryParse(command[1], out tierCommand))
                         {
                             list = list.Where(x => x.Tier == tierCommand);
                         }
@@ -255,7 +255,7 @@ namespace PokemonGoRaidBot
                 case "help":
                     var helpmessage = $"```This bot parses discord chat messages to see if a raid is being mentioned.  If a text channel exists on the discord server called '{config.OutputChannel}', it posts the raids there and combines any responses to the raid in a cleaner fashion.\n\n";
                     helpmessage += "``````css\n       #Commands:\n";
-                    helpmessage += $"{config.Prefix}info [boss name (optional)] - Displays information about the selected raid, or all of the raids above rank 3.  Information was taken from https://pokemongo.gamepress.gg.\n";
+                    helpmessage += $"  {config.Prefix}info [boss name (optional)] - Displays information about the selected raid, or all of the raids above rank 3.  Information was taken from https://pokemongo.gamepress.gg.\n";
                     helpmessage += $"  {config.Prefix}channel [channel name (optional)] - Changes the bot output channel on this server to the value passed in for [channel name].  If none, the override is removed and the default value '{config.OutputChannel}' is used.  Moderator or admin privileges required.\n";
                     helpmessage += $"  {config.Prefix}alias [pokemon] [alias] - Adds an alias for a pokemon.  Moderator or admin privileges required.\n";
                     helpmessage += $"  {config.Prefix}removealias [pokemon] [alias] - Removes an alias for a pokemon.  Moderator or admin privileges required.\n";
