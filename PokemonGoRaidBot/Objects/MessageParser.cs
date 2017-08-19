@@ -178,16 +178,19 @@ namespace PokemonGoRaidBot.Objects
         /// </summary>
         /// <param name="info"></param>
         /// <returns></returns>
-        public static string MakeInfoLine(PokemonInfo info, int paddingSize = 0)
+        public static string MakeInfoLine(PokemonInfo info, ulong guildId, int paddingSize = 0)
         {
             var lineFormat = "\n{0}: {7}Tier={1} BossCP={2:#,##0} MinCP={3:#,##0} MaxCP={4:#,##0} CatchRate={5}%{6}";
             var padding = 0;
             if (paddingSize > 0)
                 padding = paddingSize - info.BossNameFormatted.Length;
+            
+            var allAliases = new List<string>(info.Aliases);
+            allAliases.AddRange(info.ServerAliases.Where(x => x.Key == guildId).Select(x => x.Value));
 
             return string.Format(lineFormat, info.BossNameFormatted, info.Tier, info.BossCP, info.MinCP, info.MaxCP, 
-                info.CatchRate * 100, 
-                info.Aliases.Count() == 0 ? "" : " Aliases: " + string.Join(",", info.Aliases),
+                info.CatchRate * 100,
+                allAliases.Count() == 0 ? "" : " Aliases: " + string.Join(",", allAliases),
                 new String(' ', padding));
         }
         /// <summary>
@@ -198,7 +201,7 @@ namespace PokemonGoRaidBot.Objects
         /// <param name="name"></param>
         /// <param name="config"></param>
         /// <returns></returns>
-        private static PokemonInfo ParsePokemon(string name, BotConfig config, ulong guildId)
+        public static PokemonInfo ParsePokemon(string name, BotConfig config, ulong guildId)
         {
             if (name.Length < 3) return null;
 

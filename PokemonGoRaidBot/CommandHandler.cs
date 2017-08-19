@@ -114,11 +114,11 @@ namespace PokemonGoRaidBot
                 case "info":
                     if (command.Length > 1 && command[1].Length > 2)
                     {
-                        var info = config.PokemonInfoList.FirstOrDefault(x => x.Name.ToLowerInvariant().StartsWith(command[1]) || x.Aliases.Contains(command[1]));
+                        var info = MessageParser.ParsePokemon(command[1], config, guild.Id);
                         var response = "```";
 
                         if (info != null)
-                            response += MessageParser.MakeInfoLine(info);
+                            response += MessageParser.MakeInfoLine(info, guild.Id);
                         else
                             response += $"'{command[1]}' did not match any raid boss names or aliases.";
 
@@ -138,10 +138,6 @@ namespace PokemonGoRaidBot
                         {
                             list = list.Where(x => x.Tier == tierCommand);
                         }
-                        else
-                        {
-                            list = list.Where(x => x.Tier > 2);
-                        }
 
                         var orderedList = list.OrderByDescending(x => x.Id).OrderByDescending(x => x.Tier);
 
@@ -150,7 +146,7 @@ namespace PokemonGoRaidBot
                         strings.Add("```");
                         foreach (var info in orderedList)
                         {
-                            var lineStr = MessageParser.MakeInfoLine(info, maxBossLength);
+                            var lineStr = MessageParser.MakeInfoLine(info, guild.Id, maxBossLength);
 
                             if (strings[strInd].Length + lineStr.Length + 3 < 2000)
                                 strings[strInd] += lineStr;
@@ -258,7 +254,7 @@ namespace PokemonGoRaidBot
                     break;
                 case "help":
                     var helpmessage = $"```This bot parses discord chat messages to see if a raid is being mentioned.  If a text channel exists on the discord server called '{config.OutputChannel}', it posts the raids there and combines any responses to the raid in a cleaner fashion.\n\n";
-                    helpmessage += "``````fix\n  Commands:";
+                    helpmessage += "``````css\n       #Commands:\n";
                     helpmessage += $"{config.Prefix}info [boss name (optional)] - Displays information about the selected raid, or all of the raids above rank 3.  Information was taken from https://pokemongo.gamepress.gg.\n";
                     helpmessage += $"  {config.Prefix}channel [channel name (optional)] - Changes the bot output channel on this server to the value passed in for [channel name].  If none, the override is removed and the default value '{config.OutputChannel}' is used.  Moderator or admin privileges required.\n";
                     helpmessage += $"  {config.Prefix}alias [pokemon] [alias] - Adds an alias for a pokemon.  Moderator or admin privileges required.\n";
