@@ -6,8 +6,6 @@ namespace PokemonGoRaidBot.Objects
 {
     public class PokemonRaidPost
     {
-        public ulong MessageId;
-
         public bool HasEndDate;
         
         public string User;
@@ -19,6 +17,8 @@ namespace PokemonGoRaidBot.Objects
         public DateTime EndDate;
 
         public PokemonInfo Pokemon;
+
+        public List<ulong> MessageIds = new List<ulong>();
 
         public List<PokemonMessage> Responses = new List<PokemonMessage>();
 

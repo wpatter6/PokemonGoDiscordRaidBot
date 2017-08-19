@@ -95,17 +95,29 @@ namespace PokemonGoRaidBot.Objects
         /// </summary>
         /// <param name="post"></param>
         /// <returns></returns>
-        public static string MakeResponseString(PokemonRaidPost post)
+        public static string[] MakeResponseStrings(PokemonRaidPost post, string startMessage)
         {
-            var result = $"```{post.DiscordColor ?? (post.DiscordColor = discordColors[colorIndex >= discordColors.Length - 1 ? (colorIndex = 0) : colorIndex++])}";
+            List<string> resultList = new List<string>();
+            int i = 0, maxLength = 2000, firstMaxLength = maxLength - startMessage.Length;
+
+            resultList.Add(startMessage + $"```{post.DiscordColor ?? (post.DiscordColor = discordColors[colorIndex >= discordColors.Length - 1 ? (colorIndex = 0) : colorIndex++])}");
 
             foreach(var message in post.Responses)
             {
-                result += $"\n{message.Username}:  {Regex.Replace(message.Content, @"<@[0-9]*>", "").TrimStart()}";
+                var messageString = $"\n   #{message.Username}:  {Regex.Replace(message.Content, @"<(@|#)[0-9]*>", "").TrimStart()}";
+
+                if (resultList[i].Length + messageString.Length > (i==0 ? firstMaxLength : maxLength))
+                {
+                    resultList[i] += "```";
+                    resultList.Add("```" + post.DiscordColor);
+                    i++;
+                }
+
+                resultList[i] += messageString;
             }
-            
-            result += "\n```";
-            return result;
+
+            resultList[i] += "\n```";
+            return resultList.ToArray();
         }
 
         /// <summary>
@@ -164,20 +176,19 @@ namespace PokemonGoRaidBot.Objects
             }
 
             var ts = new TimeSpan(0);
-            var hrRegex = new Regex("([0-9])h", RegexOptions.IgnoreCase);
+            var hrRegex = new Regex("([0-9]{1})h", RegexOptions.IgnoreCase);
             if (hrRegex.IsMatch(message))
             {
                 var match = hrRegex.Match(message);
-                string hour = match.Groups[0].Value;//, minute = match.Groups[1].Value;
+                string hour = match.Groups[1].Value;//, minute = match.Groups[1].Value;
                 ts.Add(new TimeSpan(Convert.ToInt32(hour), 0, 0));
             }
 
-            var minRegex = new Regex("([0-9])m");
+            var minRegex = new Regex("([0-9]{1,2})m");
             if (minRegex.IsMatch(message))
             {
-
-                var match = hrRegex.Match(message);
-                string min = match.Groups[0].Value;//, minute = match.Groups[1].Value;
+                var match = minRegex.Match(message);
+                string min = match.Groups[1].Value;//, minute = match.Groups[1].Value;
                 ts = ts.Add(new TimeSpan(0, Convert.ToInt32(min), 0));
             }
             return ts;
