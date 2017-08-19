@@ -83,8 +83,11 @@ namespace PokemonGoRaidBot
 
             foreach (var post in deletedPosts)
             {
-                var m = new IMessage[] { await post.OutputChannel.GetMessageAsync(post.MessageId) };
-                deleteTasks.Add(post.OutputChannel.DeleteMessagesAsync(m));
+                foreach(var messageId in post.MessageIds)
+                {
+                    var m = new IMessage[] { await post.OutputChannel.GetMessageAsync(messageId) };
+                    deleteTasks.Add(post.OutputChannel.DeleteMessagesAsync(m));
+                }
             }
             if (deleteTasks.Count() > 0)
                 Task.WaitAll(deleteTasks.ToArray());
@@ -226,16 +229,27 @@ namespace PokemonGoRaidBot
                         post.User,
                         post.FromChannel.Id,
                         !post.HasEndDate ? "" : string.Format(", ends around {0:h: mm tt}", post.EndDate));
+            
+            var messages = MessageParser.MakeResponseStrings(post, response);
 
-            response += MessageParser.MakeResponseString(post);
+            var newMessageIds = new List<ulong>();
 
-            if (post.MessageId != default(ulong))
+            foreach(var messageId in post.MessageIds)
             {
-                var m = await post.OutputChannel.GetMessageAsync(post.MessageId);
-                await post.OutputChannel.DeleteMessagesAsync(new IMessage[] { m });
+                if (messageId != default(ulong))
+                {
+                    var m = await post.OutputChannel.GetMessageAsync(messageId);
+                    await post.OutputChannel.DeleteMessagesAsync(new IMessage[] { m });
+                }
             }
-            var result = await post.OutputChannel.SendMessageAsync(response);
-            post.MessageId = result.Id;
+
+            post.MessageIds.Clear();
+
+            foreach(var message in messages)
+            {
+                var messageResult = await post.OutputChannel.SendMessageAsync(message);
+                post.MessageIds.Add(messageResult.Id);
+            }
         }
         /// <summary>
         /// Adds new post or updates the existing post in the raid post array.
