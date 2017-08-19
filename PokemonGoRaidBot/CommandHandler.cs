@@ -224,13 +224,7 @@ namespace PokemonGoRaidBot
         /// <param name="outputchannel"></param>
         private async Task MakePost(PokemonRaidPost post)
         {
-            string response = string.Format("__**{0}**__ posted by {1} in <#{2}>{3}",
-                        post.Pokemon.Name,
-                        post.User,
-                        post.FromChannel.Id,
-                        !post.HasEndDate ? "" : string.Format(", ends around {0:h: mm tt}", post.EndDate));
-            
-            var messages = MessageParser.MakeResponseStrings(post, response);
+            var messages = MessageParser.MakePostStrings(post);
 
             var newMessageIds = new List<ulong>();
 
