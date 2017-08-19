@@ -134,7 +134,7 @@ namespace PokemonGoRaidBot
 
                         var list = config.PokemonInfoList.Where(x => x.CatchRate > 0);
 
-                        if (command.Length > 0 && Int32.TryParse(command[1], out tierCommand))
+                        if (command.Length > 1 && Int32.TryParse(command[1], out tierCommand))
                         {
                             list = list.Where(x => x.Tier == tierCommand);
                         }
