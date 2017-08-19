@@ -204,7 +204,8 @@
     "BossCP": 34707,
     "MinCP": 2011,
     "MaxCP": 2097,
-    "CatchRate": 0.04
+    "CatchRate": 0.04,
+    "Aliases": ["ttar"]
   },
   {
     "Id": 144,
