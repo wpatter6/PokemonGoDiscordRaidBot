@@ -12,6 +12,8 @@ namespace PokemonGoRaidBot.Objects
 
         public string DiscordColor;
 
+        public string Location;
+
         public DateTime PostDate;
 
         public DateTime EndDate;

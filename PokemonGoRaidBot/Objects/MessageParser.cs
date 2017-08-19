@@ -9,11 +9,13 @@ namespace PokemonGoRaidBot.Objects
 {
     public static class MessageParser
     {
-        private static int maxRaidMinutes = 100;
         private static int colorIndex = 0;
         private static string[] minuteAliases = new string[] { "m", "mi", "min", "mins", "minutes", "minute" };
         private static string[] hourAliases = new string[] { "h", "hr", "hour", "hours" };
-        private static string[] discordColors = new string[] { "css", "brainfuck", "fix", "apache" };
+        private static string[] discordColors = new string[] { "css", "brainfuck", "fix", "apache", "" };
+
+        private const int maxRaidMinutes = 100;
+        private const string matchedWordReplacement = "#|#|#|#";//when trying to match location, replace pokemon names and time spans with this string
 
         /// <summary>
         /// Will attempt to parse the necessary information out of a message to create a raid post.
@@ -39,6 +41,8 @@ namespace PokemonGoRaidBot.Objects
             var timespan = new TimeSpan();
             var i = 0;
 
+            var unmatchedWords = new List<string>();
+
             foreach (var word in words)
             {
                 i++;
@@ -46,13 +50,18 @@ namespace PokemonGoRaidBot.Objects
                 if (result.Pokemon == null)
                 {
                     result.Pokemon = GetPokemon(word, config);
-                    if (result.Pokemon != null) continue;
+                    if (result.Pokemon != null)
+                    {
+                        unmatchedWords.Add(matchedWordReplacement);
+                        continue;
+                    }
                 }
 
                 var ts = ParseTimespan(word);
                 if (ts.Ticks > 0)
                 {
                     timespan = timespan.Add(ts);
+                    unmatchedWords.Add(matchedWordReplacement);
                     continue;
                 }
 
@@ -60,24 +69,53 @@ namespace PokemonGoRaidBot.Objects
                 {
                     var mins = words[i - 2];
                     var min = 0;
+                    var isminute = false;
+
                     if (Int32.TryParse(mins, out min))
+                    { 
                         timespan = timespan.Add(new TimeSpan(0, min, 0));
-                    else if (mins.ToLowerInvariant() == "a")
+                        isminute = true;
+                    }
+                    else if (mins.ToLowerInvariant() == "a" || mins.ToLowerInvariant() == "an")
+                    { 
                         timespan = timespan.Add(new TimeSpan(0, 1, 0));
+                        isminute = true;
+                    }
+                    if (isminute)
+                    {
+                        unmatchedWords[unmatchedWords.Count() - 1] = matchedWordReplacement;
+                        unmatchedWords.Add(matchedWordReplacement);
+                        continue;
+                    }
                 }
 
                 if (hourAliases.Contains(word) && i > 1)//go back and get the previous word
                 {
                     var hrs = words[i - 2];
                     var hr = 0;
+                    var ishour = false;
                     if (Int32.TryParse(hrs, out hr))
+                    { 
                         timespan = timespan.Add(new TimeSpan(hr, 0, 0));
-                    else if (hrs.ToLowerInvariant() == "a")
+                        ishour = true;
+                    }
+                    else if (hrs.ToLowerInvariant() == "a" || hrs.ToLowerInvariant() == "an")
+                    { 
                         timespan = timespan.Add(new TimeSpan(1, 0, 0));
+                        ishour = true;
+                    }
+                    if (ishour)
+                    {
+                        unmatchedWords[unmatchedWords.Count() - 1] = matchedWordReplacement;
+                        unmatchedWords.Add(matchedWordReplacement);
+                        continue;
+                    }
                 }
+                //the word was not matched, add it to the cleaned array to check for location
+                unmatchedWords.Add(word);
             }
 
-            if (timespan.Ticks > 0 && !Regex.IsMatch(messageString, "(there|arrive) in|away|my way|omw"))
+            if (timespan.Ticks > 0 && !Regex.IsMatch(messageString, "(there|arrive) in|away|my way|omw|out"))
             {
                 result.EndDate = result.PostDate + timespan;
                 result.HasEndDate = true;
@@ -87,6 +125,8 @@ namespace PokemonGoRaidBot.Objects
                 result.EndDate = result.PostDate + new TimeSpan(0, maxRaidMinutes, 0);
                 result.HasEndDate = false;
             }
+
+            result.Location = ParseLocation(string.Join(" ", unmatchedWords.ToArray()));
 
             return result;
         }
@@ -120,6 +160,17 @@ namespace PokemonGoRaidBot.Objects
             return resultList.ToArray();
         }
 
+        public static string[] MakePostStrings(PokemonRaidPost post)
+        {
+            string response = string.Format("__**{0}**__ posted by {1} in <#{2}>{3}{4}",
+                        post.Pokemon.Name,
+                        post.User,
+                        post.FromChannel.Id,
+                        !string.IsNullOrEmpty(post.Location) ? string.Format(" at {0}", post.Location) : "",
+                        !post.HasEndDate ? "" : string.Format(", ends around {0:h: mm tt}", post.EndDate));
+
+            return MakeResponseStrings(post, response);
+        }
         /// <summary>
         /// Returns a single row of pokemon info for the !info command.
         /// </summary>
@@ -192,6 +243,37 @@ namespace PokemonGoRaidBot.Objects
                 ts = ts.Add(new TimeSpan(0, Convert.ToInt32(min), 0));
             }
             return ts;
+        }
+        /// <summary>
+        /// Attempts to get a location out of a full message string.
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns>The string representation of the location</returns>
+        private static string ParseLocation(string message)
+        {
+            var result = ParseLocationBase(message);
+
+            return Regex.Replace(result, @"\b(until|at|if|or|when)\b", "", RegexOptions.IgnoreCase).Replace(matchedWordReplacement, "").Trim();
+        }
+        private static string ParseLocationBase(string message)
+        {
+            var crossStreetsReg = new Regex(@"([a-zA-Z0-9]* (\&|and) [a-zA-Z0-9]*)", RegexOptions.IgnoreCase);
+
+            if (crossStreetsReg.IsMatch(message))
+                return crossStreetsReg.Match(message).Groups[1].Value;
+
+            var atReg = new Regex("at ([a-zA-Z0-9 ]*)");//timespans should be removed already, so "at [blah blah]" should indicate location
+
+            if (atReg.IsMatch(message))
+                return atReg.Match(message).Groups[1].Value;
+
+
+            var parkReg = new Regex(@"([a-zA-Z0-9 ]*\b(park|school|church|museum|mural|statue))\b", RegexOptions.IgnoreCase);
+
+            if (parkReg.IsMatch(message))
+                return parkReg.Match(message).Groups[1].Value;
+            
+            return "";
         }
     }
 }
