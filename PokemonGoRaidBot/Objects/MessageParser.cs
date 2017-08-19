@@ -77,7 +77,7 @@ namespace PokemonGoRaidBot.Objects
                 }
             }
 
-            if (timespan.Ticks > 0 && !Regex.IsMatch(messageString, "(there|arrive) in|away"))
+            if (timespan.Ticks > 0 && !Regex.IsMatch(messageString, "(there|arrive) in|away|my way|omw"))
             {
                 result.EndDate = result.PostDate + timespan;
                 result.HasEndDate = true;
