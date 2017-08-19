@@ -253,7 +253,7 @@ namespace PokemonGoRaidBot.Objects
         {
             var result = ParseLocationBase(message);
 
-            return Regex.Replace(result, @"\b(until|at|if|or|when)\b", "", RegexOptions.IgnoreCase).Replace(matchedWordReplacement, "").Trim();
+            return Regex.Replace(result, @"\b(until|at|if|or|when|the)\b", "", RegexOptions.IgnoreCase).Replace("  ", " ").Replace(matchedWordReplacement, "").Trim();
         }
         private static string ParseLocationBase(string message)
         {
@@ -268,7 +268,7 @@ namespace PokemonGoRaidBot.Objects
                 return atReg.Match(message).Groups[1].Value;
 
 
-            var parkReg = new Regex(@"([a-zA-Z0-9 ]*\b(park|school|church|museum|mural|statue))\b", RegexOptions.IgnoreCase);
+            var parkReg = new Regex(@"([a-zA-Z0-9 ]*\b(park|school|church|museum|mural|statue) ?[a-zA-Z]*\b?)", RegexOptions.IgnoreCase);
 
             if (parkReg.IsMatch(message))
                 return parkReg.Match(message).Groups[1].Value;
