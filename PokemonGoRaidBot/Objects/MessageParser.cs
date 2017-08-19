@@ -33,6 +33,8 @@ namespace PokemonGoRaidBot.Objects
                 Responses = new List<PokemonMessage>() { new PokemonMessage(message.Author.Username, message.Content) }
             };
 
+            var guildId = ((SocketGuildChannel)message.Channel).Guild.Id;
+
             var messageString = message.Content;
 
             var words = messageString.Split(' ');
@@ -49,7 +51,7 @@ namespace PokemonGoRaidBot.Objects
 
                 if (result.Pokemon == null)
                 {
-                    result.Pokemon = GetPokemon(word, config);
+                    result.Pokemon = ParsePokemon(word, config, guildId);
                     if (result.Pokemon != null)
                     {
                         unmatchedWords.Add(matchedWordReplacement);
@@ -115,7 +117,7 @@ namespace PokemonGoRaidBot.Objects
                 unmatchedWords.Add(word);
             }
 
-            if (timespan.Ticks > 0 && !Regex.IsMatch(messageString, "(there|arrive) in|away|my way|omw|out"))
+            if (timespan.Ticks > 0 && !Regex.IsMatch(messageString, "\b((there|arrive) in|away|my way|omw|out)\b"))
             {
                 result.EndDate = result.PostDate + timespan;
                 result.HasEndDate = true;
@@ -196,13 +198,16 @@ namespace PokemonGoRaidBot.Objects
         /// <param name="name"></param>
         /// <param name="config"></param>
         /// <returns></returns>
-        private static PokemonInfo GetPokemon(string name, BotConfig config)
+        private static PokemonInfo ParsePokemon(string name, BotConfig config, ulong guildId)
         {
             if (name.Length < 3) return null;
 
             var cleanedName = Regex.Replace(name, @"\W", "").ToLowerInvariant();
 
-            var result = config.PokemonInfoList.FirstOrDefault(x => x.Aliases.Contains(cleanedName));
+            var result = config.PokemonInfoList.FirstOrDefault(x => x.ServerAliases.Where(xx => xx.Key == guildId && xx.Value == cleanedName).Count() > 0);
+            if (result != null) return result;
+
+            result = config.PokemonInfoList.FirstOrDefault(x => x.Aliases.Contains(cleanedName));
             if (result != null) return result;
 
             result = config.PokemonInfoList.OrderByDescending(x => x.Id).FirstOrDefault(x => x.Name.ToLowerInvariant().StartsWith(cleanedName));
@@ -253,7 +258,7 @@ namespace PokemonGoRaidBot.Objects
         {
             var result = ParseLocationBase(message);
 
-            return Regex.Replace(result, @"\b(until|at|if|or|when|the)\b", "", RegexOptions.IgnoreCase).Replace("  ", " ").Replace(matchedWordReplacement, "").Trim();
+            return Regex.Replace(result, @"\b(until|at|if|or|when|the)\b", "", RegexOptions.IgnoreCase).Replace(",", "").Replace(".", "").Replace("  ", " ").Replace(matchedWordReplacement, "").Trim();
         }
         private static string ParseLocationBase(string message)
         {

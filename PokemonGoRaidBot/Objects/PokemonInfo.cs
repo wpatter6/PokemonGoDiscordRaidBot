@@ -13,6 +13,7 @@ namespace PokemonGoRaidBot.Objects
         public int MaxCP;
         public double CatchRate;
         public List<string> Aliases = new List<string>();
+        public List<KeyValuePair<ulong, string>> ServerAliases = new List<KeyValuePair<ulong, string>>();
 
         [JsonIgnore]
         public string BossNameFormatted

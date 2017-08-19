@@ -15,6 +15,8 @@ namespace PokemonGoRaidBot.Config
         public string Token { get; set; }
         public string LinkUrl { get; set; }
         public string OutputChannel { get; set; }
+
+        public Dictionary<ulong, ulong> ServerChannels { get; set; }
         
         public List<PokemonInfo> PokemonInfoList { get; set; }
 
@@ -22,6 +24,8 @@ namespace PokemonGoRaidBot.Config
         {
             Prefix = "!";
             Token = "";
+            ServerChannels = new Dictionary<ulong, ulong>();
+            PokemonInfoList = new List<PokemonInfo>();
         }
 
         public void Save(string dir = "configuration/config.json")
