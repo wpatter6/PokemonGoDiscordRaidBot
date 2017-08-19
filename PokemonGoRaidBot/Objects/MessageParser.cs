@@ -166,7 +166,7 @@ namespace PokemonGoRaidBot.Objects
                         post.Pokemon.Name,
                         post.User,
                         post.FromChannel.Id,
-                        !string.IsNullOrEmpty(post.Location) ? string.Format(" at {0}", post.Location) : "",
+                        !string.IsNullOrEmpty(post.Location) ? string.Format(" at **{0}**", post.Location) : "",
                         !post.HasEndDate ? "" : string.Format(", ends around {0:h: mm tt}", post.EndDate));
 
             return MakeResponseStrings(post, response);
