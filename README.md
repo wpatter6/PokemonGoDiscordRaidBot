@@ -1,17 +1,17 @@
 # PokemonGoRaidBot
-Discord Bot Template based on Discord.Net 1.0.1
+- Discord Bot Template based on Discord.Net 1.0.1
 
-This discord bot will parse posts in a discord guild and provide clean output to a configured channel on the discord guild.
+- This discord bot will parse posts in a discord guild and provide clean output to a configured channel on the discord server.
 
-It identifies responses to a raid post and includes the discussion on the configured channel's raid post thread as well.  It also parses any time strings in the user's response and outputs the actual time (currently only in MST but will soon make it configurable)
+- It identifies responses to a raid post and includes the discussion on the configured channel's raid post thread as well.  It also parses any time strings in the user's response and outputs the actual time (currently only in MST but will soon make it configurable)
 
 ![Pokemon Go Raid Bot in action](http://i.imgur.com/M0MF0Vn.png)
 
-When multiple responses occur, the number of respondants will display instead of the 'posted by' user.
+- When multiple responses occur, the number of respondants will display instead of the 'posted by' user.
 
-Specific channels can have the raid posts pinned and can be configured using commands listed below.
+- Specific channels can have the raid posts pinned and can be configured using commands listed below.
 
-It determines the end time of the raid and removes its messages from the output chat after the raid has ended.
+- It determines the end time of the raid and removes its messages from the output chat after the raid has ended.
 
 ## How to Build:
 1. Download the full repository.
