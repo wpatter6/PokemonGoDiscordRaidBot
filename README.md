@@ -17,7 +17,8 @@
 1. Download the full repository.
 1. Run the publish.ps1 powershell script.  This will delete and re-create the `Releases` folder with zip files containing the builds for windows, ubuntu, and osx.
 
-I1. Get the zip file for your operating system from the `Releases` folder, either by downloading it directly or building using the above  Build instructions.
+## How to install:
+1. Get the zip file for your operating system from the `Releases` folder, either by downloading it directly or building using the above  Build instructions.
 1. Extract the package and run the executable
   1. It will ask you to enter the bot token.  Copy this from the bot you created at [here](https://discordapp.com/developers/applications/me)
   1. It will ask for the default output channel.  This should be the channel name from your discord server that the bot should post into.
