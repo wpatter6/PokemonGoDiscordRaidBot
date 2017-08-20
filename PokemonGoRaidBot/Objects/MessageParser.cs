@@ -28,9 +28,11 @@ namespace PokemonGoRaidBot.Objects
             var result = new PokemonRaidPost()
             {
                 User = message.Author.Username,
+                UserId = message.Author.Id,
                 PostDate = DateTime.Now,//uses local time for bot
                 FromChannel = message.Channel,
-                Responses = new List<PokemonMessage>() { new PokemonMessage(message.Author.Username, message.Content) }
+                Responses = new List<PokemonMessage>() { new PokemonMessage(message.Author.Username, message.Content, DateTime.Now) },
+                EndDate = DateTime.Now + new TimeSpan(0, maxRaidMinutes, 0)
             };
 
             var guildId = ((SocketGuildChannel)message.Channel).Guild.Id;
@@ -44,7 +46,7 @@ namespace PokemonGoRaidBot.Objects
             var i = 0;
 
             var unmatchedWords = new List<string>();
-
+            var isActualTime = false;
             foreach (var word in words)
             {
                 i++;
@@ -59,7 +61,7 @@ namespace PokemonGoRaidBot.Objects
                     }
                 }
 
-                var ts = ParseTimespan(word);
+                var ts = ParseTimespan(word, ref isActualTime);
                 if (ts.Ticks > 0)
                 {
                     timespan = timespan.Add(ts);
@@ -114,18 +116,24 @@ namespace PokemonGoRaidBot.Objects
                     }
                 }
                 //the word was not matched, add it to the cleaned array to check for location
+
+                if (Regex.IsMatch(word, "^at$", RegexOptions.IgnoreCase)) isActualTime = true;
+
                 unmatchedWords.Add(word);
             }
 
-            if (timespan.Ticks > 0 && !Regex.IsMatch(messageString, "\b((there|arrive) in|away|my way|omw|out)\b"))
+            if (timespan.Ticks > 0)
             {
-                result.EndDate = result.PostDate + timespan;
-                result.HasEndDate = true;
-            }
-            else
-            {
-                result.EndDate = result.PostDate + new TimeSpan(0, maxRaidMinutes, 0);
-                result.HasEndDate = false;
+                var dt = result.PostDate + timespan;
+
+                if(!isActualTime)
+                    result.Responses[0].Content += string.Format(" ({0:h:mmtt})", dt);
+
+                if (!Regex.IsMatch(messageString, @"\b((there|arrive) in|away|my way|omw|out)\b", RegexOptions.IgnoreCase))
+                {
+                    result.EndDate = dt;
+                    result.HasEndDate = true;
+                }
             }
 
             result.Location = ParseLocation(string.Join(" ", unmatchedWords.ToArray()));
@@ -140,15 +148,16 @@ namespace PokemonGoRaidBot.Objects
         public static string[] MakeResponseStrings(PokemonRaidPost post, string startMessage)
         {
             List<string> resultList = new List<string>();
-            int i = 0, maxLength = 2000, firstMaxLength = maxLength - startMessage.Length;
+            int i = 1, maxLength = 2000;//, firstMaxLength = maxLength - startMessage.Length;
 
-            resultList.Add(startMessage + $"```{post.DiscordColor ?? (post.DiscordColor = discordColors[colorIndex >= discordColors.Length - 1 ? (colorIndex = 0) : colorIndex++])}");
+            resultList.Add(startMessage);
+            resultList.Add($"```{post.DiscordColor ?? (post.DiscordColor = discordColors[colorIndex >= discordColors.Length - 1 ? (colorIndex = 0) : colorIndex++])}");
 
-            foreach(var message in post.Responses)
+            foreach(var message in post.Responses.OrderBy(x => x.MessageDate))
             {
                 var messageString = $"\n   #{message.Username}:  {Regex.Replace(message.Content, @"<(@|#)[0-9]*>", "").TrimStart()}";
 
-                if (resultList[i].Length + messageString.Length > (i==0 ? firstMaxLength : maxLength))
+                if (resultList[i].Length + messageString.Length > maxLength)
                 {
                     resultList[i] += "```";
                     resultList.Add("```" + post.DiscordColor);
@@ -161,15 +170,17 @@ namespace PokemonGoRaidBot.Objects
             resultList[i] += "\n```";
             return resultList.ToArray();
         }
-
         public static string[] MakePostStrings(PokemonRaidPost post)
         {
-            string response = string.Format("__**{0}**__ posted by {1} in <#{2}>{3}{4}",
+            string response = string.Format("`{5}` __**{0}**__ posted by {1} in <#{2}>{3}{4}",
                         post.Pokemon.Name,
                         post.User,
                         post.FromChannel.Id,
                         !string.IsNullOrEmpty(post.Location) ? string.Format(" at **{0}**", post.Location) : "",
-                        !post.HasEndDate ? "" : string.Format(", ends around {0:h: mm tt}", post.EndDate));
+                        string.Format(", ends around {0:h:mmtt}", post.EndDate),
+                        post.UniqueId);
+
+            if (post.Pin) return new string[] { response };
 
             return MakeResponseStrings(post, response);
         }
@@ -223,20 +234,46 @@ namespace PokemonGoRaidBot.Objects
         /// </summary>
         /// <param name="message"></param>
         /// <returns></returns>
-        private static TimeSpan ParseTimespan(string message)
+        private static TimeSpan ParseTimespan(string message, ref bool isActualTime)
         {
+            var timeRegex = new Regex("([0-9]{1,2}):?([0-9]{2})?(a|p)", RegexOptions.IgnoreCase);
+            if (timeRegex.IsMatch(message))//posting an actual time like "3:30pm" or "10am"
+            {
+                var match = timeRegex.Match(message);
+                int hour = Convert.ToInt32(match.Groups[1].Value),
+                    minute = string.IsNullOrEmpty(match.Groups[2].Value) ? 0 : Convert.ToInt32(match.Groups[2].Value);
+                string part = match.Groups[3].Value;
+
+                if(part.Equals("p", StringComparison.OrdinalIgnoreCase))
+                    hour += 12;
+
+                var postedDate = DateTime.Today.Add(TimeSpan.Parse(string.Format("{0}:{1}", hour, minute + 1)));
+                isActualTime = true;
+                return new TimeSpan(postedDate.Ticks - DateTime.Now.Ticks);
+            }
+
             var tsRegex = new Regex("([0-9]):([0-9]{2})");
-            if (tsRegex.IsMatch(message))
+            if (tsRegex.IsMatch(message))//posting like "1:30" -- ActualTime indicates it was preceeded by the word "at"
             {
                 var match = tsRegex.Match(message);
-                string hour = match.Groups[1].Value, minute = match.Groups[2].Value;
+                int hour = Convert.ToInt32(match.Groups[1].Value), 
+                    minute = Convert.ToInt32(match.Groups[2].Value);
 
-                return new TimeSpan(Convert.ToInt32(hour), Convert.ToInt32(minute), 0);
+                if (hour > 2) isActualTime = true;
+
+                if(!isActualTime)
+                    return new TimeSpan(hour, minute, 0);
+                else
+                {
+                    if (DateTime.Now.Hour > 9 && hour < 9) hour += 12;//PM is inferred
+                    var postedDate = DateTime.Today.Add(TimeSpan.Parse(string.Format("{0}:{1}", hour, minute +1)));
+                    return new TimeSpan(postedDate.Ticks - DateTime.Now.Ticks);
+                }
             }
 
             var ts = new TimeSpan(0);
-            var hrRegex = new Regex("([0-9]{1})h", RegexOptions.IgnoreCase);
-            if (hrRegex.IsMatch(message))
+            var hrRegex = new Regex("([0-2]{1})h", RegexOptions.IgnoreCase);
+            if (hrRegex.IsMatch(message))//posting like "1h"
             {
                 var match = hrRegex.Match(message);
                 string hour = match.Groups[1].Value;//, minute = match.Groups[1].Value;
@@ -282,6 +319,21 @@ namespace PokemonGoRaidBot.Objects
                 return parkReg.Match(message).Groups[1].Value;
             
             return "";
+        }
+        public static bool CompareLocations(string loc1, string loc2)
+        {
+            loc1 = loc1.ToLowerInvariant();
+            loc2 = loc2.ToLowerInvariant();
+
+            if (loc1 == loc2 || loc1.StartsWith(loc2) || loc2.StartsWith(loc1)) return true;
+
+            var reg1 = new Regex(loc1.Replace(" ", "[a-zA-Z]* "));
+            var reg2 = new Regex(loc2.Replace(" ", "[a-zA-Z]* "));
+
+            if (reg1.IsMatch(loc2)) return true;
+            if (reg2.IsMatch(loc1)) return true;
+
+            return false;
         }
     }
 }

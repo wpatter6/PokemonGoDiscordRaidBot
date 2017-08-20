@@ -19,6 +19,7 @@ namespace PokemonGoRaidBot.Config
         public Dictionary<ulong, ulong> ServerChannels { get; set; }
         
         public List<PokemonInfo> PokemonInfoList { get; set; }
+        public List<ulong> PinChannels { get; set; }
 
         public BotConfig()
         {
@@ -26,6 +27,7 @@ namespace PokemonGoRaidBot.Config
             Token = "";
             ServerChannels = new Dictionary<ulong, ulong>();
             PokemonInfoList = new List<PokemonInfo>();
+            PinChannels = new List<ulong>();
         }
 
         public void Save(string dir = "configuration/config.json")
@@ -40,6 +42,7 @@ namespace PokemonGoRaidBot.Config
             if (result.PokemonInfoList == null) result.PokemonInfoList = GetDefaultPokemonInfoList();
             if (string.IsNullOrEmpty(result.LinkUrl)) result.LinkUrl = "https://pokemongo.gamepress.gg/pokemon/{0}";
             if (string.IsNullOrEmpty(result.OutputChannel)) result.OutputChannel = "raid-bot";
+            if (result.PinChannels == null) result.PinChannels = new List<ulong>();
             
             result.Save();
             return result;
