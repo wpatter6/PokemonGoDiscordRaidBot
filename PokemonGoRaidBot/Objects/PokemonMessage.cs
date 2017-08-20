@@ -4,12 +4,15 @@ namespace PokemonGoRaidBot.Objects
 {
     public class PokemonMessage
     {
-        public PokemonMessage(string username, string message, DateTime date)
+        public PokemonMessage(ulong userId, string userName, string message, DateTime date)
         {
-            Username = username;
+            UserId = userId;
+            Username = userName;
             Content = message;
             MessageDate = date;
         }
+        //public string Username;
+        public ulong UserId;
         public string Username;
         public string Content;
         public DateTime MessageDate;

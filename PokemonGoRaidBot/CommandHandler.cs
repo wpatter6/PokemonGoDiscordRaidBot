@@ -61,13 +61,12 @@ namespace PokemonGoRaidBot
                 if (config.PinChannels.Contains(message.Channel.Id))
                 {
                     pin = true;
-                    outputchannel = message.Channel;
+                    //outputchannel = message.Channel;
                 }
 
-                if (outputchannel == null && config.ServerChannels.ContainsKey(guild.Id))
+                if (config.ServerChannels.ContainsKey(guild.Id))
                     outputchannel = (ISocketMessageChannel)guild.Channels.FirstOrDefault(x => x.Id == config.ServerChannels[guild.Id]);
-
-                if (outputchannel == null)
+                else
                     outputchannel = (ISocketMessageChannel)guild.Channels.FirstOrDefault(x => x.Name == config.OutputChannel);
 
                 //do nothing if output channel is not available.
@@ -80,28 +79,22 @@ namespace PokemonGoRaidBot
                 {//Someone is issuing a command, respond in their channel
                     await DoCommand(message);
                 }
-                else if (outputchannel != null && message.MentionedUsers.Count() > 0)
+                else if ((outputchannel != null || pin) && message.MentionedUsers.Count() > 0)
                 {//possibly a response to someone who posted a raid
                     await DoResponse(message);
                 }
-                else if (outputchannel != null)
+                else if (outputchannel != null || pin)
                 {//try to see if a raid was posted
                     await DoPost(message, outputchannel, pin);
                 }
             }
             catch (Exception e)
             {
-                Console.BackgroundColor = ConsoleColor.Yellow;
-                Console.ForegroundColor = ConsoleColor.Black;
-                Console.WriteLine("Error: {0}", e.Message);
-                Console.Write(e.StackTrace);
-                Console.WriteLine("---");
-                Console.BackgroundColor = ConsoleColor.Black;
-                Console.ForegroundColor = ConsoleColor.White;
+                DoError(e);
             }
         }
         /// <summary>
-        /// Used as a recurring method which will remove old posts to keep the channel clean of expired raids.
+        /// Used as a recurring method which will remove old posts to keep the output channel clean of expired raids.
         /// </summary>
         /// <param name="stateInfo"></param>
         public async void PurgePosts(Object stateInfo = null)
@@ -118,18 +111,72 @@ namespace PokemonGoRaidBot
 
             foreach (var post in deletedPosts)
             {
-                foreach(var messageId in post.MessageIds)
+                foreach(var messageId in post.OutputMessageIds)
                 {
                     var m = new IMessage[] { await post.OutputChannel.GetMessageAsync(messageId) };
-
-                    if(m[0] is RestUserMessage && ((RestUserMessage)m[0]).IsPinned)
-                        await ((RestUserMessage)m[0]).UnpinAsync();
-
+                    
                     deleteTasks.Add(post.OutputChannel.DeleteMessagesAsync(m));
+                }
+
+                var m1 = new IMessage[] { await post.OutputChannel.GetMessageAsync(post.MessageId) };
+
+                if(m1.Count() > 0)
+                {
+                    if (m1[0] is RestUserMessage && ((RestUserMessage)m1[0]).IsPinned)
+                        await ((RestUserMessage)m1[0]).UnpinAsync();
+
+                    deleteTasks.Add(post.OutputChannel.DeleteMessagesAsync(m1));
                 }
             }
             if (deleteTasks.Count() > 0)
                 Task.WaitAll(deleteTasks.ToArray());
+
+            //Clean up old messages
+            foreach (var guild in bot.Guilds)
+            {
+                SocketGuildChannel outputchannel;
+
+                if (config.ServerChannels.ContainsKey(guild.Id))
+                    outputchannel = guild.GetChannel(config.ServerChannels[guild.Id]);
+                else
+                    outputchannel = guild.Channels.FirstOrDefault(x => x.Name == config.OutputChannel);
+
+                if(outputchannel != null)
+                {
+                    var messagesAsync = ((ISocketMessageChannel)outputchannel).GetMessagesAsync();
+                    using(var enumerator = messagesAsync.GetEnumerator())
+                    {
+                        while (await enumerator.MoveNext())
+                        {
+                            var messages = enumerator.Current;
+                            foreach(var message in messages)
+                            {
+                                if (message.CreatedAt < DateTimeOffset.Now.AddHours(2))
+                                {
+                                    try
+                                    { 
+                                        await message.DeleteAsync();
+                                    }
+                                    catch(Exception e)
+                                    {
+                                        DoError(e);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        private void DoError(Exception e)
+        {
+            Console.BackgroundColor = ConsoleColor.Yellow;
+            Console.ForegroundColor = ConsoleColor.Black;
+            Console.WriteLine("Error: {0}", e.Message);
+            Console.Write(e.StackTrace);
+            Console.WriteLine("---");
+            Console.BackgroundColor = ConsoleColor.Black;
+            Console.ForegroundColor = ConsoleColor.White;
         }
         private async Task DoCommand(SocketUserMessage message)
         {
@@ -137,8 +184,9 @@ namespace PokemonGoRaidBot
             var user = (SocketGuildUser)message.Author;
             var guild = ((SocketGuildChannel)message.Channel).Guild;
 
-            var isAdmin = user.GuildPermissions.Administrator;
-            var isMod = user.Roles.Where(x => x.Name.ToLowerInvariant().StartsWith("mod")).Count() > 0;
+            var isAdmin = user.GuildPermissions.Administrator || user.GuildPermissions.ManageGuild;
+            //user.Roles.Where(x=>x.Permissions.)
+            //var isMod = //user.GuildPermissions. //user.Roles.Where(x => x.Name.ToLowerInvariant().StartsWith("mod")).Count() > 0;
 
             switch (command[0].ToLowerInvariant())
             {
@@ -194,7 +242,7 @@ namespace PokemonGoRaidBot
                     }
                     break;
                 case "channel":
-                    if (!isMod && !isAdmin)
+                    if (!isAdmin)
                     {
                         await MakeCommandMessage(message.Channel, noAccessMessage);
                         return;
@@ -220,8 +268,13 @@ namespace PokemonGoRaidBot
                         await MakeCommandMessage(message.Channel, $"Output channel override for {guild.Name} removed, default value \"{config.OutputChannel}\" will be used.");
                     }
                     break;
+                case "nochannel":
+                    config.ServerChannels[guild.Id] = 0;
+                    config.Save();
+                    await MakeCommandMessage(message.Channel, "Bot will no longer output to a single channel.  Use !channel to undo this.");
+                    break;
                 case "alias"://command[1] = Pokemon identifier, command[2] = alias to add
-                    if (!isMod && !isAdmin)
+                    if (!isAdmin)
                     {
                         await MakeCommandMessage(message.Channel, noAccessMessage);
                         return;
@@ -245,7 +298,7 @@ namespace PokemonGoRaidBot
                     await MakeCommandMessage(message.Channel, resp);
                     break;
                 case "removealias"://command[1] = Pokemon identifier, command[2] = alias to remove
-                    if (!isMod && !isAdmin)
+                    if (!isAdmin)
                     {
                         await MakeCommandMessage(message.Channel, noAccessMessage);
                         return;
@@ -288,7 +341,7 @@ namespace PokemonGoRaidBot
                         await MakeCommandMessage(message.Channel, $"Post with Unique Id \"{command[2]}\" not found.");
                         return;
                     }
-                    if (post1.UserId != message.Author.Id && post2.UserId != message.Author.Id && !isMod && !isAdmin)
+                    if (post1.UserId != message.Author.Id && post2.UserId != message.Author.Id && !isAdmin)
                     {
                         await MakeCommandMessage(message.Channel, "Only one of the post creators, server mods, or administrators can merge raid posts.");
                     }
@@ -311,7 +364,7 @@ namespace PokemonGoRaidBot
                     break;
                 case "delete"://command[1] = raid UniqueId to delete
                     var post = posts.FirstOrDefault(x => x.UniqueId == command[1]);
-                    if (post.UserId != message.Author.Id && !isMod && !isAdmin)
+                    if (post.UserId != message.Author.Id && !isAdmin)
                     {
                         await MakeCommandMessage(message.Channel, "Only the creator of the post, server mods, or administrators can delete raid posts.");
                     }
@@ -323,7 +376,7 @@ namespace PokemonGoRaidBot
                     DeletePost(post);
                     break;
                 case "pinall":
-                    if (!isMod && !isAdmin)
+                    if (!isAdmin)
                     {
                         await MakeCommandMessage(message.Channel, noAccessMessage);
                         return;
@@ -340,7 +393,7 @@ namespace PokemonGoRaidBot
 
                     break;
                 case "pin"://command[1] = channel name for 'pin' behavior
-                    if (!isMod && !isAdmin)
+                    if (!isAdmin)
                     {
                         await MakeCommandMessage(message.Channel, noAccessMessage);
                         return;
@@ -363,7 +416,7 @@ namespace PokemonGoRaidBot
                     }
                     break;
                 case "unpinall":
-                    if (!isMod && !isAdmin)
+                    if (!isAdmin)
                     {
                         await MakeCommandMessage(message.Channel, noAccessMessage);
                         return;
@@ -379,7 +432,7 @@ namespace PokemonGoRaidBot
                     await MakeCommandMessage(message.Channel, $"All channels removed from Pin Channels.");
                     break;
                 case "unpin"://command[1] = channel name to remove from 'pin' behavior
-                    if (!isMod && !isAdmin)
+                    if (!isAdmin)
                     {
                         await MakeCommandMessage(message.Channel, noAccessMessage);
                         return;
@@ -399,21 +452,21 @@ namespace PokemonGoRaidBot
                     config.Save();
                     await MakeCommandMessage(message.Channel, $"{unpinchannel.Name} removed from Pin Channels.");
                     break;
+                case "pinlist":
+                    var pinstring = "";
+                    foreach(var channel in guild.Channels)
+                    {
+                        if (config.PinChannels.Contains(channel.Id))
+                            pinstring += $"\n{channel.Name}";
+                    }
+
+                    if (string.IsNullOrEmpty(pinstring)) pinstring = "No channels in Pin List.";
+                    else pinstring = "Pinned Channels:" + pinstring;
+
+                    await MakeCommandMessage(message.Channel, pinstring);
+                    break;
                 case "help":
-                    var helpmessage = $"```This bot parses discord chat messages to see if a raid is being mentioned.  If a raid is found, it will post to a specific channel, by default '{config.OutputChannel}'.  Channels can be configured to pin the raid instead of posting it to the specific channel.\n\n";
-                    helpmessage += "``````css\n       #Commands:\n";
-                    helpmessage += $"  {config.Prefix}info [boss name (optional)] - Displays information about the selected raid, or all of the raids above rank 3.  Information was taken from https://pokemongo.gamepress.gg.\n";
-                    helpmessage += $"  {config.Prefix}channel [channel name (optional)] - Changes the bot output channel on this server to the value passed in for [channel name].  If none, the override is removed and the default value '{config.OutputChannel}' is used.  Moderator or admin privileges required.\n";
-                    helpmessage += $"  {config.Prefix}alias [pokemon] [alias] - Adds an alias for a pokemon.  Moderator or admin privileges required.\n";
-                    helpmessage += $"  {config.Prefix}removealias [pokemon] [alias] - Removes an alias for a pokemon.  Moderator or admin privileges required.\n";
-                    helpmessage += $"  {config.Prefix}delete [id] - Deletes a raid post with the corresponding Id.\n";
-                    helpmessage += $"  {config.Prefix}merge [id1] [id2] - Merges two raid posts together with the corresponding Ids.\n";
-                    helpmessage += $"  {config.Prefix}pin [channel name] - Raids posted in the specified channel will not be sent to the regular output channel and will instead be posted and pinned in the specified channel.\n";
-                    helpmessage += $"  {config.Prefix}unpin [channel name] - Removes channel from pin channels.\n";
-                    helpmessage += $"  {config.Prefix}pinall - Adds all channels on the server to pin channels.\n";
-                    helpmessage += $"  {config.Prefix}unpinall - Removes all channels on the server from pin channels.\n";
-                    helpmessage += $"  {config.Prefix}help - Shows this message.";
-                    helpmessage += "```";
+                    var helpmessage = MessageParser.GetHelpString(config);
                     await message.Channel.SendMessageAsync(helpmessage);
                     break;
                 default:
@@ -425,24 +478,24 @@ namespace PokemonGoRaidBot
         {
             foreach (var mentionedUser in message.MentionedUsers)
             {
-                var post = MessageParser.ParseMessage(message, config);
+                var post = MessageParser.ParsePost(message, config);
                 var pokemon = post?.Pokemon;
 
                 var mentionPost = posts.OrderByDescending(x => x.EndDate)
                     .FirstOrDefault(x => x.FromChannel.Id == message.Channel.Id
-                        && x.Responses.Where(xx => xx.Username == mentionedUser.Username).Count() > 0
+                        && x.Responses.Where(xx => xx.UserId == mentionedUser.Id).Count() > 0
                         && x.Pokemon.Name == (pokemon ?? x.Pokemon).Name);
 
                 if (mentionPost != null)
                 {
-                    mentionPost.Responses.Add(new PokemonMessage(mentionedUser.Username, message.Content, DateTime.Now));
+                    mentionPost.Responses.Add(new PokemonMessage(mentionedUser.Id, mentionedUser.Username, message.Content, DateTime.Now));
                     await MakePost(mentionPost);
                 }
             }
         }
         private async Task DoPost(SocketUserMessage message, ISocketMessageChannel outputchannel, bool pin)
         {
-            var post = MessageParser.ParseMessage(message, config);
+            var post = MessageParser.ParsePost(message, config);
 
             if (post != null)
             {
@@ -454,43 +507,66 @@ namespace PokemonGoRaidBot
                     await MakePost(post);
             }
         }
-        
+
         /// <summary>
         /// Creates the text string and outputs the post message into the channel.
         /// If post.MessageId is populated, will delete and recreate the message.
+        /// 403 Error is output to console if bot user doesn't have role access to manage messages.
         /// </summary>
         /// <param name="post"></param>
         /// <param name="outputchannel"></param>
         private async Task MakePost(PokemonRaidPost post)
         {
-            var messages = MessageParser.MakePostStrings(post);
-
-            var newMessageIds = new List<ulong>();
-
-            foreach(var messageId in post.MessageIds)
+            try
             {
-                if (messageId != default(ulong))
+                IMessage deleteMessage;
+                if (post.Pin && post.MessageId != default(ulong))
                 {
-                    var m = await post.OutputChannel.GetMessageAsync(messageId);
-                    await post.OutputChannel.DeleteMessagesAsync(new IMessage[] { m });
+                    deleteMessage = await post.FromChannel.GetMessageAsync(post.MessageId);
+                    if (deleteMessage.IsPinned)
+                    {
+                        await ((RestUserMessage)deleteMessage).UnpinAsync();
+                    }
+                    await deleteMessage.DeleteAsync();
+                }
+
+                foreach (var messageId in post.OutputMessageIds)
+                {
+                    deleteMessage = await post.OutputChannel.GetMessageAsync(messageId);
+                    await deleteMessage.DeleteAsync();
                 }
             }
-
-            post.MessageIds.Clear();
-            foreach(var message in messages)
+            catch (Exception e)
             {
-                var messageResult = await post.OutputChannel.SendMessageAsync(message);
+                DoError(e);
+            }
 
-                post.MessageIds.Add(messageResult.Id);
+            RestUserMessage messageResult;
 
+            var messages = MessageParser.MakePostStrings(post);
+
+            if (post.Pin)
+            {
+                messageResult = await post.FromChannel.SendMessageAsync(messages[0]);
                 try
                 {
-                    if (post.Pin) await messageResult.PinAsync();
+                    await messageResult.PinAsync();
                 }
-                catch
+                catch (Exception e)
                 {
+                    DoError(e);
+                }
+                post.MessageId = messageResult.Id;
+            }
 
-                }//error is thrown if bot doesn't have server rights to pin messages
+            post.OutputMessageIds.Clear();
+            if (post.OutputChannel != null)
+            {
+                foreach (var message in messages)
+                {
+                    messageResult = await post.OutputChannel.SendMessageAsync(message);
+                    post.OutputMessageIds.Add(messageResult.Id);
+                }
             }
         }
         /// <summary>
@@ -508,7 +584,7 @@ namespace PokemonGoRaidBot
                 .FirstOrDefault(x => 
                     x.FromChannel.Id == post.FromChannel.Id//Posted in the same channel
                     && ((post.Pokemon != null && x.Pokemon.Name == post.Pokemon.Name)//Either pokemon matches OR
-                        || (post.Pokemon == null && x.Responses.Where(xx => xx.Username == post.User).Count() > 0))//User already in the thread
+                        || (post.Pokemon == null && x.Responses.Where(xx => xx.UserId == post.UserId).Count() > 0))//User already in the thread
                 );
 
             if (existing != null)

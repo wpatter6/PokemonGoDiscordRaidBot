@@ -18,6 +18,8 @@ namespace PokemonGoRaidBot.Objects
 
         public ulong UserId;
 
+        public ulong MessageId;
+
         public string DiscordColor;
 
         public string Location;
@@ -27,8 +29,8 @@ namespace PokemonGoRaidBot.Objects
         public DateTime EndDate;
 
         public PokemonInfo Pokemon;
-
-        public List<ulong> MessageIds = new List<ulong>();
+        
+        public List<ulong> OutputMessageIds = new List<ulong>();
 
         public List<PokemonMessage> Responses = new List<PokemonMessage>();
 

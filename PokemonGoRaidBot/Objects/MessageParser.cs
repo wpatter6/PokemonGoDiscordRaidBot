@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace PokemonGoRaidBot.Objects
 {
-    public static class MessageParser
+    internal static class MessageParser
     {
         private static int colorIndex = 0;
         private static string[] minuteAliases = new string[] { "m", "mi", "min", "mins", "minutes", "minute" };
@@ -17,13 +17,14 @@ namespace PokemonGoRaidBot.Objects
         private const int maxRaidMinutes = 100;
         private const string matchedWordReplacement = "#|#|#|#";//when trying to match location, replace pokemon names and time spans with this string
 
+        #region Input
         /// <summary>
-        /// Will attempt to parse the necessary information out of a message to create a raid post.
+        /// Attempts to parse the necessary information out of a message to create a raid post.
         /// </summary>
         /// <param name="message"></param>
         /// <param name="config"></param>
         /// <returns>If return value is null, or property 'Pokemon' is null, raid post is invalid.</returns>
-        public static PokemonRaidPost ParseMessage(SocketMessage message, BotConfig config)
+        public static PokemonRaidPost ParsePost(SocketMessage message, BotConfig config)
         {
             var result = new PokemonRaidPost()
             {
@@ -31,7 +32,7 @@ namespace PokemonGoRaidBot.Objects
                 UserId = message.Author.Id,
                 PostDate = DateTime.Now,//uses local time for bot
                 FromChannel = message.Channel,
-                Responses = new List<PokemonMessage>() { new PokemonMessage(message.Author.Username, message.Content, DateTime.Now) },
+                Responses = new List<PokemonMessage>() { new PokemonMessage(message.Author.Id, message.Author.Username, message.Content, DateTime.Now) },
                 EndDate = DateTime.Now + new TimeSpan(0, maxRaidMinutes, 0)
             };
 
@@ -141,70 +142,6 @@ namespace PokemonGoRaidBot.Objects
             return result;
         }
         /// <summary>
-        /// Creates the string that contains user resposes to a raid post.
-        /// </summary>
-        /// <param name="post"></param>
-        /// <returns></returns>
-        public static string[] MakeResponseStrings(PokemonRaidPost post, string startMessage)
-        {
-            List<string> resultList = new List<string>();
-            int i = 1, maxLength = 2000;//, firstMaxLength = maxLength - startMessage.Length;
-
-            resultList.Add(startMessage);
-            resultList.Add($"```{post.DiscordColor ?? (post.DiscordColor = discordColors[colorIndex >= discordColors.Length - 1 ? (colorIndex = 0) : colorIndex++])}");
-
-            foreach(var message in post.Responses.OrderBy(x => x.MessageDate))
-            {
-                var messageString = $"\n   #{message.Username}:  {Regex.Replace(message.Content, @"<(@|#)[0-9]*>", "").TrimStart()}";
-
-                if (resultList[i].Length + messageString.Length > maxLength)
-                {
-                    resultList[i] += "```";
-                    resultList.Add("```" + post.DiscordColor);
-                    i++;
-                }
-
-                resultList[i] += messageString;
-            }
-
-            resultList[i] += "\n```";
-            return resultList.ToArray();
-        }
-        public static string[] MakePostStrings(PokemonRaidPost post)
-        {
-            string response = string.Format("`{5}` __**{0}**__ posted by {1} in <#{2}>{3}{4}",
-                        post.Pokemon.Name,
-                        post.User,
-                        post.FromChannel.Id,
-                        !string.IsNullOrEmpty(post.Location) ? string.Format(" at **{0}**", post.Location) : "",
-                        string.Format(", ends around {0:h:mmtt}", post.EndDate),
-                        post.UniqueId);
-
-            if (post.Pin) return new string[] { response };
-
-            return MakeResponseStrings(post, response);
-        }
-        /// <summary>
-        /// Returns a single row of pokemon info for the !info command.
-        /// </summary>
-        /// <param name="info"></param>
-        /// <returns></returns>
-        public static string MakeInfoLine(PokemonInfo info, ulong guildId, int paddingSize = 0)
-        {
-            var lineFormat = "\n{0}: {7}Tier={1} BossCP={2:#,##0} MinCP={3:#,##0} MaxCP={4:#,##0} CatchRate={5}%{6}";
-            var padding = 0;
-            if (paddingSize > 0)
-                padding = paddingSize - info.BossNameFormatted.Length;
-            
-            var allAliases = new List<string>(info.Aliases);
-            allAliases.AddRange(info.ServerAliases.Where(x => x.Key == guildId).Select(x => x.Value));
-
-            return string.Format(lineFormat, info.BossNameFormatted, info.Tier, info.BossCP, info.MinCP, info.MaxCP, 
-                info.CatchRate * 100,
-                allAliases.Count() == 0 ? "" : " Aliases: " + string.Join(",", allAliases),
-                new String(' ', padding));
-        }
-        /// <summary>
         /// Attempts to match a single word string with a pokemon's name or aliases.  
         /// The string must be longer than three characters
         /// And will only match aliases exactly, or the beginning or entierty of the pokemon's name.
@@ -234,7 +171,7 @@ namespace PokemonGoRaidBot.Objects
         /// </summary>
         /// <param name="message"></param>
         /// <returns></returns>
-        private static TimeSpan ParseTimespan(string message, ref bool isActualTime)
+        public static TimeSpan ParseTimespan(string message, ref bool isActualTime)
         {
             var timeRegex = new Regex("([0-9]{1,2}):?([0-9]{2})?(a|p)", RegexOptions.IgnoreCase);
             if (timeRegex.IsMatch(message))//posting an actual time like "3:30pm" or "10am"
@@ -294,7 +231,7 @@ namespace PokemonGoRaidBot.Objects
         /// </summary>
         /// <param name="message"></param>
         /// <returns>The string representation of the location</returns>
-        private static string ParseLocation(string message)
+        public static string ParseLocation(string message)
         {
             var result = ParseLocationBase(message);
 
@@ -320,20 +257,124 @@ namespace PokemonGoRaidBot.Objects
             
             return "";
         }
-        public static bool CompareLocations(string loc1, string loc2)
+        /// <summary>
+        /// Attempts to determine if two locations are the same.
+        /// </summary>
+        /// <param name="loc1"></param>
+        /// <param name="loc2"></param>
+        /// <returns></returns>
+        public static bool CompareLocations(string loc1, string loc2, bool triedCrossStreets = false)
         {
             loc1 = loc1.ToLowerInvariant();
             loc2 = loc2.ToLowerInvariant();
 
             if (loc1 == loc2 || loc1.StartsWith(loc2) || loc2.StartsWith(loc1)) return true;
 
-            var reg1 = new Regex(loc1.Replace(" ", "[a-zA-Z]* "));
-            var reg2 = new Regex(loc2.Replace(" ", "[a-zA-Z]* "));
+            //Check if they used any abbreviations
+            var abbrReg1 = new Regex(loc1.Replace(" ", "[a-zA-Z]* "));
+            var abbrReg2 = new Regex(loc2.Replace(" ", "[a-zA-Z]* "));
 
-            if (reg1.IsMatch(loc2)) return true;
-            if (reg2.IsMatch(loc1)) return true;
+            if (abbrReg1.IsMatch(loc2)) return true;
+            if (abbrReg2.IsMatch(loc1)) return true;
+
+            if (triedCrossStreets) return false;
+
+            var crossStreetsReg = new Regex(@"([a-zA-Z0-9]*) (\&|and) ([a-zA-Z0-9]*)", RegexOptions.IgnoreCase);
+            if(crossStreetsReg.IsMatch(loc1) && crossStreetsReg.IsMatch(loc2))
+            {
+                var match = crossStreetsReg.Match(loc2);
+                return CompareLocations(loc1, string.Format("{0} {1} {2}", match.Groups[3].Value, match.Groups[2].Value, match.Groups[1].Value), true);
+            }
 
             return false;
         }
+        #endregion
+
+        #region Output
+        public static string GetHelpString(BotConfig config)
+        {
+            var helpmessage = $"```This bot parses discord chat messages to see if a raid is being mentioned.  If a raid is found, it will post to a specific channel, by default '{config.OutputChannel}'.  Channels can be configured to pin the raid instead of posting it to the specific channel.\n\n";
+            helpmessage += "``````css\n       #Commands:\n";
+            helpmessage += $"  {config.Prefix}info [name] - Displays information about the selected raid, or all of the raids above rank 3.  Information was taken from https://pokemongo.gamepress.gg.\n";
+            helpmessage += $"  {config.Prefix}channel [name] - Changes the bot output channel on this server to the value passed in for [name].  If blank, the override is removed and the value '{config.OutputChannel}' is used.\n";
+            helpmessage += $"  {config.Prefix}nochannel - Prevents bot from posting in a specific channel.  {config.Prefix}pin functionality can still be used in specific channels.\n";
+            helpmessage += $"  {config.Prefix}alias [pokemon] [alias] - Adds an alias for a pokemon.\n";
+            helpmessage += $"  {config.Prefix}removealias [pokemon] [alias] - Removes an alias for a pokemon.\n";
+            helpmessage += $"  {config.Prefix}delete [id] - Deletes a raid post with the corresponding Id.\n";
+            helpmessage += $"  {config.Prefix}merge [id1] [id2] - Merges two raid posts together.\n";
+            helpmessage += $"  {config.Prefix}pin [channel name] - Raids posted in the specified channel will be posted and pinned in the channel itself.\n";
+            helpmessage += $"  {config.Prefix}unpin [channel name] - Removes channel from pin channels.\n";
+            helpmessage += $"  {config.Prefix}pinall - Adds all channels on the server to pin channels.\n";
+            helpmessage += $"  {config.Prefix}unpinall - Removes all channels on the server from pin channels.\n";
+            helpmessage += $"  {config.Prefix}help - Shows this message.";
+            helpmessage += "```";
+            return helpmessage;
+        }
+        /// <summary>
+        /// Returns a single row of pokemon info for the !info command.
+        /// </summary>
+        /// <param name="info"></param>
+        /// <returns></returns>
+        public static string MakeInfoLine(PokemonInfo info, ulong guildId, int paddingSize = 0)
+        {
+            var lineFormat = "\n{0}: {7}Tier={1} BossCP={2:#,##0} MinCP={3:#,##0} MaxCP={4:#,##0} CatchRate={5}%{6}";
+            var padding = 0;
+            if (paddingSize > 0)
+                padding = paddingSize - info.BossNameFormatted.Length;
+
+            var allAliases = new List<string>(info.Aliases);
+            allAliases.AddRange(info.ServerAliases.Where(x => x.Key == guildId).Select(x => x.Value));
+
+            return string.Format(lineFormat, info.BossNameFormatted, info.Tier, info.BossCP, info.MinCP, info.MaxCP,
+                info.CatchRate * 100,
+                allAliases.Count() == 0 ? "" : " Aliases: " + string.Join(",", allAliases),
+                new String(' ', padding));
+        }
+        /// <summary>
+        /// Creates the string that contains user resposes to a raid post.
+        /// </summary>
+        /// <param name="post"></param>
+        /// <returns></returns>
+        public static string[] MakeResponseStrings(PokemonRaidPost post, string startMessage)
+        {
+            List<string> resultList = new List<string>();
+            int i = 1, maxLength = 2000;//, firstMaxLength = maxLength - startMessage.Length;
+
+            resultList.Add(startMessage);
+            resultList.Add($"```{post.DiscordColor ?? (post.DiscordColor = discordColors[colorIndex >= discordColors.Length - 1 ? (colorIndex = 0) : colorIndex++])}");
+
+            foreach (var message in post.Responses.OrderBy(x => x.MessageDate))
+            {
+                var messageString = $"\n   #{message.Username}:  {Regex.Replace(message.Content, @"<(@|#)[0-9]*>", "").TrimStart()}";
+
+                if (resultList[i].Length + messageString.Length > maxLength)
+                {
+                    resultList[i] += "```";
+                    resultList.Add("```" + post.DiscordColor);
+                    i++;
+                }
+
+                resultList[i] += messageString;
+            }
+
+            resultList[i] += "\n```";
+            return resultList.ToArray();
+        }
+        public static string[] MakePostStrings(PokemonRaidPost post)
+        {
+            var responderCount = post.Responses.GroupBy(x => x.UserId).Select(x => x.First()).Count();
+            string response = string.Format("`{5}` __**{0}**__ {1} in <#{2}>{3}{4}",
+                        post.Pokemon.Name,
+                        responderCount == 1 ? "posted by " + post.User : Convert.ToString(responderCount) + " discussing",
+                        post.FromChannel.Id,
+                        !string.IsNullOrEmpty(post.Location) ? string.Format(" at **{0}**", post.Location) : "",
+                        string.Format(", ends around {0:h:mmtt}", post.EndDate),
+                        post.UniqueId);
+
+            if (post.Pin) return new string[] { response };
+
+            return MakeResponseStrings(post, response);
+        }
+        #endregion
     }
 }
