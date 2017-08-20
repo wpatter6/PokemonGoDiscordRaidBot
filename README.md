@@ -22,12 +22,12 @@
 1. Extract the package and run the executable
   1. It will ask you to enter the bot token.  Copy this from the bot you created at [here](https://discordapp.com/developers/applications/me)
   1. It will ask for the default output channel.  This should be the channel name from your discord server that the bot should post into.
-  1. These values will be stored in the `configuration\config.json` file.  If you wish to change them in the future, you can do so in this file, or delete it and re-enter them the next time you run the bot.
+  1. These values will be stored in the `configuration\config.json` file.  If you wish to change them in the future, you can do so in this file, or delete it and re-enter them the next time you run the bot.  If you edit the json directly, you will need to close and restart the bot for the changes to take effect.
 
 ## Bot Commands:
 * !info [name] - Displays information about the selected raid, or all of the raids above rank 3.  Information was taken from https://pokemongo.gamepress.gg.
-* !channel [name] - Changes the bot output channel on this server to the value passed in for [name].  If blank, the override is removed and the value 'raid-bot' is used.
-* !nochannel - Prevents bot from posting in a specific channel.  {config.Prefix}pin functionality can still be used in specific channels.
+* !channel [name] - Changes the bot output channel on this server to the value passed in for [name].  If blank, the override is removed and the default value is used.
+* !nochannel - Prevents bot from posting in a specific channel. !pin functionality can still be used for specific channels.
 * !alias [pokemon] [alias] - Adds an alias for a pokemon.
 * !removealias [pokemon] [alias] - Removes an alias for a pokemon.
 * !delete [id] - Deletes a raid post with the corresponding Id.
