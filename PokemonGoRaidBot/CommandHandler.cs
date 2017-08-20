@@ -20,6 +20,7 @@ namespace PokemonGoRaidBot
         private IServiceProvider map;
         private BotConfig config;
         private List<PokemonRaidPost> posts;
+        private string noAccessMessage = "You do not have the necessary permissions to change this setting.  You must be a server moderator or administrator to make this change.";
 
         public CommandHandler(IServiceProvider provider, BotConfig botconfig)
         {
@@ -193,92 +194,85 @@ namespace PokemonGoRaidBot
                     }
                     break;
                 case "channel":
-                    if (isMod || isAdmin)
+                    if (!isMod && !isAdmin)
                     {
-                        if (command.Length > 1 && !string.IsNullOrEmpty(command[1]))
+                        await MakeCommandMessage(message.Channel, noAccessMessage);
+                        return;
+                    }
+                    if (command.Length > 1 && !string.IsNullOrEmpty(command[1]))
+                    {
+                        var channel = guild.Channels.FirstOrDefault(x => x.Name.ToLowerInvariant() == command[1].ToLowerInvariant());
+                        if (channel != null)
                         {
-                            var channel = guild.Channels.FirstOrDefault(x => x.Name.ToLowerInvariant() == command[1].ToLowerInvariant());
-                            if (channel != null)
-                            {
-                                config.ServerChannels[guild.Id] = channel.Id;
-                                config.Save();
-                                await MakeCommandMessage(message.Channel, $"Output channel for {guild.Name} changed to {channel.Name}");
-                            }
-                            else
-                            {
-                                await MakeCommandMessage(message.Channel, $"{guild.Name} does not contain a channel named \"{command[1]}\"");
-                            }
+                            config.ServerChannels[guild.Id] = channel.Id;
+                            config.Save();
+                            await MakeCommandMessage(message.Channel, $"Output channel for {guild.Name} changed to {channel.Name}");
                         }
                         else
                         {
-                            config.ServerChannels.Remove(guild.Id);
-                            config.Save();
-                            await MakeCommandMessage(message.Channel, $"Output channel override for {guild.Name} removed, default value \"{config.OutputChannel}\" will be used.");
+                            await MakeCommandMessage(message.Channel, $"{guild.Name} does not contain a channel named \"{command[1]}\"");
                         }
                     }
                     else
                     {
-                        await MakeCommandMessage(message.Channel, $"You do not have the necessary permissions to change this setting.  You must be a server moderator or administrator to make this change.");
+                        config.ServerChannels.Remove(guild.Id);
+                        config.Save();
+                        await MakeCommandMessage(message.Channel, $"Output channel override for {guild.Name} removed, default value \"{config.OutputChannel}\" will be used.");
                     }
                     break;
                 case "alias"://command[1] = Pokemon identifier, command[2] = alias to add
-                    if (isMod || isAdmin)
+                    if (!isMod && !isAdmin)
                     {
-                        PokemonInfo foundInfo = null;
-                        foreach (var info in config.PokemonInfoList)
+                        await MakeCommandMessage(message.Channel, noAccessMessage);
+                        return;
+                    }
+                    PokemonInfo foundInfo = null;
+                    foreach (var info in config.PokemonInfoList)
+                    {
+                        if (info.Name.Equals(command[1], StringComparison.OrdinalIgnoreCase))
                         {
-                            if (info.Name.Equals(command[1], StringComparison.OrdinalIgnoreCase))
-                            {
-                                info.ServerAliases.Add(new KeyValuePair<ulong, string>(guild.Id, command[2].ToLowerInvariant()));
-                                foundInfo = info;
-                                config.Save();
-                                break;
-                            }
+                            info.ServerAliases.Add(new KeyValuePair<ulong, string>(guild.Id, command[2].ToLowerInvariant()));
+                            foundInfo = info;
+                            config.Save();
+                            break;
                         }
-                        var resp = $"Pokemon matching '{command[1]}' not found.";
-
-                        if (foundInfo != null)
-                            resp = $"Alias \"{command[2].ToLowerInvariant()}\" added to {foundInfo.Name}";
-
-                        await MakeCommandMessage(message.Channel, resp);
-                        break;
                     }
-                    else
-                    {
-                        await MakeCommandMessage(message.Channel, "You do not have the necessary permissions to change this setting.  You must be a server moderator or administrator to make this change.");
-                    }
+                    var resp = $"Pokemon matching '{command[1]}' not found.";
+
+                    if (foundInfo != null)
+                        resp = $"Alias \"{command[2].ToLowerInvariant()}\" added to {foundInfo.Name}";
+
+                    await MakeCommandMessage(message.Channel, resp);
                     break;
                 case "removealias"://command[1] = Pokemon identifier, command[2] = alias to remove
-                    if (isMod || isAdmin)
+                    if (!isMod && !isAdmin)
                     {
-                        var resp = "";
-                        foreach (var info in config.PokemonInfoList)
+                        await MakeCommandMessage(message.Channel, noAccessMessage);
+                        return;
+                    }
+                    var aresp = "";
+                    foreach (var info in config.PokemonInfoList)
+                    {
+                        if (info.Name.Equals(command[1], StringComparison.OrdinalIgnoreCase))
                         {
-                            if (info.Name.Equals(command[1], StringComparison.OrdinalIgnoreCase))
-                            {
-                                var alias = info.ServerAliases.FirstOrDefault(x => x.Key == guild.Id && x.Value == command[2].ToLowerInvariant());
+                            var alias = info.ServerAliases.FirstOrDefault(x => x.Key == guild.Id && x.Value == command[2].ToLowerInvariant());
 
-                                if (!alias.Equals(default(KeyValuePair<ulong, string>)))
-                                {
-                                    info.ServerAliases.Remove(alias);
-                                    config.Save();
-                                    resp = $"Alias \"{alias.Value}\" removed from {info.Name}";
-                                }
-                                else
-                                {
-                                    resp = $"Alias \"{alias.Value}\" not found on {info.Name}.  ";
-                                    var aliases = info.ServerAliases.Where(x => x.Key == guild.Id);
-                                    resp += aliases.Count() > 0 ? "Aliases that can be removed are: " + string.Join(", ", aliases.Select(x => x.Value)) : $"No aliases found for {info.Name}.";
-                                }
-                                break;
+                            if (!alias.Equals(default(KeyValuePair<ulong, string>)))
+                            {
+                                info.ServerAliases.Remove(alias);
+                                config.Save();
+                                aresp = $"Alias \"{alias.Value}\" removed from {info.Name}";
                             }
+                            else
+                            {
+                                aresp = $"Alias \"{alias.Value}\" not found on {info.Name}.  ";
+                                var aliases = info.ServerAliases.Where(x => x.Key == guild.Id);
+                                aresp += aliases.Count() > 0 ? "Aliases that can be removed are: " + string.Join(", ", aliases.Select(x => x.Value)) : $"No aliases found for {info.Name}.";
+                            }
+                            break;
                         }
-                        await MakeCommandMessage(message.Channel, resp);
                     }
-                    else
-                    {
-                        await MakeCommandMessage(message.Channel, $"You do not have the necessary permissions to change this setting.  You must be a server moderator or administrator to make this change.");
-                    }
+                    await MakeCommandMessage(message.Channel, aresp);
                     break;
                 case "merge"://command[1] = raid1 UniqueId, command[2] = raid2 UniqueId to merge
                     var post1 = posts.FirstOrDefault(x => x.UniqueId == command[1]);
@@ -329,7 +323,12 @@ namespace PokemonGoRaidBot
                     DeletePost(post);
                     break;
                 case "pinall":
-                    foreach(var pinallChannel in guild.Channels)
+                    if (!isMod && !isAdmin)
+                    {
+                        await MakeCommandMessage(message.Channel, noAccessMessage);
+                        return;
+                    }
+                    foreach (var pinallChannel in guild.Channels)
                     {
                         if (!config.PinChannels.Contains(pinallChannel.Id))
                         {
@@ -341,6 +340,11 @@ namespace PokemonGoRaidBot
 
                     break;
                 case "pin"://command[1] = channel name for 'pin' behavior
+                    if (!isMod && !isAdmin)
+                    {
+                        await MakeCommandMessage(message.Channel, noAccessMessage);
+                        return;
+                    }
                     var pinchannel = guild.Channels.FirstOrDefault(x => x.Name.ToLowerInvariant() == command[1].ToLowerInvariant());
                     if (pinchannel == null)
                     {
@@ -359,6 +363,11 @@ namespace PokemonGoRaidBot
                     }
                     break;
                 case "unpinall":
+                    if (!isMod && !isAdmin)
+                    {
+                        await MakeCommandMessage(message.Channel, noAccessMessage);
+                        return;
+                    }
                     foreach (var pinallChannel in guild.Channels)
                     {
                         if (config.PinChannels.Contains(pinallChannel.Id))
@@ -370,6 +379,11 @@ namespace PokemonGoRaidBot
                     await MakeCommandMessage(message.Channel, $"All channels removed from Pin Channels.");
                     break;
                 case "unpin"://command[1] = channel name to remove from 'pin' behavior
+                    if (!isMod && !isAdmin)
+                    {
+                        await MakeCommandMessage(message.Channel, noAccessMessage);
+                        return;
+                    }
                     var unpinchannel = guild.Channels.FirstOrDefault(x => x.Name.ToLowerInvariant() == command[1].ToLowerInvariant());
                     if (unpinchannel == null)
                     {
