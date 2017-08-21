@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using PokemonGoRaidBot.Objects;
 
 namespace PokemonGoRaidBot.Config
@@ -10,25 +11,45 @@ namespace PokemonGoRaidBot.Config
     {
         public string Prefix { get; set; }
         public string Token { get; set; }
-        public string LinkUrl { get; set; }
         public string OutputChannel { get; set; }
 
-        public Dictionary<ulong, ulong> ServerChannels { get; set; }
-        public Dictionary<ulong, string> ServerLanguages { get; set; }
-        public Dictionary<ulong, int> ServerTimezones { get; set; }
-        
+        public List<GuildConfig> GuildConfigs { get; set; }
+
+        //public Dictionary<ulong, ulong> ServerChannels { get; set; }
+        //public Dictionary<ulong, string> ServerLanguages { get; set; }
+        //public Dictionary<ulong, int> ServerTimezones { get; set; }
+
         public List<PokemonInfo> PokemonInfoList { get; set; }
         public List<ulong> PinChannels { get; set; }
+
+        public string LinkFormat { get; set; }
+
+        public string GoogleApiKey { get; set; }
+
+        public GuildConfig GetGuildConfig(ulong id)
+        {
+            var result = GuildConfigs.FirstOrDefault(x => x.Id == id);
+            if(result == null)
+            {
+                result = new GuildConfig()
+                {
+                    Id = id
+                };
+                GuildConfigs.Add(result);
+            }
+            return result;
+        }
 
         public BotConfig()
         {
             Prefix = "!";
             Token = "";
-            ServerChannels = new Dictionary<ulong, ulong>();
-            ServerLanguages = new Dictionary<ulong, string>();
-            ServerTimezones = new Dictionary<ulong, int>();
-            PokemonInfoList = new List<PokemonInfo>();
+            GuildConfigs = new List<GuildConfig>();
             PinChannels = new List<ulong>();
+
+            //ServerChannels = new Dictionary<ulong, ulong>();
+            //ServerLanguages = new Dictionary<ulong, string>();
+            //ServerTimezones = new Dictionary<ulong, int>();
         }
 
         public void Save(string dir = "configuration/config.json")
@@ -43,12 +64,12 @@ namespace PokemonGoRaidBot.Config
 
             /*Make sure all properties are populated*/
             if (result.PokemonInfoList == null) result.PokemonInfoList = GetDefaultPokemonInfoList();
-            if (string.IsNullOrEmpty(result.LinkUrl)) result.LinkUrl = "https://pokemongo.gamepress.gg/pokemon/{0}";
             if (string.IsNullOrEmpty(result.OutputChannel)) result.OutputChannel = "raid-bot";
 
-            if (result.ServerChannels == null) result.ServerChannels = new Dictionary<ulong, ulong>();
-            if (result.ServerLanguages == null) result.ServerLanguages = new Dictionary<ulong, string>();
-            if (result.ServerTimezones == null) result.ServerTimezones = new Dictionary<ulong, int>();
+            if (string.IsNullOrEmpty(result.LinkFormat)) result.LinkFormat = "https://pokemongo.gamepress.gg/pokemon/{0}#raid-boss-counters";
+
+            if (result.GuildConfigs == null) result.GuildConfigs = new List<GuildConfig>();
+
             if (result.PinChannels == null) result.PinChannels = new List<ulong>();
 
             result.Save();

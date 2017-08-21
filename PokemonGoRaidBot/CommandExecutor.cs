@@ -105,12 +105,13 @@ namespace PokemonGoRaidBot
                 var info = Parser.ParsePokemon(Command[1], Config, Guild.Id);
                 var response = "";
 
-                if (info != null)
-                    response += Parser.MakeInfoLine(info, Guild.Id);
-                else
-                    response += string.Format(Parser.Language.Formats["commandPokemonNotFound"], Command[1]);//$"'{Command[1]}' did not match any raid boss names or aliases.";
+                if (info != null) {
+                    response += "```" + Parser.MakeInfoLine(info, Guild.Id) + "```";
+                    response += string.Format(Config.LinkFormat, info.Id);
+                } else
+                    response += "```" + string.Format(Parser.Language.Formats["commandPokemonNotFound"], Command[1]) + "```";//$"'{Command[1]}' did not match any raid boss names or aliases.";
 
-                await Handler.MakeCommandMessage(Message.Channel, response);
+                await Message.Channel.SendMessageAsync(response);
             }
             else
             {
@@ -159,7 +160,10 @@ namespace PokemonGoRaidBot
                 await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoAccess"]);
                 return;
             }
-            Config.ServerLanguages[Guild.Id] = Command[1];
+            
+            Config.GetGuildConfig(Guild.Id).Language = Command[1];
+
+            //Config.ServerLanguages[Guild.Id] = Command[1];
             Config.Save();
             await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandLanguageSuccess"], Guild.Name, Command[1]));
         }
@@ -180,7 +184,7 @@ namespace PokemonGoRaidBot
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandInvalidNumber"], Command[1]));
                 return;
             }
-            Config.ServerTimezones[Guild.Id] = timezoneOut;
+            Config.GetGuildConfig(Guild.Id).Timezone = timezoneOut;
             Config.Save();
             await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandTimezoneSuccess"], Guild.Name, timezoneOut > -1 ? "+" + timezoneOut.ToString() : timezoneOut.ToString()));
         }
@@ -198,7 +202,8 @@ namespace PokemonGoRaidBot
                 var channel = Guild.Channels.FirstOrDefault(x => x.Name.ToLowerInvariant() == Command[1].ToLowerInvariant());
                 if (channel != null)
                 {
-                    Config.ServerChannels[Guild.Id] = channel.Id;
+                    Config.GetGuildConfig(Guild.Id).OutputChannelId = channel.Id;
+                    //Config.ServerChannels[Guild.Id] = channel.Id;
                     Config.Save();
                     await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandChannelSuccess"], Guild.Name, channel.Name));//// $"Output channel for {Guild.Name} changed to {channel.Name}");
                 }
@@ -209,7 +214,8 @@ namespace PokemonGoRaidBot
             }
             else
             {
-                Config.ServerChannels.Remove(Guild.Id);
+                Config.GetGuildConfig(Guild.Id).OutputChannelId = null;
+                //Config.ServerChannels.Remove(Guild.Id);
                 Config.Save();
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandChannelCleared"], Guild.Name, Config.OutputChannel));//$"Output channel override for {Guild.Name} removed, default value \"{Config.OutputChannel}\" will be used.");
             }
@@ -223,7 +229,8 @@ namespace PokemonGoRaidBot
                 await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoAccess"]);
                 return;
             }
-            Config.ServerChannels[Guild.Id] = 0;
+            Config.GetGuildConfig(Guild.Id).OutputChannelId = 0;
+            //Config.ServerChannels[Guild.Id] = 0;
             Config.Save();
             await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoChannelSuccess"]);
         }
@@ -448,10 +455,59 @@ namespace PokemonGoRaidBot
             await Handler.MakeCommandMessage(Message.Channel, pinstring);
         }
 
+        [RaidBotCommand("city")]
+        private async Task City()
+        {
+            if (!IsAdmin)
+            {
+                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoAccess"]);
+                return;
+            }
+
+            var cityString = string.Join(" ", Command.Skip(1));
+            Config.GetGuildConfig(Guild.Id).City = cityString;
+            Config.Save();
+            await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandCitySuccess"], Guild.Name, cityString));//$"{unpinchannel.Name} removed from Pin Channels.");
+        }
+
+        [RaidBotCommand("channelcity")]
+        private async Task ChannelCity()
+        {
+            if (!IsAdmin)
+            {
+                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoAccess"]);
+                return;
+            }
+            var channel = Guild.Channels.FirstOrDefault(x => x.Name.ToLowerInvariant() == Command[1].ToLowerInvariant());
+            if (Command.Length > 2 && !string.IsNullOrEmpty(Command[1]))
+            {
+                if (channel != null)
+                {
+                    var city = string.Join(" ", Command.Skip(2));
+                    Config.GetGuildConfig(Guild.Id).ChannelCities[channel.Id] = city;
+                    //Config.ServerChannels[Guild.Id] = channel.Id;
+                    Config.Save();
+                    await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandCitySuccess"], "channel " + channel.Name, city));//// $"Output channel for {Guild.Name} changed to {channel.Name}");
+                    
+                }
+                else
+                {
+                    await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandGuildNoChannel"], Guild.Name, Command[1]));//$"{Guild.Name} does not contain a channel named \"{Command[1]}\"");
+                }
+            }
+            else
+            {
+                Config.GetGuildConfig(Guild.Id).ChannelCities.Remove(channel.Id);
+                //Config.ServerChannels.Remove(Guild.Id);
+                Config.Save();
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandChannelCityCleared"], Guild.Name, Config.GetGuildConfig(Guild.Id).City));//$"Output channel override for {Guild.Name} removed, default value \"{Config.OutputChannel}\" will be used.");
+            }
+        }
+
         [RaidBotCommand("help")]
         private async Task Help()
         {
-            var helpMessage = Parser.GetHelpString(Config);
+            var helpMessage = Parser.GetHelpString(Config, IsAdmin);
             await Message.Channel.SendMessageAsync(helpMessage);
         }
     }

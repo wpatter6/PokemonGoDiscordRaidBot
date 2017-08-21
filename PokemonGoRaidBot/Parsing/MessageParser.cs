@@ -8,6 +8,8 @@ using System.Linq;
 using System.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Threading.Tasks;
+using System.Net;
 
 namespace PokemonGoRaidBot.Parsing
 {
@@ -17,7 +19,9 @@ namespace PokemonGoRaidBot.Parsing
 
         public ParserLanguage Language;
         private static string[] discordColors = new string[] { "css", "brainfuck", "fix", "apache", "" };
+        private const string googleGeocodeApiUrl = "https://maps.googleapis.com/maps/api/geocode/json?address={0}&key={1}";
 
+        private const int latLongComparisonMaxMeters = 30;
         private const int maxRaidMinutes = 100;
         private const string matchedWordReplacement = "#|#|#|#";//when trying to match location, replace pokemon names and time spans with this string
         private int timeOffset;
@@ -35,7 +39,7 @@ namespace PokemonGoRaidBot.Parsing
         /// <param name="message"></param>
         /// <param name="config"></param>
         /// <returns>If return value is null, or property 'Pokemon' is null, raid post is invalid.</returns>
-        public PokemonRaidPost ParsePost(SocketMessage message, BotConfig config)
+        public async Task<PokemonRaidPost> ParsePost(SocketMessage message, BotConfig config)
         {
             var result = new PokemonRaidPost()
             {
@@ -56,6 +60,7 @@ namespace PokemonGoRaidBot.Parsing
 
             var timespan = new TimeSpan();
             var i = 0;
+            var nopost = false;
 
             var unmatchedWords = new List<string>();
             var isActualTime = false;
@@ -68,6 +73,10 @@ namespace PokemonGoRaidBot.Parsing
                     result.Pokemon = ParsePokemon(word, config, guildId);
                     if (result.Pokemon != null)
                     {
+                        if (i > 1)//if last word invalidates
+                            if (Language.RegularExpressions["pokemonInvalidators"].IsMatch(words[i - 2]))
+                                nopost = true;
+
                         unmatchedWords.Add(matchedWordReplacement);
                         continue;
                     }
@@ -134,6 +143,9 @@ namespace PokemonGoRaidBot.Parsing
                 unmatchedWords.Add(word);
             }
 
+            //someone is asking for any in the area not posting
+            if (nopost) result.Pokemon = null;
+
             if (timespan.Ticks > 0)
             {
                 var dt = result.PostDate + timespan;
@@ -157,6 +169,11 @@ namespace PokemonGoRaidBot.Parsing
                 result.JoinedUsers[message.Author.Id] = joinCount.Value;
 
             result.Location = ParseLocation(newUnmatchedString);
+
+            if (!string.IsNullOrEmpty(result.Location))
+            {
+                result.LatLong = await GetLocationLatLong(result.Location, (SocketGuildChannel)message.Channel, config);
+            }
 
             return result;
         }
@@ -256,6 +273,7 @@ namespace PokemonGoRaidBot.Parsing
 
             return Language.RegularExpressions["locationExcludeWords"].Replace(result, "").Replace(",", "").Replace(".", "").Replace("  ", " ").Replace(matchedWordReplacement, "").Trim();
         }
+
         /// <summary>
         /// 
         /// </summary>
@@ -266,7 +284,11 @@ namespace PokemonGoRaidBot.Parsing
             var crossStreetsReg = Language.RegularExpressions["locationCrossStreets"]; //new Regex(@"([a-zA-Z0-9]* (\&|and) [a-zA-Z0-9]*)", RegexOptions.IgnoreCase);
 
             if (crossStreetsReg.IsMatch(message))
-                return crossStreetsReg.Match(message).Groups[1].Value;
+            {
+                var match = crossStreetsReg.Match(message);
+                return match.Groups[1].Value;
+            }
+                
 
             var atReg = Language.RegularExpressions["locationAt"]; //new Regex("at ([a-zA-Z0-9 ]*)");//timespans should be removed already, so "at [blah blah]" should indicate location
 
@@ -287,8 +309,10 @@ namespace PokemonGoRaidBot.Parsing
         /// <param name="loc1"></param>
         /// <param name="loc2"></param>
         /// <returns></returns>
-        public bool CompareLocations(string loc1, string loc2, bool triedCrossStreets = false)
+        public bool CompareLocationStrings(string loc1, string loc2, bool triedCrossStreets = false)
         {
+            if (string.IsNullOrEmpty(loc1) || string.IsNullOrEmpty(loc2)) return false;
+
             loc1 = loc1.ToLowerInvariant();
             loc2 = loc2.ToLowerInvariant();
 
@@ -307,10 +331,14 @@ namespace PokemonGoRaidBot.Parsing
             if(crossStreetsReg.IsMatch(loc1) && crossStreetsReg.IsMatch(loc2))
             {
                 var match = crossStreetsReg.Match(loc2);
-                return CompareLocations(loc1, string.Format("{0} {1} {2}", match.Groups[3].Value, match.Groups[2].Value, match.Groups[1].Value), true);
+                return CompareLocationStrings(loc1, string.Format("{0} {1} {2}", match.Groups[3].Value, match.Groups[2].Value, match.Groups[1].Value), true);
             }
 
             return false;
+        }
+        public bool CompareLocationLatLong(KeyValuePair<double,double> ll1, KeyValuePair<double,double> ll2)
+        {
+            return DistanceBetweenTwoPoints(ll1, ll2) < latLongComparisonMaxMeters;
         }
         public int? ParseJoinedUsersCount(string message, out string messageout)
         {
@@ -336,34 +364,67 @@ namespace PokemonGoRaidBot.Parsing
 
                 return Convert.ToInt32(startmatch.Groups[2].Value);
             }
+
+            var meReg = Language.RegularExpressions["joinMe"];
+            if (meReg.IsMatch(message))
+            {
+                messageout = meReg.Replace(message, matchedWordReplacement);
+                return 1;
+            }
+
             messageout = message;
             return null;
+        }
+        public double DistanceBetweenTwoPoints(KeyValuePair<double, double> ll1, KeyValuePair<double, double> ll2)
+        {
+            var R = 6371e3; // metres
+            var φ1 = ll1.Key / (180 / Math.PI);
+            var φ2 = ll2.Key / (180 / Math.PI);
+            var Δφ = (ll2.Key - ll1.Key) / (180 / Math.PI);
+            var Δλ = (ll2.Value - ll1.Value) / (180 / Math.PI);
+
+            var a = Math.Sin(Δφ / 2) * Math.Sin(Δφ / 2) +
+                    Math.Cos(φ1) * Math.Cos(φ2) *
+                    Math.Sin(Δλ / 2) * Math.Sin(Δλ / 2);
+            var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+
+            var d = R * c;
+            return d;
         }
         #endregion
 
         #region Output
-        public string GetHelpString(BotConfig config)
+        public string GetHelpString(BotConfig config, bool admin)
         {
             var helpmessage = string.Format(string.Format("```{0}\n\n", Language.Strings["helpTop"]), config.OutputChannel);
             helpmessage += string.Format("``````css\n       #{0}:\n", Language.Strings["helpCommands"]);
             helpmessage += string.Format("  {0}join [id] [number] - {1}\n", config.Prefix, Language.Strings["helpJoin"]);
             helpmessage += string.Format("  {0}unjoin [id] - {1}\n", config.Prefix, Language.Strings["helpUnJoin"]);
             helpmessage += string.Format("  {0}info [name] - {1}\n", config.Prefix, Language.Strings["helpInfo"]);
-            helpmessage += string.Format(string.Format("  {0}channel [name] - *{1}\n", config.Prefix, Language.Strings["helpChannel"]), config.OutputChannel);
-            helpmessage += string.Format("  {0}nochannel - *{1}\n", config.Prefix, Language.Strings["helpNoChannel"]);
-            helpmessage += string.Format("  {0}alias [pokemon] [alias] - *{1}\n", config.Prefix, Language.Strings["helpAlias"]);
-            helpmessage += string.Format("  {0}removealias [pokemon] [alias] - *{1}\n", config.Prefix, Language.Strings["helpRemoveAlias"]);
-            helpmessage += string.Format("  {0}delete [id] - *{1}\n", config.Prefix, Language.Strings["helpDelete"]);
-            helpmessage += string.Format("  {0}merge [id1] [id2] - *{1}\n", config.Prefix, Language.Strings["helpMerge"]);
-            helpmessage += string.Format("  {0}pin [channel name] - *{1}\n", config.Prefix, Language.Strings["helpPin"]);
-            helpmessage += string.Format("  {0}unpin [channel name] - *{1}\n", config.Prefix, Language.Strings["helpUnPin"]);
-            helpmessage += string.Format("  {0}pinall - *{1}\n", config.Prefix, Language.Strings["helpPinAll"]);
-            helpmessage += string.Format("  {0}unpinall - *{1}\n", config.Prefix, Language.Strings["helpUnPinAll"]);
-            helpmessage += string.Format("  {0}timezone [gmt offset] - *{1}\n", config.Prefix, Language.Strings["helpTimezone"]);
-            helpmessage += string.Format("  {0}language [language] - *{1}\n", config.Prefix, Language.Strings["helpLanguage"]);
-            //helpmessage += string.Format("  {{0}}timezone - TODO Configure server GMT offset and apply it everywhere times are determined";
-            helpmessage += string.Format("  {0}help - {1}\n", config.Prefix, Language.Strings["helpHelp"]);
-            helpmessage += string.Format("        *{0}", Language.Strings["helpAdmin"]);
+            if (admin)
+            { 
+                helpmessage += string.Format(string.Format("  {0}channel [name] - *{1}\n", config.Prefix, Language.Strings["helpChannel"]), config.OutputChannel);
+                helpmessage += string.Format("  {0}nochannel - *{1}\n", config.Prefix, Language.Strings["helpNoChannel"]);
+                helpmessage += string.Format("  {0}alias [pokemon] [alias] - *{1}\n", config.Prefix, Language.Strings["helpAlias"]);
+                helpmessage += string.Format("  {0}removealias [pokemon] [alias] - *{1}\n", config.Prefix, Language.Strings["helpRemoveAlias"]);
+                helpmessage += string.Format("  {0}delete [id] - *{1}\n", config.Prefix, Language.Strings["helpDelete"]);
+                helpmessage += string.Format("  {0}merge [id1] [id2] - *{1}\n", config.Prefix, Language.Strings["helpMerge"]);
+                helpmessage += string.Format("  {0}pin [channel name] - *{1}\n", config.Prefix, Language.Strings["helpPin"]);
+                helpmessage += string.Format("  {0}unpin [channel name] - *{1}\n", config.Prefix, Language.Strings["helpUnPin"]);
+                helpmessage += string.Format("  {0}pinall - *{1}\n", config.Prefix, Language.Strings["helpPinAll"]);
+                helpmessage += string.Format("  {0}unpinall - *{1}\n", config.Prefix, Language.Strings["helpUnPinAll"]);
+                helpmessage += string.Format("  {0}timezone [gmt offset] - *{1}\n", config.Prefix, Language.Strings["helpTimezone"]);
+                helpmessage += string.Format("  {0}language [language] - *{1}\n", config.Prefix, Language.Strings["helpLanguage"]);
+                helpmessage += string.Format("  {0}city [city] - *{1}\n", config.Prefix, Language.Strings["helpCity"]);
+                helpmessage += string.Format("  {0}channelcity [channel name] [city] - *{1}\n", config.Prefix, Language.Strings["helpChannelCity"]);
+                //helpmessage += string.Format("  {{0}}timezone - TODO Configure server GMT offset and apply it everywhere times are determined";
+                helpmessage += string.Format("  {0}help - {1}\n", config.Prefix, Language.Strings["helpHelp"]);
+                helpmessage += string.Format("        *{0}", Language.Strings["helpAdmin"]);
+            }
+            else
+            {
+                helpmessage += string.Format("  {0}help - {1}\n", config.Prefix, Language.Strings["helpHelp"]);
+            }
             helpmessage += "```";
             return helpmessage;
         }
@@ -383,15 +444,15 @@ namespace PokemonGoRaidBot.Parsing
             allAliases.AddRange(info.ServerAliases.Where(x => x.Key == guildId).Select(x => x.Value));
 
             return string.Format(lineFormat,
+                info.BossNameFormatted,
                 new String(' ', padding),
-                info.BossNameFormatted, 
                 info.Tier, 
                 info.BossCP, 
                 info.MinCP, 
                 info.MaxCP,
                 info.CatchRate * 100,
-                allAliases.Count() == 0 ? "" : Language.Strings["aliases"] + string.Join(",", allAliases),
-                "https://pokemongo.gamepress.gg/pokemon/"+info.Id.ToString());//TODO MOVE THIS URL TO CONFIG
+                allAliases.Count() == 0 ? "" : Language.Strings["aliases"] + string.Join(",", allAliases)
+                );//TODO MOVE THIS URL TO CONFIG
         }
         /// <summary>
         /// Creates the string that contains user resposes to a raid post.
@@ -446,10 +507,48 @@ namespace PokemonGoRaidBot.Parsing
                 post.FromChannel.Id,
                 !string.IsNullOrEmpty(post.Location) ? string.Format(Language.Formats["postLocation"], post.Location) : "",
                 string.Format(Language.Formats["postEnds"], post.EndDate.AddHours(timeOffset)),
+                post.LatLong.HasValue ? string.Format("https://www.google.com/maps/dir/Current+Location/{0},{1}\n", post.LatLong.Value.Key, post.LatLong.Value.Value) : "",
                 joinCount > 0 ? string.Format(Language.Formats["postJoined"], joinCount, joinString) : string.Format(Language.Formats["postNoneJoined"], post.UserId)
                 );
             return response;
         }
         #endregion
+        
+        public async Task<KeyValuePair<double, double>?> GetLocationLatLong(string location, SocketGuildChannel channel, BotConfig config)
+        {
+            if (string.IsNullOrEmpty(config.GoogleApiKey)) return null;
+            var guildConfig = config.GetGuildConfig(channel.Guild.Id);
+            var city = guildConfig.ChannelCities.ContainsKey(channel.Id) ? guildConfig.ChannelCities[channel.Id] : guildConfig.City ?? "";
+            if (!string.IsNullOrEmpty(city)) city = ", " + city;
+            var search = Uri.EscapeDataString(location + city);
+
+            var url = string.Format(googleGeocodeApiUrl, search, config.GoogleApiKey);
+
+            var request = (HttpWebRequest)WebRequest.Create(url);
+            dynamic fullresult;
+            using (var response = (HttpWebResponse)await request.GetResponseAsync())
+            {
+                using (var responseStream = response.GetResponseStream())
+                {
+                    using (var reader = new StreamReader(responseStream))
+                    {
+                        fullresult = JsonConvert.DeserializeObject<dynamic>(reader.ReadToEnd());
+                    }
+                }
+            }
+            if (fullresult.results != null && ((JArray)fullresult.results).Count() > 0)
+            {
+
+                var lat = ((JValue)fullresult.results[0].geometry.location.lat).ToObject<double>();
+                var lng = ((JValue)fullresult.results[0].geometry.location.lng).ToObject<double>();
+
+                return new KeyValuePair<double, double>(lat, lng);
+            }
+            else
+            {
+                return null;
+                //throw new Exception(string.Format("Invalid response from google geocoding api ({0})", url));
+            }
+        }
     }
 }

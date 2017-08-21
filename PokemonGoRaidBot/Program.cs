@@ -84,7 +84,13 @@ namespace PokemonGoRaidBot
                 Console.Write("Bot Token: ");
                 config.Token = Console.ReadLine();              // Read the bot token from console.
 
-                Console.Write("Bot Output Channel Name:");
+                Console.Write("Google Geocoding Api Key:");
+                config.GoogleApiKey = Console.ReadLine();
+
+                Console.Write("Bot Command Prefix (!): ");
+                config.Prefix = Console.ReadLine();
+
+                Console.Write("Bot Default Output Channel Name:");
                 config.OutputChannel = Console.ReadLine();
 
                 //Console.Write("Bot Prefix: ");

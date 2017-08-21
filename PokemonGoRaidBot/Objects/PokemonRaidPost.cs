@@ -42,6 +42,8 @@ namespace PokemonGoRaidBot.Objects
 
         public string UniqueId;
 
+        public KeyValuePair<double, double>? LatLong;
+
         private static String NewId()
         {
             long num = new Random().Next(10000000, 90000000);

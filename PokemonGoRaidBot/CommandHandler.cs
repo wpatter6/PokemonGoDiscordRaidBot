@@ -11,6 +11,9 @@ using PokemonGoRaidBot.Objects;
 using System.Linq;
 using Discord.Rest;
 using PokemonGoRaidBot.Parsing;
+using System.Net;
+using Newtonsoft.Json;
+using System.IO;
 
 namespace PokemonGoRaidBot
 {
@@ -64,16 +67,18 @@ namespace PokemonGoRaidBot
                     //outputchannel = message.Channel;
                 }
 
-                if (Config.ServerChannels.ContainsKey(guild.Id))
-                    outputchannel = (ISocketMessageChannel)guild.Channels.FirstOrDefault(x => x.Id == Config.ServerChannels[guild.Id]);
+                var guildConfig = Config.GetGuildConfig(guild.Id);
+
+                if (guildConfig.OutputChannelId.HasValue)
+                    outputchannel = (ISocketMessageChannel)guild.Channels.FirstOrDefault(x => x.Id == guildConfig.OutputChannelId.Value);
                 else
                     outputchannel = (ISocketMessageChannel)guild.Channels.FirstOrDefault(x => x.Name == Config.OutputChannel);
 
                 var context = new SocketCommandContext(bot, message);
 
-                var lang = Config.ServerLanguages.ContainsKey(guild.Id) ? Config.ServerLanguages[guild.Id] : "en-us";
+                var lang = guildConfig.Language ?? "en-us";
                 var botTimezone = TimeZoneInfo.Local.GetUtcOffset(DateTime.Now).Hours - (TimeZoneInfo.Local.IsDaylightSavingTime(DateTime.Now) ? 1 : 0);
-                var serverTimezone = Config.ServerTimezones.ContainsKey(guild.Id) ? Config.ServerTimezones[guild.Id] : botTimezone;
+                var serverTimezone = guildConfig.Timezone ?? botTimezone;
 
                 var parser = new MessageParser(lang, serverTimezone - botTimezone);
 
@@ -138,48 +143,49 @@ namespace PokemonGoRaidBot
 
                     await m1[0].DeleteAsync();
                 }
-
             }
             
             //if (deleteTasks.Count() > 0)
             //    Task.WaitAll(deleteTasks.ToArray());
 
             //Clean up old messages
-            foreach (var guild in bot.Guilds)
-            {
-                SocketGuildChannel outputchannel;
+            //foreach (var guild in bot.Guilds)
+            //{
+            //    SocketGuildChannel outputchannel;
 
-                if (Config.ServerChannels.ContainsKey(guild.Id))
-                    outputchannel = guild.GetChannel(Config.ServerChannels[guild.Id]);
-                else
-                    outputchannel = guild.Channels.FirstOrDefault(x => x.Name == Config.OutputChannel);
+            //    var guildConfig = Config.GetGuild(guild.Id);
+                
+            //    if (guildConfig.OutputChannelId.HasValue)
+            //        outputchannel = guild.Channels.FirstOrDefault(x => x.Id == guildConfig.OutputChannelId.Value);
+            //    else
+            //        outputchannel = guild.Channels.FirstOrDefault(x => x.Name == Config.OutputChannel);
 
-                if(outputchannel != null)
-                {
-                    var messagesAsync = ((ISocketMessageChannel)outputchannel).GetMessagesAsync();
-                    using(var enumerator = messagesAsync.GetEnumerator())
-                    {
-                        while (await enumerator.MoveNext())
-                        {
-                            var messages = enumerator.Current;
-                            foreach(var message in messages)
-                            {
-                                if (message.CreatedAt < DateTimeOffset.Now.AddHours(2))
-                                {
-                                    try
-                                    { 
-                                        await message.DeleteAsync();
-                                    }
-                                    catch(Exception e)
-                                    {
-                                        DoError(e);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            //    if(outputchannel != null)
+            //    {
+            //        var messagesAsync = ((ISocketMessageChannel)outputchannel).GetMessagesAsync();
+            //        using(var enumerator = messagesAsync.GetEnumerator())
+            //        {
+            //            while (await enumerator.MoveNext())
+            //            {
+            //                var messages = enumerator.Current;
+            //                foreach(var message in messages)
+            //                {
+            //                    if (message.CreatedAt < DateTimeOffset.Now.AddHours(2))
+            //                    {
+            //                        try
+            //                        { 
+            //                            await message.DeleteAsync();
+            //                        }
+            //                        catch(Exception e)
+            //                        {
+            //                            DoError(e);
+            //                        }
+            //                    }
+            //                }
+            //            }
+            //        }
+            //    }
+            //}
         }
         /// <summary>
         /// Output an error to the bot console.
@@ -216,17 +222,26 @@ namespace PokemonGoRaidBot
         {
             foreach (var mentionedUser in message.MentionedUsers)
             {
-                var post = parser.ParsePost(message, Config);
+                var post = await parser.ParsePost(message, Config);
                 var pokemon = post?.Pokemon;
 
-                var mentionPost = Posts.OrderByDescending(x => x.EndDate)
+                var mentionPost = Posts.OrderByDescending(x => x.Responses.Max(xx => xx.MessageDate))
                     .FirstOrDefault(x => x.FromChannel.Id == message.Channel.Id
                         && x.Responses.Where(xx => xx.UserId == mentionedUser.Id).Count() > 0
                         && x.Pokemon.Name == (pokemon ?? x.Pokemon).Name);
 
                 if (mentionPost != null)
                 {
+                    MergePosts(mentionPost, post);
+                    /*
+                    if (string.IsNullOrEmpty(mentionPost.Location)) mentionPost.Location = post.Location;
+                    if (!mentionPost.LatLong.HasValue) mentionPost.LatLong = post.LatLong;
+
                     mentionPost.Responses.Add(new PokemonMessage(mentionedUser.Id, mentionedUser.Username, message.Content, DateTime.Now));
+
+                    foreach(var joinuser in post.JoinedUsers)
+                        mentionPost.JoinedUsers[joinuser.Key] = joinuser.Value;
+                    */
                     await MakePost(mentionPost, parser);
                 }
             }
@@ -241,7 +256,7 @@ namespace PokemonGoRaidBot
         /// <returns></returns>
         private async Task DoPost(SocketUserMessage message, MessageParser parser, ISocketMessageChannel outputchannel, bool pin)
         {
-            var post = parser.ParsePost(message, Config);
+            var post = await parser.ParsePost(message, Config);
 
             if (post != null)
             {
@@ -328,7 +343,10 @@ namespace PokemonGoRaidBot
             var channelPosts = Posts.Where(x => x.FromChannel.Id == post.FromChannel.Id);
 
             //if location matches, must be same.
-            var existing = channelPosts.FirstOrDefault(x => parser.CompareLocations(x.Location, post.Location));
+            var existing = channelPosts.FirstOrDefault(x => parser.CompareLocationStrings(x.Location, post.Location));
+
+            if(existing == null && post.LatLong.HasValue && channelPosts.Where(x => x.LatLong.HasValue).Count() > 0)
+                existing = channelPosts.Where(x => x.LatLong.HasValue).FirstOrDefault(x => parser.CompareLocationLatLong(x.LatLong.Value, x.LatLong.Value));
 
             if (existing == null)
                 existing = channelPosts
@@ -342,30 +360,63 @@ namespace PokemonGoRaidBot
 
             if (existing != null)
             {
+                MergePosts(existing, post);
+                /*
                 if (post.HasEndDate)
                 {
                     existing.HasEndDate = true;
                     existing.EndDate = post.EndDate;
                 }
 
-                if (!string.IsNullOrEmpty(post.Location) && string.IsNullOrEmpty(existing.Location)) existing.Location = post.Location;
+                if (string.IsNullOrEmpty(existing.Location)) existing.Location = post.Location;
+                if (!existing.LatLong.HasValue) existing.LatLong = post.LatLong;
 
                 //overwrite with new values
                 foreach(var user in post.JoinedUsers)
                     existing.JoinedUsers[user.Key] = user.Value;
 
-                existing.Responses.Add(post.Responses[0]);
+                existing.Responses.AddRange(post.Responses);
 
                 foreach(var joinuser in post.JoinedUsers)
                 {
                     if(!existing.JoinedUsers.ContainsKey(joinuser.Key) || existing.JoinedUsers[joinuser.Key] == 1)
                         existing.JoinedUsers[joinuser.Key] = joinuser.Value;
-                }
+                }*/
 
                 return existing;
             }
             else if(post.Pokemon != null) Posts.Add(post);
             return post;
+        }
+        /// <summary>
+        /// Combines two posts into one.  The second is should be the newer post.
+        /// </summary>
+        /// <param name="post1"></param>
+        /// <param name="post2"></param>
+        /// <returns></returns>
+        public PokemonRaidPost MergePosts(PokemonRaidPost post1, PokemonRaidPost post2)
+        {
+            if (post2.HasEndDate)
+            {
+                post1.HasEndDate = true;
+                post1.EndDate = post2.EndDate;
+            }
+
+            if (string.IsNullOrEmpty(post1.Location)) post1.Location = post2.Location;
+            if (!post1.LatLong.HasValue) post1.LatLong = post2.LatLong;
+
+            //overwrite with new values
+            foreach (var user in post2.JoinedUsers)
+                post1.JoinedUsers[user.Key] = user.Value;
+
+            post1.Responses.AddRange(post2.Responses);
+
+            foreach (var joinuser in post2.JoinedUsers)
+            {
+                if (!post1.JoinedUsers.ContainsKey(joinuser.Key) || post1.JoinedUsers[joinuser.Key] == 1)
+                    post1.JoinedUsers[joinuser.Key] = joinuser.Value;
+            }
+            return post1;
         }
         /// <summary>
         /// Delete a post from both chat and the list.
@@ -386,5 +437,6 @@ namespace PokemonGoRaidBot
         {
             await channel.SendMessageAsync($"```{message}```");
         }
+
     }
 }
