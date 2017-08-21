@@ -17,10 +17,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Languages\" />
     <Folder Include="Properties\" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Languages\en-us.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="RaidInfo.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

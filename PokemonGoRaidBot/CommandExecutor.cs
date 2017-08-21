@@ -7,6 +7,7 @@ using System.Text;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Reflection;
+using PokemonGoRaidBot.Parsing;
 
 namespace PokemonGoRaidBot
 {
@@ -21,7 +22,7 @@ namespace PokemonGoRaidBot
         private BotConfig Config;
 
         private string[] Command;
-        private string noAccessMessage = "You do not have the necessary permissions to change this setting.  You must be a server moderator or administrator to make this change.";
+        //private string noAccessMessage = "You do not have the necessary permissions to change this setting.  You must be a server moderator or administrator to make this change.";
 
         public CommandExecutor(CommandHandler handler, SocketUserMessage message, MessageParser parser)
         {
@@ -56,7 +57,7 @@ namespace PokemonGoRaidBot
             }
             if (!found)
             {
-                await Handler.MakeCommandMessage(Message.Channel, $"Unknown Command \"{Command[0]}\".  Type {Config.Prefix}help to see valid Commands for this bot.");
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandUnknown"], Command[0], Config.Prefix));//$"Unknown Command \"{Command[0]}\".  Type {Config.Prefix}help to see valid Commands for this bot.");
             }
         }
 
@@ -66,14 +67,14 @@ namespace PokemonGoRaidBot
             var post = Handler.Posts.FirstOrDefault(x => x.UniqueId == Command[1]);
             if(post == null)
             {
-                await Handler.MakeCommandMessage(Message.Channel, $"Raid post with Id \"{Command[1]}\" does not exist.");
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[1]));// $"Raid post with Id \"{Command[1]}\" does not exist.");
                 return;
             }
 
             int num;
             if(!Int32.TryParse(Command[2], out num))
             {
-                await Handler.MakeCommandMessage(Message.Channel, $"Invalid number of raid joiners \"{Command[2]}\".");
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandInvalidNumber"], Command[2]));//$"Invalid number of raid joiners \"{Command[2]}\".");
                 return;
             }
 
@@ -88,7 +89,7 @@ namespace PokemonGoRaidBot
             var post = Handler.Posts.FirstOrDefault(x => x.UniqueId == Command[1]);
             if (post == null)
             {
-                await Handler.MakeCommandMessage(Message.Channel, $"Raid post with Id \"{Command[1]}\" does not exist.");
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[1]));
                 return;
             }
 
@@ -107,7 +108,7 @@ namespace PokemonGoRaidBot
                 if (info != null)
                     response += Parser.MakeInfoLine(info, Guild.Id);
                 else
-                    response += $"'{Command[1]}' did not match any raid boss names or aliases.";
+                    response += string.Format(Parser.Language.Formats["commandPokemonNotFound"], Command[1]);//$"'{Command[1]}' did not match any raid boss names or aliases.";
 
                 await Handler.MakeCommandMessage(Message.Channel, response);
             }
@@ -150,12 +151,46 @@ namespace PokemonGoRaidBot
             }
         }
 
+        [RaidBotCommand("language")]
+        private async Task Language()
+        {
+            if (!IsAdmin)
+            {
+                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoAccess"]);
+                return;
+            }
+            Config.ServerLanguages[Guild.Id] = Command[1];
+            Config.Save();
+            await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandLanguageSuccess"], Guild.Name, Command[1]));
+        }
+
+        [RaidBotCommand("timezone")]
+        private async Task Timezone()
+        {
+            if (!IsAdmin)
+            {
+                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoAccess"]);
+                return;
+            }
+            int timezoneOut = int.MinValue;
+            var isvalid = Int32.TryParse(Command[1], out timezoneOut);
+
+            if(!isvalid || timezoneOut > 12 || timezoneOut < -11)
+            {
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandInvalidNumber"], Command[1]));
+                return;
+            }
+            Config.ServerTimezones[Guild.Id] = timezoneOut;
+            Config.Save();
+            await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandTimezoneSuccess"], Guild.Name, timezoneOut > -1 ? "+" + timezoneOut.ToString() : timezoneOut.ToString()));
+        }
+
         [RaidBotCommand("channel")]
         private async Task Channel()
         {
             if (!IsAdmin)
             {
-                await Handler.MakeCommandMessage(Message.Channel, noAccessMessage);
+                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoAccess"]);
                 return;
             }
             if (Command.Length > 1 && !string.IsNullOrEmpty(Command[1]))
@@ -165,18 +200,18 @@ namespace PokemonGoRaidBot
                 {
                     Config.ServerChannels[Guild.Id] = channel.Id;
                     Config.Save();
-                    await Handler.MakeCommandMessage(Message.Channel, $"Output channel for {Guild.Name} changed to {channel.Name}");
+                    await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandChannelSuccess"], Guild.Name, channel.Name));//// $"Output channel for {Guild.Name} changed to {channel.Name}");
                 }
                 else
                 {
-                    await Handler.MakeCommandMessage(Message.Channel, $"{Guild.Name} does not contain a channel named \"{Command[1]}\"");
+                    await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandGuildNoChannel"], Guild.Name, Command[1]));//$"{Guild.Name} does not contain a channel named \"{Command[1]}\"");
                 }
             }
             else
             {
                 Config.ServerChannels.Remove(Guild.Id);
                 Config.Save();
-                await Handler.MakeCommandMessage(Message.Channel, $"Output channel override for {Guild.Name} removed, default value \"{Config.OutputChannel}\" will be used.");
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandChannelCleared"], Guild.Name, Config.OutputChannel));//$"Output channel override for {Guild.Name} removed, default value \"{Config.OutputChannel}\" will be used.");
             }
         }
 
@@ -185,12 +220,12 @@ namespace PokemonGoRaidBot
         {
             if (!IsAdmin)
             {
-                await Handler.MakeCommandMessage(Message.Channel, noAccessMessage);
+                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoAccess"]);
                 return;
             }
             Config.ServerChannels[Guild.Id] = 0;
             Config.Save();
-            await Handler.MakeCommandMessage(Message.Channel, "Bot will no longer output to a single channel.  Use !channel to undo this.");
+            await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoChannelSuccess"]);
         }
 
         [RaidBotCommand("alias")]
@@ -198,7 +233,7 @@ namespace PokemonGoRaidBot
         {
             if (!IsAdmin)
             {
-                await Handler.MakeCommandMessage(Message.Channel, noAccessMessage);
+                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoAccess"]);
                 return;
             }
             PokemonInfo foundInfo = null;
@@ -212,10 +247,10 @@ namespace PokemonGoRaidBot
                     break;
                 }
             }
-            var resp = $"Pokemon matching '{Command[1]}' not found.";
+            var resp = string.Format(Parser.Language.Formats["commandPokemonNotFound"], Command[1]);// $"Pokemon matching '{Command[1]}' not found.";
 
             if (foundInfo != null)
-                resp = $"Alias \"{Command[2].ToLowerInvariant()}\" added to {foundInfo.Name}";
+                resp = string.Format(Parser.Language.Formats["commandAliasSuccess"], Command[2].ToLowerInvariant(), foundInfo.Name);//$"Alias \"{Command[2].ToLowerInvariant()}\" added to {foundInfo.Name}";
 
             await Handler.MakeCommandMessage(Message.Channel, resp);
         }
@@ -225,7 +260,7 @@ namespace PokemonGoRaidBot
         {
             if (!IsAdmin)
             {
-                await Handler.MakeCommandMessage(Message.Channel, noAccessMessage);
+                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoAccess"]);
                 return;
             }
             var aresp = "";
@@ -239,13 +274,15 @@ namespace PokemonGoRaidBot
                     {
                         info.ServerAliases.Remove(alias);
                         Config.Save();
-                        aresp = $"Alias \"{alias.Value}\" removed from {info.Name}";
+                        aresp = string.Format(Parser.Language.Formats["commandRemoveAliasSuccess"], alias.Value, info.Name);// $"Alias \"{alias.Value}\" removed from {info.Name}";
                     }
                     else
                     {
-                        aresp = $"Alias \"{alias.Value}\" not found on {info.Name}.  ";
+                        aresp = string.Format(Parser.Language.Formats["commandRemoveAliasNotFound"], alias.Value, info.Name);// $"Alias \"{alias.Value}\" not found on {info.Name}.  ";
                         var aliases = info.ServerAliases.Where(x => x.Key == Guild.Id);
-                        aresp += aliases.Count() > 0 ? "Aliases that can be removed are: " + string.Join(", ", aliases.Select(x => x.Value)) : $"No aliases found for {info.Name}.";
+                        aresp += aliases.Count() > 0 ? 
+                            string.Format(Parser.Language.Formats["commandRemoveAliasNotFoundAvaliable"], string.Join(", ", aliases.Select(x => x.Value))) 
+                            : string.Format(Parser.Language.Formats["commandRemoveAliasNotFoundNone"], info.Name);
                     }
                     break;
                 }
@@ -259,19 +296,19 @@ namespace PokemonGoRaidBot
             var post1 = Handler.Posts.FirstOrDefault(x => x.UniqueId == Command[1]);
             if (post1 == null)
             {
-                await Handler.MakeCommandMessage(Message.Channel, $"Post with Unique Id \"{Command[1]}\" not found.");
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[1]));//$"Post with Unique Id \"{Command[1]}\" not found.");
                 return;
             }
 
             var post2 = Handler.Posts.FirstOrDefault(x => x.UniqueId == Command[2]);
             if (post2 == null)
             {
-                await Handler.MakeCommandMessage(Message.Channel, $"Post with Unique Id \"{Command[2]}\" not found.");
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[2]));//$"Post with Unique Id \"{Command[2]}\" not found.");
                 return;
             }
             if (post1.UserId != Message.Author.Id && post2.UserId != Message.Author.Id && !IsAdmin)
             {
-                await Handler.MakeCommandMessage(Message.Channel, "Only one of the post creators, server mods, or administrators can merge raid posts.");
+                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoPostAccess"]);
             }
 
             if (post1.HasEndDate)
@@ -296,12 +333,12 @@ namespace PokemonGoRaidBot
             var post = Handler.Posts.FirstOrDefault(x => x.UniqueId == Command[1]);
             if (post == null)
             {
-                await Handler.MakeCommandMessage(Message.Channel, $"Post with Unique Id \"{Command[1]}\" not found.");
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[1]));//"Post with Unique Id \"{Command[1]}\" not found.");
                 return;
             }
             if (post.UserId != Message.Author.Id && !IsAdmin)
             {
-                await Handler.MakeCommandMessage(Message.Channel, "Only the creator of the post, server mods, or administrators can delete raid posts.");
+                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoPostAccess"]);
             }
             Handler.DeletePost(post);
         }
@@ -311,7 +348,7 @@ namespace PokemonGoRaidBot
         {
             if (!IsAdmin)
             {
-                await Handler.MakeCommandMessage(Message.Channel, noAccessMessage);
+                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoAccess"]);
                 return;
             }
             foreach (var pinallChannel in Guild.Channels)
@@ -322,7 +359,7 @@ namespace PokemonGoRaidBot
                 }
             }
             Config.Save();
-            await Handler.MakeCommandMessage(Message.Channel, $"All channels added to Pin Channels.");
+            await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandPinAllSuccess"]);
         }
 
         [RaidBotCommand("pin")]
@@ -330,24 +367,24 @@ namespace PokemonGoRaidBot
         {
             if (!IsAdmin)
             {
-                await Handler.MakeCommandMessage(Message.Channel, noAccessMessage);
+                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoAccess"]);
                 return;
             }
             var pinchannel = Guild.Channels.FirstOrDefault(x => x.Name.ToLowerInvariant() == Command[1].ToLowerInvariant());
             if (pinchannel == null)
             {
-                await Handler.MakeCommandMessage(Message.Channel, $"{Guild.Name} does not contain a channel named \"{Command[1]}\"");
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandGuildNoChannel"], Guild.Name, Command[1]));// $"{Guild.Name} does not contain a channel named \"{Command[1]}\"");
                 return;
             }
             if (!Config.PinChannels.Contains(pinchannel.Id))
             {
                 Config.PinChannels.Add(pinchannel.Id);
                 Config.Save();
-                await Handler.MakeCommandMessage(Message.Channel, $"{pinchannel.Name} added to Pin Channels.");
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Strings["commandPinSuccess"], pinchannel.Name));//$"{pinchannel.Name} added to Pin Channels.");
             }
             else
             {
-                await Handler.MakeCommandMessage(Message.Channel, $"{pinchannel.Name} is already in Pin Channels.");
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Strings["commandPinAlreadyDone"], pinchannel.Name));// $"{pinchannel.Name} is already in Pin Channels.");
             }
         }
 
@@ -356,7 +393,7 @@ namespace PokemonGoRaidBot
         {
             if (!IsAdmin)
             {
-                await Handler.MakeCommandMessage(Message.Channel, noAccessMessage);
+                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoAccess"]);
                 return;
             }
             foreach (var pinallChannel in Guild.Channels)
@@ -367,7 +404,7 @@ namespace PokemonGoRaidBot
                 }
             }
             Config.Save();
-            await Handler.MakeCommandMessage(Message.Channel, $"All channels removed from Pin Channels.");
+            await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandUnPinAllSuccess"]);
         }
 
         [RaidBotCommand("unpin")]
@@ -375,23 +412,24 @@ namespace PokemonGoRaidBot
         {
             if (!IsAdmin)
             {
-                await Handler.MakeCommandMessage(Message.Channel, noAccessMessage);
+                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoAccess"]);
                 return;
             }
             var unpinchannel = Guild.Channels.FirstOrDefault(x => x.Name.ToLowerInvariant() == Command[1].ToLowerInvariant());
             if (unpinchannel == null)
             {
-                await Handler.MakeCommandMessage(Message.Channel, $"{Guild.Name} does not contain a channel named \"{Command[1]}\"");
+
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandGuildNoChannel"], Guild.Name, Command[1]));//$"{Guild.Name} does not contain a channel named \"{Command[1]}\"");
                 return;
             }
             if (!Config.PinChannels.Contains(unpinchannel.Id))
             {
-                await Handler.MakeCommandMessage(Message.Channel, $"{unpinchannel.Name} has not been added to Pin Channels.");
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandChannelNotPinned"], unpinchannel.Name));//$"{unpinchannel.Name} has not been added to Pin Channels.");
                 return;
             }
             Config.PinChannels.Remove(unpinchannel.Id);
             Config.Save();
-            await Handler.MakeCommandMessage(Message.Channel, $"{unpinchannel.Name} removed from Pin Channels.");
+            await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandChannelNotPinned"], unpinchannel.Name));//$"{unpinchannel.Name} removed from Pin Channels.");
         }
 
         [RaidBotCommand("pinlist")]

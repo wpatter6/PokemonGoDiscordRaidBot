@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using PokemonGoRaidBot.Objects;
 using System.Linq;
 using Discord.Rest;
+using PokemonGoRaidBot.Parsing;
 
 namespace PokemonGoRaidBot
 {
@@ -40,7 +41,6 @@ namespace PokemonGoRaidBot
 
         public async Task HandleCommand(SocketMessage pMsg)
         {
-            var t = TimeZoneInfo.Local.BaseUtcOffset;
             try
             {
                 if (pMsg.Source == MessageSource.System && pMsg.Author.Id == bot.CurrentUser.Id)
@@ -69,11 +69,13 @@ namespace PokemonGoRaidBot
                 else
                     outputchannel = (ISocketMessageChannel)guild.Channels.FirstOrDefault(x => x.Name == Config.OutputChannel);
 
-                //do nothing if output channel is not available.
-                //if (outputchannel == null) outputchannel = message.Channel;
-
                 var context = new SocketCommandContext(bot, message);
-                var parser = new MessageParser();
+
+                var lang = Config.ServerLanguages.ContainsKey(guild.Id) ? Config.ServerLanguages[guild.Id] : "en-us";
+                var botTimezone = TimeZoneInfo.Local.GetUtcOffset(DateTime.Now).Hours - (TimeZoneInfo.Local.IsDaylightSavingTime(DateTime.Now) ? 1 : 0);
+                var serverTimezone = Config.ServerTimezones.ContainsKey(guild.Id) ? Config.ServerTimezones[guild.Id] : botTimezone;
+
+                var parser = new MessageParser(lang, serverTimezone - botTimezone);
 
                 var argPos = 0;
                 if (message.HasStringPrefix(Config.Prefix, ref argPos))
@@ -179,6 +181,10 @@ namespace PokemonGoRaidBot
                 }
             }
         }
+        /// <summary>
+        /// Output an error to the bot console.
+        /// </summary>
+        /// <param name="e"></param>
         private void DoError(Exception e)
         {
             Console.BackgroundColor = ConsoleColor.Yellow;
@@ -189,11 +195,23 @@ namespace PokemonGoRaidBot
             Console.BackgroundColor = ConsoleColor.Black;
             Console.ForegroundColor = ConsoleColor.White;
         }
+        /// <summary>
+        /// Executes a explicit bot command
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="parser"></param>
+        /// <returns></returns>
         private async Task DoCommand(SocketUserMessage message, MessageParser parser)
         {
             var executor = new CommandExecutor(this, message, parser);
             await executor.Execute();
         }
+        /// <summary>
+        /// Adds a message to an existing raid post.
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="parser"></param>
+        /// <returns></returns>
         private async Task DoResponse(SocketUserMessage message, MessageParser parser)
         {
             foreach (var mentionedUser in message.MentionedUsers)
@@ -213,6 +231,14 @@ namespace PokemonGoRaidBot
                 }
             }
         }
+        /// <summary>
+        /// Performs the raid post behavior
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="parser"></param>
+        /// <param name="outputchannel"></param>
+        /// <param name="pin"></param>
+        /// <returns></returns>
         private async Task DoPost(SocketUserMessage message, MessageParser parser, ISocketMessageChannel outputchannel, bool pin)
         {
             var post = parser.ParsePost(message, Config);
@@ -227,7 +253,6 @@ namespace PokemonGoRaidBot
                     await MakePost(post, parser);
             }
         }
-
         /// <summary>
         /// Creates the text string and outputs the post message into the channel.
         /// If post.MessageId is populated, will delete and recreate the message.
@@ -342,11 +367,21 @@ namespace PokemonGoRaidBot
             else if(post.Pokemon != null) Posts.Add(post);
             return post;
         }
+        /// <summary>
+        /// Delete a post from both chat and the list.
+        /// </summary>
+        /// <param name="post"></param>
         public void DeletePost(PokemonRaidPost post)
         {
             post.EndDate = DateTime.MinValue;
             PurgePosts();
         }
+        /// <summary>
+        /// Posts a message from a command into chat.
+        /// </summary>
+        /// <param name="channel"></param>
+        /// <param name="message"></param>
+        /// <returns></returns>
         public async Task MakeCommandMessage(ISocketMessageChannel channel, string message)
         {
             await channel.SendMessageAsync($"```{message}```");
