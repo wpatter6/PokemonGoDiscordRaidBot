@@ -25,6 +25,8 @@
   1. These values will be stored in the `configuration\config.json` file.  If you wish to change them in the future, you can do so in this file, or delete it and re-enter them the next time you run the bot.  If you edit the json directly, you will need to close and restart the bot for the changes to take effect.
 
 ## Bot Commands:
+* !join [id] [number] - Joins the specified number of people to the specified raid Id. Overwrites any previous values.
+* !unjoin [id] - Removes your join information from the raid.
 * !info [name] - Displays information about the selected raid, or all of the raids above rank 3.  Information was taken from https://pokemongo.gamepress.gg.
 * !channel [name] - Changes the bot output channel on this server to the value passed in for [name].  If blank, the override is removed and the default value is used.
 * !nochannel - Prevents bot from posting in a specific channel. !pin functionality can still be used for specific channels.

@@ -18,20 +18,19 @@ namespace PokemonGoRaidBot
         private CommandService commands;
         private DiscordSocketClient bot;
         private IServiceProvider map;
-        private BotConfig config;
-        private List<PokemonRaidPost> posts;
-        private string noAccessMessage = "You do not have the necessary permissions to change this setting.  You must be a server moderator or administrator to make this change.";
+        public readonly BotConfig Config;
+        public readonly List<PokemonRaidPost> Posts;
 
         public CommandHandler(IServiceProvider provider, BotConfig botconfig)
         {
-            config = botconfig;
+            Config = botconfig;
             map = provider;
             bot = map.GetService<DiscordSocketClient>();
 
             //Send user message to get handled
             bot.MessageReceived += HandleCommand;
             commands = map.GetService<CommandService>();
-            posts = new List<PokemonRaidPost>();
+            Posts = new List<PokemonRaidPost>();
         }
         
         public async Task ConfigureAsync()
@@ -41,6 +40,7 @@ namespace PokemonGoRaidBot
 
         public async Task HandleCommand(SocketMessage pMsg)
         {
+            var t = TimeZoneInfo.Local.BaseUtcOffset;
             try
             {
                 if (pMsg.Source == MessageSource.System && pMsg.Author.Id == bot.CurrentUser.Id)
@@ -58,34 +58,35 @@ namespace PokemonGoRaidBot
                 ISocketMessageChannel outputchannel = null;
                 var pin = false;
 
-                if (config.PinChannels.Contains(message.Channel.Id))
+                if (Config.PinChannels.Contains(message.Channel.Id))
                 {
                     pin = true;
                     //outputchannel = message.Channel;
                 }
 
-                if (config.ServerChannels.ContainsKey(guild.Id))
-                    outputchannel = (ISocketMessageChannel)guild.Channels.FirstOrDefault(x => x.Id == config.ServerChannels[guild.Id]);
+                if (Config.ServerChannels.ContainsKey(guild.Id))
+                    outputchannel = (ISocketMessageChannel)guild.Channels.FirstOrDefault(x => x.Id == Config.ServerChannels[guild.Id]);
                 else
-                    outputchannel = (ISocketMessageChannel)guild.Channels.FirstOrDefault(x => x.Name == config.OutputChannel);
+                    outputchannel = (ISocketMessageChannel)guild.Channels.FirstOrDefault(x => x.Name == Config.OutputChannel);
 
                 //do nothing if output channel is not available.
                 //if (outputchannel == null) outputchannel = message.Channel;
 
                 var context = new SocketCommandContext(bot, message);
+                var parser = new MessageParser();
 
                 var argPos = 0;
-                if (message.HasStringPrefix(config.Prefix, ref argPos))
+                if (message.HasStringPrefix(Config.Prefix, ref argPos))
                 {//Someone is issuing a command, respond in their channel
-                    await DoCommand(message);
+                    await DoCommand(message, parser);
                 }
                 else if ((outputchannel != null || pin) && message.MentionedUsers.Count() > 0)
                 {//possibly a response to someone who posted a raid
-                    await DoResponse(message);
+                    await DoResponse(message, parser);
                 }
                 else if (outputchannel != null || pin)
                 {//try to see if a raid was posted
-                    await DoPost(message, outputchannel, pin);
+                    await DoPost(message, parser, outputchannel, pin);
                 }
             }
             catch (Exception e)
@@ -100,46 +101,56 @@ namespace PokemonGoRaidBot
         public async void PurgePosts(Object stateInfo = null)
         {
             var deletedPosts = new List<PokemonRaidPost>();
-            var deleteTasks = new List<Task>();
             var now = DateTime.Now;
 
-            foreach (var post in posts)
+            foreach (var post in Posts)
             {
                 if (post.EndDate < now) deletedPosts.Add(post);
             }
-            posts.RemoveAll(x => deletedPosts.Contains(x));
+            Posts.RemoveAll(x => deletedPosts.Contains(x));
 
             foreach (var post in deletedPosts)
             {
+                var messages = new List<IMessage>();
                 foreach(var messageId in post.OutputMessageIds)
                 {
                     var m = new IMessage[] { await post.OutputChannel.GetMessageAsync(messageId) };
-                    
-                    deleteTasks.Add(post.OutputChannel.DeleteMessagesAsync(m));
+                    messages.AddRange(m.Where(x => x != null));
                 }
 
-                var m1 = new IMessage[] { await post.OutputChannel.GetMessageAsync(post.MessageId) };
+                try
+                {
+                    await post.OutputChannel.DeleteMessagesAsync(messages);
+                }
+                catch (Exception e)
+                {
+                    DoError(e);
+                }
 
-                if(m1.Count() > 0)
+                var m1 = new IMessage[] { await post.FromChannel.GetMessageAsync(post.MessageId) };
+
+                if(m1.Count() > 0 && m1[0] != null)
                 {
                     if (m1[0] is RestUserMessage && ((RestUserMessage)m1[0]).IsPinned)
                         await ((RestUserMessage)m1[0]).UnpinAsync();
 
-                    deleteTasks.Add(post.OutputChannel.DeleteMessagesAsync(m1));
+                    await m1[0].DeleteAsync();
                 }
+
             }
-            if (deleteTasks.Count() > 0)
-                Task.WaitAll(deleteTasks.ToArray());
+            
+            //if (deleteTasks.Count() > 0)
+            //    Task.WaitAll(deleteTasks.ToArray());
 
             //Clean up old messages
             foreach (var guild in bot.Guilds)
             {
                 SocketGuildChannel outputchannel;
 
-                if (config.ServerChannels.ContainsKey(guild.Id))
-                    outputchannel = guild.GetChannel(config.ServerChannels[guild.Id]);
+                if (Config.ServerChannels.ContainsKey(guild.Id))
+                    outputchannel = guild.GetChannel(Config.ServerChannels[guild.Id]);
                 else
-                    outputchannel = guild.Channels.FirstOrDefault(x => x.Name == config.OutputChannel);
+                    outputchannel = guild.Channels.FirstOrDefault(x => x.Name == Config.OutputChannel);
 
                 if(outputchannel != null)
                 {
@@ -178,310 +189,19 @@ namespace PokemonGoRaidBot
             Console.BackgroundColor = ConsoleColor.Black;
             Console.ForegroundColor = ConsoleColor.White;
         }
-        private async Task DoCommand(SocketUserMessage message)
+        private async Task DoCommand(SocketUserMessage message, MessageParser parser)
         {
-            var command = message.Content.Substring(config.Prefix.Length).Split(' ');
-            var user = (SocketGuildUser)message.Author;
-            var guild = ((SocketGuildChannel)message.Channel).Guild;
-
-            var isAdmin = user.GuildPermissions.Administrator || user.GuildPermissions.ManageGuild;
-            //user.Roles.Where(x=>x.Permissions.)
-            //var isMod = //user.GuildPermissions. //user.Roles.Where(x => x.Name.ToLowerInvariant().StartsWith("mod")).Count() > 0;
-
-            switch (command[0].ToLowerInvariant())
-            {
-                case "info":
-                    if (command.Length > 1 && command[1].Length > 2)
-                    {
-                        var info = MessageParser.ParsePokemon(command[1], config, guild.Id);
-                        var response = "";
-
-                        if (info != null)
-                            response += MessageParser.MakeInfoLine(info, guild.Id);
-                        else
-                            response += $"'{command[1]}' did not match any raid boss names or aliases.";
-
-                        await MakeCommandMessage(message.Channel, response);
-                    }
-                    else
-                    {
-                        var strings = new List<string>();
-                        var strInd = 0;
-
-                        var tierCommand = 0;
-
-                        var list = config.PokemonInfoList.Where(x => x.CatchRate > 0);
-
-                        if (command.Length > 1 && Int32.TryParse(command[1], out tierCommand))
-                        {
-                            list = list.Where(x => x.Tier == tierCommand);
-                        }
-
-                        var orderedList = list.OrderByDescending(x => x.Id).OrderByDescending(x => x.Tier);
-
-
-                        var maxBossLength = orderedList.Select(x => x.BossNameFormatted.Length).Max();
-                        strings.Add("```");
-                        foreach (var info in orderedList)
-                        {
-                            var lineStr = MessageParser.MakeInfoLine(info, guild.Id, maxBossLength);
-
-                            if (strings[strInd].Length + lineStr.Length + 3 < 2000)
-                                strings[strInd] += lineStr;
-                            else
-                            {
-                                strings[strInd] += "```";
-                                strings.Add("```" + lineStr);
-                                strInd++;
-                            }
-
-                        }
-                        strings[strInd] += "```";
-                        foreach (var str in strings)
-                            await message.Channel.SendMessageAsync(str);
-                    }
-                    break;
-                case "channel":
-                    if (!isAdmin)
-                    {
-                        await MakeCommandMessage(message.Channel, noAccessMessage);
-                        return;
-                    }
-                    if (command.Length > 1 && !string.IsNullOrEmpty(command[1]))
-                    {
-                        var channel = guild.Channels.FirstOrDefault(x => x.Name.ToLowerInvariant() == command[1].ToLowerInvariant());
-                        if (channel != null)
-                        {
-                            config.ServerChannels[guild.Id] = channel.Id;
-                            config.Save();
-                            await MakeCommandMessage(message.Channel, $"Output channel for {guild.Name} changed to {channel.Name}");
-                        }
-                        else
-                        {
-                            await MakeCommandMessage(message.Channel, $"{guild.Name} does not contain a channel named \"{command[1]}\"");
-                        }
-                    }
-                    else
-                    {
-                        config.ServerChannels.Remove(guild.Id);
-                        config.Save();
-                        await MakeCommandMessage(message.Channel, $"Output channel override for {guild.Name} removed, default value \"{config.OutputChannel}\" will be used.");
-                    }
-                    break;
-                case "nochannel":
-                    config.ServerChannels[guild.Id] = 0;
-                    config.Save();
-                    await MakeCommandMessage(message.Channel, "Bot will no longer output to a single channel.  Use !channel to undo this.");
-                    break;
-                case "alias"://command[1] = Pokemon identifier, command[2] = alias to add
-                    if (!isAdmin)
-                    {
-                        await MakeCommandMessage(message.Channel, noAccessMessage);
-                        return;
-                    }
-                    PokemonInfo foundInfo = null;
-                    foreach (var info in config.PokemonInfoList)
-                    {
-                        if (info.Name.Equals(command[1], StringComparison.OrdinalIgnoreCase))
-                        {
-                            info.ServerAliases.Add(new KeyValuePair<ulong, string>(guild.Id, command[2].ToLowerInvariant()));
-                            foundInfo = info;
-                            config.Save();
-                            break;
-                        }
-                    }
-                    var resp = $"Pokemon matching '{command[1]}' not found.";
-
-                    if (foundInfo != null)
-                        resp = $"Alias \"{command[2].ToLowerInvariant()}\" added to {foundInfo.Name}";
-
-                    await MakeCommandMessage(message.Channel, resp);
-                    break;
-                case "removealias"://command[1] = Pokemon identifier, command[2] = alias to remove
-                    if (!isAdmin)
-                    {
-                        await MakeCommandMessage(message.Channel, noAccessMessage);
-                        return;
-                    }
-                    var aresp = "";
-                    foreach (var info in config.PokemonInfoList)
-                    {
-                        if (info.Name.Equals(command[1], StringComparison.OrdinalIgnoreCase))
-                        {
-                            var alias = info.ServerAliases.FirstOrDefault(x => x.Key == guild.Id && x.Value == command[2].ToLowerInvariant());
-
-                            if (!alias.Equals(default(KeyValuePair<ulong, string>)))
-                            {
-                                info.ServerAliases.Remove(alias);
-                                config.Save();
-                                aresp = $"Alias \"{alias.Value}\" removed from {info.Name}";
-                            }
-                            else
-                            {
-                                aresp = $"Alias \"{alias.Value}\" not found on {info.Name}.  ";
-                                var aliases = info.ServerAliases.Where(x => x.Key == guild.Id);
-                                aresp += aliases.Count() > 0 ? "Aliases that can be removed are: " + string.Join(", ", aliases.Select(x => x.Value)) : $"No aliases found for {info.Name}.";
-                            }
-                            break;
-                        }
-                    }
-                    await MakeCommandMessage(message.Channel, aresp);
-                    break;
-                case "merge"://command[1] = raid1 UniqueId, command[2] = raid2 UniqueId to merge
-                    var post1 = posts.FirstOrDefault(x => x.UniqueId == command[1]);
-                    if (post1 == null)
-                    {
-                        await MakeCommandMessage(message.Channel, $"Post with Unique Id \"{command[1]}\" not found.");
-                        return;
-                    }
-
-                    var post2 = posts.FirstOrDefault(x => x.UniqueId == command[2]);
-                    if (post2 == null)
-                    {
-                        await MakeCommandMessage(message.Channel, $"Post with Unique Id \"{command[2]}\" not found.");
-                        return;
-                    }
-                    if (post1.UserId != message.Author.Id && post2.UserId != message.Author.Id && !isAdmin)
-                    {
-                        await MakeCommandMessage(message.Channel, "Only one of the post creators, server mods, or administrators can merge raid posts.");
-                    }
-
-                    if (post1.HasEndDate)
-                    {
-                        if (post2.HasEndDate)
-                        {
-                            post1.EndDate = new DateTime(Math.Max(post1.EndDate.Ticks, post2.EndDate.Ticks));
-                        }
-                    }
-                    else if (post2.HasEndDate)
-                        post1.EndDate = post2.EndDate;
-
-                    post1.Responses.AddRange(post2.Responses);
-
-                    DeletePost(post2);
-                    await MakePost(post1);
-
-                    break;
-                case "delete"://command[1] = raid UniqueId to delete
-                    var post = posts.FirstOrDefault(x => x.UniqueId == command[1]);
-                    if (post.UserId != message.Author.Id && !isAdmin)
-                    {
-                        await MakeCommandMessage(message.Channel, "Only the creator of the post, server mods, or administrators can delete raid posts.");
-                    }
-                    if (post == null)
-                    {
-                        await MakeCommandMessage(message.Channel, $"Post with Unique Id \"{command[1]}\" not found.");
-                        return;
-                    }
-                    DeletePost(post);
-                    break;
-                case "pinall":
-                    if (!isAdmin)
-                    {
-                        await MakeCommandMessage(message.Channel, noAccessMessage);
-                        return;
-                    }
-                    foreach (var pinallChannel in guild.Channels)
-                    {
-                        if (!config.PinChannels.Contains(pinallChannel.Id))
-                        {
-                            config.PinChannels.Add(pinallChannel.Id);
-                        }
-                    }
-                    config.Save();
-                    await MakeCommandMessage(message.Channel, $"All channels added to Pin Channels.");
-
-                    break;
-                case "pin"://command[1] = channel name for 'pin' behavior
-                    if (!isAdmin)
-                    {
-                        await MakeCommandMessage(message.Channel, noAccessMessage);
-                        return;
-                    }
-                    var pinchannel = guild.Channels.FirstOrDefault(x => x.Name.ToLowerInvariant() == command[1].ToLowerInvariant());
-                    if (pinchannel == null)
-                    {
-                        await MakeCommandMessage(message.Channel, $"{guild.Name} does not contain a channel named \"{command[1]}\"");
-                        return;
-                    }
-                    if (!config.PinChannels.Contains(pinchannel.Id))
-                    {
-                        config.PinChannels.Add(pinchannel.Id);
-                        config.Save();
-                        await MakeCommandMessage(message.Channel, $"{pinchannel.Name} added to Pin Channels.");
-                    }
-                    else
-                    {
-                        await MakeCommandMessage(message.Channel, $"{pinchannel.Name} is already in Pin Channels.");
-                    }
-                    break;
-                case "unpinall":
-                    if (!isAdmin)
-                    {
-                        await MakeCommandMessage(message.Channel, noAccessMessage);
-                        return;
-                    }
-                    foreach (var pinallChannel in guild.Channels)
-                    {
-                        if (config.PinChannels.Contains(pinallChannel.Id))
-                        {
-                            config.PinChannels.Remove(pinallChannel.Id);
-                        }
-                    }
-                    config.Save();
-                    await MakeCommandMessage(message.Channel, $"All channels removed from Pin Channels.");
-                    break;
-                case "unpin"://command[1] = channel name to remove from 'pin' behavior
-                    if (!isAdmin)
-                    {
-                        await MakeCommandMessage(message.Channel, noAccessMessage);
-                        return;
-                    }
-                    var unpinchannel = guild.Channels.FirstOrDefault(x => x.Name.ToLowerInvariant() == command[1].ToLowerInvariant());
-                    if (unpinchannel == null)
-                    {
-                        await MakeCommandMessage(message.Channel, $"{guild.Name} does not contain a channel named \"{command[1]}\"");
-                        return;
-                    }
-                    if (!config.PinChannels.Contains(unpinchannel.Id))
-                    {
-                        await MakeCommandMessage(message.Channel, $"{unpinchannel.Name} has not been added to Pin Channels.");
-                        return;
-                    }
-                    config.PinChannels.Remove(unpinchannel.Id);
-                    config.Save();
-                    await MakeCommandMessage(message.Channel, $"{unpinchannel.Name} removed from Pin Channels.");
-                    break;
-                case "pinlist":
-                    var pinstring = "";
-                    foreach(var channel in guild.Channels)
-                    {
-                        if (config.PinChannels.Contains(channel.Id))
-                            pinstring += $"\n{channel.Name}";
-                    }
-
-                    if (string.IsNullOrEmpty(pinstring)) pinstring = "No channels in Pin List.";
-                    else pinstring = "Pinned Channels:" + pinstring;
-
-                    await MakeCommandMessage(message.Channel, pinstring);
-                    break;
-                case "help":
-                    var helpmessage = MessageParser.GetHelpString(config);
-                    await message.Channel.SendMessageAsync(helpmessage);
-                    break;
-                default:
-                    await message.Channel.SendMessageAsync($"```Unknown command \"{command[0]}\".  Type {config.Prefix}help to see valid commands for this bot.```");
-                    break;
-            }
+            var executor = new CommandExecutor(this, message, parser);
+            await executor.Execute();
         }
-        private async Task DoResponse(SocketUserMessage message)
+        private async Task DoResponse(SocketUserMessage message, MessageParser parser)
         {
             foreach (var mentionedUser in message.MentionedUsers)
             {
-                var post = MessageParser.ParsePost(message, config);
+                var post = parser.ParsePost(message, Config);
                 var pokemon = post?.Pokemon;
 
-                var mentionPost = posts.OrderByDescending(x => x.EndDate)
+                var mentionPost = Posts.OrderByDescending(x => x.EndDate)
                     .FirstOrDefault(x => x.FromChannel.Id == message.Channel.Id
                         && x.Responses.Where(xx => xx.UserId == mentionedUser.Id).Count() > 0
                         && x.Pokemon.Name == (pokemon ?? x.Pokemon).Name);
@@ -489,22 +209,22 @@ namespace PokemonGoRaidBot
                 if (mentionPost != null)
                 {
                     mentionPost.Responses.Add(new PokemonMessage(mentionedUser.Id, mentionedUser.Username, message.Content, DateTime.Now));
-                    await MakePost(mentionPost);
+                    await MakePost(mentionPost, parser);
                 }
             }
         }
-        private async Task DoPost(SocketUserMessage message, ISocketMessageChannel outputchannel, bool pin)
+        private async Task DoPost(SocketUserMessage message, MessageParser parser, ISocketMessageChannel outputchannel, bool pin)
         {
-            var post = MessageParser.ParsePost(message, config);
+            var post = parser.ParsePost(message, Config);
 
             if (post != null)
             {
                 post.OutputChannel = outputchannel;
                 post.Pin = pin;
-                post = AddPost(post);
+                post = AddPost(post, parser);
 
                 if (post.Pokemon != null)
-                    await MakePost(post);
+                    await MakePost(post, parser);
             }
         }
 
@@ -515,7 +235,7 @@ namespace PokemonGoRaidBot
         /// </summary>
         /// <param name="post"></param>
         /// <param name="outputchannel"></param>
-        private async Task MakePost(PokemonRaidPost post)
+        public async Task MakePost(PokemonRaidPost post, MessageParser parser)
         {
             try
             {
@@ -543,7 +263,7 @@ namespace PokemonGoRaidBot
 
             RestUserMessage messageResult;
 
-            var messages = MessageParser.MakePostStrings(post);
+            var messages = parser.MakePostStrings(post);
 
             if (post.Pin)
             {
@@ -578,14 +298,22 @@ namespace PokemonGoRaidBot
         /// </summary>
         /// <param name="post"></param>
         /// <returns>Returns either the new post or the one it matched with.</returns>
-        private PokemonRaidPost AddPost(PokemonRaidPost post)
+        public PokemonRaidPost AddPost(PokemonRaidPost post, MessageParser parser)
         {
-            var existing = posts.OrderBy(x => x.Pokemon.Name == (post.Pokemon == null ? "" : post.Pokemon.Name) ? 0 : 1)//pokemon name match takes priority if the user responded to multiple raids in the channel
-                .FirstOrDefault(x => 
-                    x.FromChannel.Id == post.FromChannel.Id//Posted in the same channel
-                    && ((post.Pokemon != null && x.Pokemon.Name == post.Pokemon.Name)//Either pokemon matches OR
-                        || (post.Pokemon == null && x.Responses.Where(xx => xx.UserId == post.UserId).Count() > 0))//User already in the thread
-                );
+            var channelPosts = Posts.Where(x => x.FromChannel.Id == post.FromChannel.Id);
+
+            //if location matches, must be same.
+            var existing = channelPosts.FirstOrDefault(x => parser.CompareLocations(x.Location, post.Location));
+
+            if (existing == null)
+                existing = channelPosts
+                    .Where(x => string.IsNullOrEmpty(x.Location) || string.IsNullOrEmpty(post.Location))//either location must be unidentified at this point
+                    .OrderBy(x => x.Pokemon.Name == (post.Pokemon == null ? "" : post.Pokemon.Name) ? 0 : 1)//pokemon name match takes priority if the user responded to multiple raids in the channel
+                    .FirstOrDefault(x =>
+                        x.FromChannel.Id == post.FromChannel.Id//Posted in the same channel
+                        && ((post.Pokemon != null && x.Pokemon.Name == post.Pokemon.Name)//Either pokemon matches OR
+                            || (post.Pokemon == null && x.Responses.Where(xx => xx.UserId == post.UserId).Count() > 0))//User already in the thread
+                    );
 
             if (existing != null)
             {
@@ -594,18 +322,32 @@ namespace PokemonGoRaidBot
                     existing.HasEndDate = true;
                     existing.EndDate = post.EndDate;
                 }
+
+                if (!string.IsNullOrEmpty(post.Location) && string.IsNullOrEmpty(existing.Location)) existing.Location = post.Location;
+
+                //overwrite with new values
+                foreach(var user in post.JoinedUsers)
+                    existing.JoinedUsers[user.Key] = user.Value;
+
                 existing.Responses.Add(post.Responses[0]);
+
+                foreach(var joinuser in post.JoinedUsers)
+                {
+                    if(!existing.JoinedUsers.ContainsKey(joinuser.Key) || existing.JoinedUsers[joinuser.Key] == 1)
+                        existing.JoinedUsers[joinuser.Key] = joinuser.Value;
+                }
+
                 return existing;
             }
-            else if(post.Pokemon != null) posts.Add(post);
+            else if(post.Pokemon != null) Posts.Add(post);
             return post;
         }
-        private void DeletePost(PokemonRaidPost post)
+        public void DeletePost(PokemonRaidPost post)
         {
             post.EndDate = DateTime.MinValue;
             PurgePosts();
         }
-        private async Task MakeCommandMessage(ISocketMessageChannel channel, string message)
+        public async Task MakeCommandMessage(ISocketMessageChannel channel, string message)
         {
             await channel.SendMessageAsync($"```{message}```");
         }

@@ -7,8 +7,8 @@ using System.Linq;
 
 namespace PokemonGoRaidBot.Objects
 {
-    internal static class MessageParser
-    {
+    public class MessageParser
+    {//TODO Remove all parsing related strings and place in config file so other languages possible
         private static int colorIndex = 0;
         private static string[] minuteAliases = new string[] { "m", "mi", "min", "mins", "minutes", "minute" };
         private static string[] hourAliases = new string[] { "h", "hr", "hour", "hours" };
@@ -24,7 +24,7 @@ namespace PokemonGoRaidBot.Objects
         /// <param name="message"></param>
         /// <param name="config"></param>
         /// <returns>If return value is null, or property 'Pokemon' is null, raid post is invalid.</returns>
-        public static PokemonRaidPost ParsePost(SocketMessage message, BotConfig config)
+        public PokemonRaidPost ParsePost(SocketMessage message, BotConfig config)
         {
             var result = new PokemonRaidPost()
             {
@@ -41,7 +41,7 @@ namespace PokemonGoRaidBot.Objects
             var messageString = message.Content;
 
             var words = messageString.Split(' ');
-            if (words.Length < 2) return null;
+            //if (words.Length < 2) return null;
 
             var timespan = new TimeSpan();
             var i = 0;
@@ -137,7 +137,15 @@ namespace PokemonGoRaidBot.Objects
                 }
             }
 
-            result.Location = ParseLocation(string.Join(" ", unmatchedWords.ToArray()));
+            var unmatchedString = string.Join(" ", unmatchedWords.ToArray());
+            var newUnmatchedString = "";
+
+            var joinCount = ParseJoinedUsersCount(unmatchedString, out newUnmatchedString);
+
+            if (joinCount.HasValue)
+                result.JoinedUsers[message.Author.Id] = joinCount.Value;
+
+            result.Location = ParseLocation(newUnmatchedString);
 
             return result;
         }
@@ -149,7 +157,7 @@ namespace PokemonGoRaidBot.Objects
         /// <param name="name"></param>
         /// <param name="config"></param>
         /// <returns></returns>
-        public static PokemonInfo ParsePokemon(string name, BotConfig config, ulong guildId)
+        public PokemonInfo ParsePokemon(string name, BotConfig config, ulong guildId)
         {
             if (name.Length < 3) return null;
 
@@ -171,7 +179,7 @@ namespace PokemonGoRaidBot.Objects
         /// </summary>
         /// <param name="message"></param>
         /// <returns></returns>
-        public static TimeSpan ParseTimespan(string message, ref bool isActualTime)
+        public TimeSpan ParseTimespan(string message, ref bool isActualTime)
         {
             var timeRegex = new Regex("([0-9]{1,2}):?([0-9]{2})?(a|p)", RegexOptions.IgnoreCase);
             if (timeRegex.IsMatch(message))//posting an actual time like "3:30pm" or "10am"
@@ -231,13 +239,13 @@ namespace PokemonGoRaidBot.Objects
         /// </summary>
         /// <param name="message"></param>
         /// <returns>The string representation of the location</returns>
-        public static string ParseLocation(string message)
+        public string ParseLocation(string message)
         {
             var result = ParseLocationBase(message);
 
             return Regex.Replace(result, @"\b(until|at|if|or|when|the)\b", "", RegexOptions.IgnoreCase).Replace(",", "").Replace(".", "").Replace("  ", " ").Replace(matchedWordReplacement, "").Trim();
         }
-        private static string ParseLocationBase(string message)
+        private string ParseLocationBase(string message)
         {
             var crossStreetsReg = new Regex(@"([a-zA-Z0-9]* (\&|and) [a-zA-Z0-9]*)", RegexOptions.IgnoreCase);
 
@@ -263,7 +271,7 @@ namespace PokemonGoRaidBot.Objects
         /// <param name="loc1"></param>
         /// <param name="loc2"></param>
         /// <returns></returns>
-        public static bool CompareLocations(string loc1, string loc2, bool triedCrossStreets = false)
+        public bool CompareLocations(string loc1, string loc2, bool triedCrossStreets = false)
         {
             loc1 = loc1.ToLowerInvariant();
             loc2 = loc2.ToLowerInvariant();
@@ -271,8 +279,8 @@ namespace PokemonGoRaidBot.Objects
             if (loc1 == loc2 || loc1.StartsWith(loc2) || loc2.StartsWith(loc1)) return true;
 
             //Check if they used any abbreviations
-            var abbrReg1 = new Regex(loc1.Replace(" ", "[a-zA-Z]* "));
-            var abbrReg2 = new Regex(loc2.Replace(" ", "[a-zA-Z]* "));
+            var abbrReg1 = new Regex(loc1.Replace(" ", "[a-zA-Z]* ").Trim() + "[a-zA-Z]*");
+            var abbrReg2 = new Regex(loc2.Replace(" ", "[a-zA-Z]* ").Trim() + "[a-zA-Z]*");
 
             if (abbrReg1.IsMatch(loc2)) return true;
             if (abbrReg2.IsMatch(loc1)) return true;
@@ -288,13 +296,42 @@ namespace PokemonGoRaidBot.Objects
 
             return false;
         }
+        public int? ParseJoinedUsersCount(string message, out string messageout)
+        {
+            var endreg = new Regex(@"([0-9]{1,2}) (people|here|on (the|our))", RegexOptions.IgnoreCase);
+
+            if (endreg.IsMatch(message))
+            {
+                var endmatch = endreg.Match(message);
+                messageout = endreg.Replace(message, matchedWordReplacement);
+
+                if (message.Contains("?")) return null;
+
+                return Convert.ToInt32(endmatch.Groups[1].Value);
+            }
+            
+            var startReg = new Regex(@"(have|are|there's) ([0-9]{1,2})", RegexOptions.IgnoreCase);
+            if (startReg.IsMatch(message))
+            {
+                var startmatch = endreg.Match(message);
+                messageout = endreg.Replace(message, matchedWordReplacement);
+
+                if (message.Contains("?")) return null;
+
+                return Convert.ToInt32(startmatch.Groups[2].Value);
+            }
+            messageout = message;
+            return null;
+        }
         #endregion
 
         #region Output
-        public static string GetHelpString(BotConfig config)
+        public string GetHelpString(BotConfig config)
         {
             var helpmessage = $"```This bot parses discord chat messages to see if a raid is being mentioned.  If a raid is found, it will post to a specific channel, by default '{config.OutputChannel}'.  Channels can be configured to pin the raid instead of posting it to the specific channel.\n\n";
             helpmessage += "``````css\n       #Commands:\n";
+            helpmessage += $"  {config.Prefix}join [id] [number] - Joins the specified number of people to the specified raid Id. Overwrites any previous values.\n";
+            helpmessage += $"  {config.Prefix}unjoin [id] - Removes your join information from the raid.\n";
             helpmessage += $"  {config.Prefix}info [name] - Displays information about the selected raid, or all of the raids above rank 3.  Information was taken from https://pokemongo.gamepress.gg.\n";
             helpmessage += $"  {config.Prefix}channel [name] - Changes the bot output channel on this server to the value passed in for [name].  If blank, the override is removed and the value '{config.OutputChannel}' is used.\n";
             helpmessage += $"  {config.Prefix}nochannel - Prevents bot from posting in a specific channel.  {config.Prefix}pin functionality can still be used in specific channels.\n";
@@ -306,6 +343,7 @@ namespace PokemonGoRaidBot.Objects
             helpmessage += $"  {config.Prefix}unpin [channel name] - Removes channel from pin channels.\n";
             helpmessage += $"  {config.Prefix}pinall - Adds all channels on the server to pin channels.\n";
             helpmessage += $"  {config.Prefix}unpinall - Removes all channels on the server from pin channels.\n";
+            //helpmessage += $"  {config.Prefix}timezone - TODO Configure server GMT offset and apply it everywhere times are determined";
             helpmessage += $"  {config.Prefix}help - Shows this message.";
             helpmessage += "```";
             return helpmessage;
@@ -315,7 +353,7 @@ namespace PokemonGoRaidBot.Objects
         /// </summary>
         /// <param name="info"></param>
         /// <returns></returns>
-        public static string MakeInfoLine(PokemonInfo info, ulong guildId, int paddingSize = 0)
+        public string MakeInfoLine(PokemonInfo info, ulong guildId, int paddingSize = 0)
         {
             var lineFormat = "\n{0}: {7}Tier={1} BossCP={2:#,##0} MinCP={3:#,##0} MaxCP={4:#,##0} CatchRate={5}%{6}";
             var padding = 0;
@@ -335,7 +373,7 @@ namespace PokemonGoRaidBot.Objects
         /// </summary>
         /// <param name="post"></param>
         /// <returns></returns>
-        public static string[] MakeResponseStrings(PokemonRaidPost post, string startMessage)
+        public string[] MakeResponseStrings(PokemonRaidPost post, string startMessage)
         {
             List<string> resultList = new List<string>();
             int i = 1, maxLength = 2000;//, firstMaxLength = maxLength - startMessage.Length;
@@ -360,20 +398,32 @@ namespace PokemonGoRaidBot.Objects
             resultList[i] += "\n```";
             return resultList.ToArray();
         }
-        public static string[] MakePostStrings(PokemonRaidPost post)
+        public string[] MakePostStrings(PokemonRaidPost post)
         {
-            var responderCount = post.Responses.GroupBy(x => x.UserId).Select(x => x.First()).Count();
-            string response = string.Format("`{5}` __**{0}**__ {1} in <#{2}>{3}{4}",
-                        post.Pokemon.Name,
-                        responderCount == 1 ? "posted by " + post.User : Convert.ToString(responderCount) + " discussing",
-                        post.FromChannel.Id,
-                        !string.IsNullOrEmpty(post.Location) ? string.Format(" at **{0}**", post.Location) : "",
-                        string.Format(", ends around {0:h:mmtt}", post.EndDate),
-                        post.UniqueId);
+            var response = MakePostHeader(post);
 
-            if (post.Pin) return new string[] { response };
+            //if (post.Pin) return new string[] { response };
 
             return MakeResponseStrings(post, response);
+        }
+        public string MakePostHeader(PokemonRaidPost post)
+        {
+            var joinString = "";
+
+            foreach (var user in post.JoinedUsers.Where(x => x.Value > 0))
+                joinString += string.Format("<@{0}>({1})", user.Key, user.Value);
+
+            var joinCount = post.JoinedUsers.Sum(x => x.Value);
+
+            string response = string.Format("`[{0}]`__**{1}**__ in <#{2}>{3}{4}\n{5}",
+                post.UniqueId,
+                post.Pokemon.Name,
+                post.FromChannel.Id,
+                !string.IsNullOrEmpty(post.Location) ? string.Format(" at **{0}**", post.Location) : "",
+                string.Format(", ends *{0:h:mmtt}*", post.EndDate),
+                joinCount > 0 ? string.Format("*{0} joined:* {1}", joinCount, joinString) : string.Format("None joined yet.  Posted by <@{0}>", post.UserId)
+                );
+            return response;
         }
         #endregion
     }

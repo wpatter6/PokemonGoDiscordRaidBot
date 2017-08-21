@@ -30,7 +30,7 @@ namespace PokemonGoRaidBot.Modules.Public
         {
             try 
             {
-                 
+                await ReplyAsync("INFO BLAH BLAH BLAH");
             }
             catch (Exception e) // catch exception error, reply with the error in string format
             {
