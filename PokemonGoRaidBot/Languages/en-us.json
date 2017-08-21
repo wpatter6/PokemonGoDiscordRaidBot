@@ -56,7 +56,7 @@
     "helpRemoveAlias": "Removes an alias for a pokemon.",
     "helpDelete": "Deletes a raid post with the corresponding Id.",
     "helpMerge": "Merges two raid posts together.",
-    "helpPin": "Raids posted in the specified channel will be posted and pinned in the channel itself.",
+    "helpPin": "Raids posted in the specified channel will be posted and pinned in the channel itself.  Bot requires \"Manage Messages\" role permission to pin.",
     "helpUnPin": "Removes channel from pin channels.",
     "helpPinAll": "Adds all channels on the server to pin channels.",
     "helpUnPinAll": "Removes all channels on the server from pin channels.",

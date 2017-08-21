@@ -508,7 +508,10 @@ namespace PokemonGoRaidBot
         private async Task Help()
         {
             var helpMessage = Parser.GetHelpString(Config, IsAdmin);
-            await Message.Channel.SendMessageAsync(helpMessage);
+            foreach(var message in helpMessage)
+            {
+                await Message.Channel.SendMessageAsync(message);
+            }
         }
     }
 }

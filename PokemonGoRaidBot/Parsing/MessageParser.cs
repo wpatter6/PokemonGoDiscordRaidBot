@@ -394,8 +394,9 @@ namespace PokemonGoRaidBot.Parsing
         #endregion
 
         #region Output
-        public string GetHelpString(BotConfig config, bool admin)
+        public string[] GetHelpString(BotConfig config, bool admin)
         {
+            var result = new List<string>();
             var helpmessage = string.Format(string.Format("```{0}\n\n", Language.Strings["helpTop"]), config.OutputChannel);
             helpmessage += string.Format("``````css\n       #{0}:\n", Language.Strings["helpCommands"]);
             helpmessage += string.Format("  {0}join [id] [number] - {1}\n", config.Prefix, Language.Strings["helpJoin"]);
@@ -413,6 +414,8 @@ namespace PokemonGoRaidBot.Parsing
                 helpmessage += string.Format("  {0}unpin [channel name] - *{1}\n", config.Prefix, Language.Strings["helpUnPin"]);
                 helpmessage += string.Format("  {0}pinall - *{1}\n", config.Prefix, Language.Strings["helpPinAll"]);
                 helpmessage += string.Format("  {0}unpinall - *{1}\n", config.Prefix, Language.Strings["helpUnPinAll"]);
+                result.Add(helpmessage + "```");
+                helpmessage = "```css\n";
                 helpmessage += string.Format("  {0}timezone [gmt offset] - *{1}\n", config.Prefix, Language.Strings["helpTimezone"]);
                 helpmessage += string.Format("  {0}language [language] - *{1}\n", config.Prefix, Language.Strings["helpLanguage"]);
                 helpmessage += string.Format("  {0}city [city] - *{1}\n", config.Prefix, Language.Strings["helpCity"]);
@@ -426,7 +429,8 @@ namespace PokemonGoRaidBot.Parsing
                 helpmessage += string.Format("  {0}help - {1}\n", config.Prefix, Language.Strings["helpHelp"]);
             }
             helpmessage += "```";
-            return helpmessage;
+            result.Add(helpmessage);
+            return result.ToArray();
         }
         /// <summary>
         /// Returns a single row of pokemon info for the !info command.

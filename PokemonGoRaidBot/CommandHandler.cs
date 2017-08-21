@@ -232,16 +232,7 @@ namespace PokemonGoRaidBot
 
                 if (mentionPost != null)
                 {
-                    MergePosts(mentionPost, post);
-                    /*
-                    if (string.IsNullOrEmpty(mentionPost.Location)) mentionPost.Location = post.Location;
-                    if (!mentionPost.LatLong.HasValue) mentionPost.LatLong = post.LatLong;
-
-                    mentionPost.Responses.Add(new PokemonMessage(mentionedUser.Id, mentionedUser.Username, message.Content, DateTime.Now));
-
-                    foreach(var joinuser in post.JoinedUsers)
-                        mentionPost.JoinedUsers[joinuser.Key] = joinuser.Value;
-                    */
+                    mentionPost = MergePosts(mentionPost, post);
                     await MakePost(mentionPost, parser);
                 }
             }
@@ -360,28 +351,7 @@ namespace PokemonGoRaidBot
 
             if (existing != null)
             {
-                MergePosts(existing, post);
-                /*
-                if (post.HasEndDate)
-                {
-                    existing.HasEndDate = true;
-                    existing.EndDate = post.EndDate;
-                }
-
-                if (string.IsNullOrEmpty(existing.Location)) existing.Location = post.Location;
-                if (!existing.LatLong.HasValue) existing.LatLong = post.LatLong;
-
-                //overwrite with new values
-                foreach(var user in post.JoinedUsers)
-                    existing.JoinedUsers[user.Key] = user.Value;
-
-                existing.Responses.AddRange(post.Responses);
-
-                foreach(var joinuser in post.JoinedUsers)
-                {
-                    if(!existing.JoinedUsers.ContainsKey(joinuser.Key) || existing.JoinedUsers[joinuser.Key] == 1)
-                        existing.JoinedUsers[joinuser.Key] = joinuser.Value;
-                }*/
+                existing = MergePosts(existing, post);
 
                 return existing;
             }
