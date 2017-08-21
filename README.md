@@ -5,7 +5,7 @@
 
 - It identifies responses to a raid post and includes the discussion on the configured channel's raid post thread as well.  It also parses any time strings in the user's response and outputs the actual time (currently only in MST but will soon make it configurable)
 
-![Pokemon Go Raid Bot in action](http://i.imgur.com/M0MF0Vn.png)
+![Pokemon Go Raid Bot in action](http://i.imgur.com/6iqfkcN.png)
 
 - When multiple responses occur, the number of respondants will display instead of the 'posted by' user.
 
