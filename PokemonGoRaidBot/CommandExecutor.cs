@@ -108,6 +108,7 @@ namespace PokemonGoRaidBot
         }
         
         [RaidBotCommand("uj")]
+        [RaidBotCommand("un")]
         [RaidBotCommand("unjoin")]
         private async Task UnJoin()
         {
