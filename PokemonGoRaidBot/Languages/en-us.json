@@ -50,6 +50,7 @@
     "helpTop": "This bot parses discord chat messages to see if a raid is being mentioned.  If a raid is found, it will post to a specific channel, by default \"{0}\".  Channels can be configured to pin the raid instead of posting it to the specific channel.",
     "helpRaidTop": "Posting a raid in chat will cause this bot to either post the raid into a specific channel, or pin it in the current channel.",
     "helpCommands": "Commands",
+    "helpAdminCommands": "Admin Commands",
     "helpJoin": "Joins the specified number of people to the specified raid Id. Overwrites any previous values.",
     "helpUnJoin": "Removes your join information from the raid.",
     "helpInfo": "Displays information about the selected raid, or all of the raids above rank 3.  Information was taken from https://pokemongo.gamepress.gg.",
