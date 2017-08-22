@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Reflection;
 using PokemonGoRaidBot.Parsing;
+using Discord;
 
 namespace PokemonGoRaidBot
 {
@@ -105,15 +106,12 @@ namespace PokemonGoRaidBot
             if (Command.Length > 1 && Command[1].Length > 2)
             {
                 var info = Parser.ParsePokemon(Command[1], Config, Guild.Id);
-                var response = "";
 
                 if (info != null) {
-                    response += "```" + Parser.MakeInfoLine(info, Config, Guild.Id) + "```";
-                    response += string.Format(Config.LinkFormat, info.Id);
+                    var message = "```css" + Parser.MakeInfoLine(info, Config, Guild.Id) + "```" + string.Format(Config.LinkFormat, info.Id);
+                    await Message.Channel.SendMessageAsync(message);
                 } else
-                    response += "```" + string.Format(Parser.Language.Formats["commandPokemonNotFound"], Command[1]) + "```";//$"'{Command[1]}' did not match any raid boss names or aliases.";
-
-                await Message.Channel.SendMessageAsync(response);
+                    await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPokemonNotFound"], Command[1]));//$"'{Command[1]}' did not match any raid boss names or aliases.";
             }
             else
             {
@@ -129,11 +127,11 @@ namespace PokemonGoRaidBot
                     list = list.Where(x => x.Tier == tierCommand);
                 }
 
-                var orderedList = list.OrderByDescending(x => x.Id).OrderByDescending(x => x.Tier);
+                var orderedList = list.OrderByDescending(x => x.Id).OrderBy(x => x.CatchRate);
 
 
                 var maxBossLength = orderedList.Select(x => x.BossNameFormatted.Length).Max();
-                strings.Add("```");
+                strings.Add("");
                 foreach (var info in orderedList)
                 {
                     var lineStr = Parser.MakeInfoLine(info, Config, Guild.Id, maxBossLength);
@@ -142,16 +140,28 @@ namespace PokemonGoRaidBot
                         strings[strInd] += lineStr;
                     else
                     {
-                        strings[strInd] += "```";
-                        strings.Add("```" + lineStr);
+                        //strings[strInd] += "```";
+                        strings.Add(lineStr);
                         strInd++;
                     }
 
                 }
-                strings[strInd] += "```";
+
                 foreach (var str in strings)
-                    await Message.Channel.SendMessageAsync(str);
+                    await Handler.MakeCommandMessage(Message.Channel, "css" + str);// Message.Channel.SendMessageAsync(str);
             }
+        }
+
+        [RaidBotCommand("test")]
+        private async Task Test()
+        {
+            var list = Config.PokemonInfoList.Where(x => x.CatchRate > 0);
+            var orderedList = list.OrderByDescending(x => x.Id).OrderByDescending(x => x.Tier);
+
+
+            var builder = new EmbedBuilder();
+            builder.Url = "https://www.google.com";
+            await Message.Channel.SendMessageAsync("", false, builder);
         }
 
         [RaidBotCommand("m")]
@@ -307,8 +317,7 @@ namespace PokemonGoRaidBot
                     
             await Handler.MakeCommandMessage(Message.Channel, aresp);
         }
-
-
+        
         [RaidBotCommand("pinall")]
         private async Task PinAll()
         {

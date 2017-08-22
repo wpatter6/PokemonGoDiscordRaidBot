@@ -549,11 +549,11 @@ namespace PokemonGoRaidBot.Parsing
                 info.BossNameFormatted,
                 new String(' ', padding),
                 info.Tier, 
-                info.BossCP, 
-                info.MinCP, 
-                info.MaxCP,
+                info.BossCP.ToString() + (info.BossCP < 9999 ? " " : ""), 
+                info.MinCP.ToString() + (info.MinCP < 999 ? " " : ""), 
+                info.MaxCP.ToString() + (info.MaxCP < 999 ? " " : ""),
                 info.CatchRate * 100,
-                allAliases.Count() == 0 ? "" : Language.Strings["aliases"] + string.Join(",", allAliases)
+                allAliases.Count() == 0 ? "" : Language.Strings["aliases"] + ": " + string.Join(",", allAliases)
                 );
         }
         /// <summary>

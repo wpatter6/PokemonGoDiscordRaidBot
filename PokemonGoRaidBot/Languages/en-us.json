@@ -20,7 +20,7 @@
     "nonAlphaNumeric": "\\W|_"
   },
   "formats": {
-    "infoLine": "\n{0}:{1}Tier={2} BossCP={3:#,##0} MinCP={4:#,##0} MaxCP={5:#,##0} CatchRate={6}%{7}", //shown for !info command
+    "infoLine": "\n{0}: {1}Tier:{2} BossCP:{3} MaxCP:{5} CatchRate:{6}% {7}", //shown for !info command
     "postHeader": "`[{0}]`__**{1}**__ in <#{2}>{3}{4}\n{5}{6}",
     "postLocation": " at **{0}**",
     "postEnds": ", ends *{0:h:mmtt}*",

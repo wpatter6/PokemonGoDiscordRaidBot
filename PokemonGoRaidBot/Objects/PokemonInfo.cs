@@ -19,7 +19,8 @@ namespace PokemonGoRaidBot.Objects
         {
             get
             {
-                return string.Format("#{0} {1}", Id, Name);
+                var spaces = new string(' ', 4 - Id.ToString().Length);
+                return string.Format("#{0}{1}{2}", Id, spaces, Name);
             }
         }
     }
