@@ -19,11 +19,11 @@
 ## How to install:
 1. Get the zip file for your operating system from the `Releases` folder, either by downloading it directly or building using the Build instructions.
 1. Extract the package and run the executable.  It will ask for the following values:
-  1. Discord bot token.  Copy this from the bot you created at [here](https://discordapp.com/developers/applications/me)
-  1. Google API key to use for location geocoding.
-  1. Command Prefix will be the prefix for the below commands (ex: "!")
-  1. Default output channel should be the channel name from your discord server that the bot should post into.
-  1. These values will be stored in the `configuration\config.json` file.  If you wish to change them in the future, you can do so in this file, or delete it and re-enter them the next time you run the bot.  If you edit the json directly, you will need to close and restart the bot for the changes to take effect.
+    1. Discord bot token.  Copy this from the bot you created [here](https://discordapp.com/developers/applications/me)
+    1. Google API key to use for location geocoding.
+    1. Command Prefix will be the prefix for the below commands (ex: "!")
+    1. Default output channel should be the channel name from your discord server that the bot should post into.
+    1. These values will be stored in the `configuration\config.json` file.  If you wish to change them in the future, you can do so in this file, or delete it and re-enter them the next time you run the bot.  If you edit the json directly, you will need to close and restart the bot for the changes to take effect.
 
 ## How to Build:
 1. Download the full repository.
