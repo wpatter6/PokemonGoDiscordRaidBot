@@ -37,6 +37,7 @@
 <hr/>
 
 ## Bot Commands:
+*Parenthesis indicate shorthand version of command*
 * `!(j)oin [id] [number]` Joins the specified number of people to the specified raid Id. Overwrites any previous values.
 * `!(un)join [id]` Removes your join information from the raid.
 * `!(i)nfo [name]` Displays information about the selected raid, or all of the raids if [name] is blank.  Information was taken from https://pokemongo.gamepress.gg.
