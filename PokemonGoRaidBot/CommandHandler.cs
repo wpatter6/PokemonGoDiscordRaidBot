@@ -64,42 +64,45 @@ namespace PokemonGoRaidBot
                     return;
 
                 var guild = ((SocketGuildChannel)message.Channel).Guild;
-
-                ISocketMessageChannel outputchannel = null;
-                var pin = false;
-
-                if (Config.GetGuildConfig(guild.Id).PinChannels.Contains(message.Channel.Id))
-                {
-                    pin = true;
-                    //outputchannel = message.Channel;
-                }
-
                 var guildConfig = Config.GetGuildConfig(guild.Id);
 
+                ISocketMessageChannel outputchannel = null;
+                var pin = guildConfig.PinChannels.Contains(message.Channel.Id);
+
+                //get output channel
                 if (guildConfig.OutputChannelId.HasValue)
                     outputchannel = (ISocketMessageChannel)guild.Channels.FirstOrDefault(x => x.Id == guildConfig.OutputChannelId.Value);
                 else
                     outputchannel = (ISocketMessageChannel)guild.Channels.FirstOrDefault(x => x.Name == Config.OutputChannel);
 
                 var context = new SocketCommandContext(bot, message);
-
+                //get configured guild language or default "en-us"
                 var lang = guildConfig.Language ?? "en-us";
+                //timezone of the bot machine
                 var botTimezone = TimeZoneInfo.Local.GetUtcOffset(DateTime.Now).Hours - (TimeZoneInfo.Local.IsDaylightSavingTime(DateTime.Now) ? 1 : 0);
+                //get configured timezone
                 var serverTimezone = guildConfig.Timezone ?? botTimezone;
 
                 var parser = new MessageParser(lang, serverTimezone - botTimezone);
 
+                var doPost = (outputchannel != null || pin) && !guildConfig.MuteChannels.Contains(message.Channel.Id);
+
                 var argPos = 0;
+
+                //begin parsing/execution
+                //Someone is issuing a command, respond in their channel
                 if (message.HasStringPrefix(Config.Prefix, ref argPos))
-                {//Someone is issuing a command, respond in their channel
+                {
                     await DoCommand(message, parser);
                 }
-                else if ((outputchannel != null || pin) && message.MentionedUsers.Count() > 0)
-                {//possibly a response to someone who posted a raid
+                //possibly a response to someone who posted a raid
+                else if (doPost && message.MentionedUsers.Count() > 0)
+                {
                     await DoResponse(message, parser);
                 }
-                else if (outputchannel != null || pin)
-                {//try to see if a raid was posted
+                //try to see if a raid was posted
+                else if (doPost)
+                {
                     await DoPost(message, parser, outputchannel, pin);
                 }
             }
@@ -166,7 +169,6 @@ namespace PokemonGoRaidBot
                         }
                     }
                 }
-
             }
             Config.Save();
             await Logger.Log(new LogMessage(LogSeverity.Debug, "handler", string.Format("deleted:{0}; remaining:{1}", deleted, remaining)));
@@ -369,9 +371,7 @@ namespace PokemonGoRaidBot
                 post1.EndDate = post2.EndDate;
             }
 
-            if (string.IsNullOrEmpty(post1.Location) 
-                || (!post1.LatLong.HasValue && post2.LatLong.HasValue) 
-                || (post1.Location.Length < post2.Location.Length && post2.LatLong.HasValue))
+            if (string.IsNullOrEmpty(post1.Location) && post2.LatLong.HasValue)//only merge location if first is blank and second has lat long
             {
                 post1.Location = post2.Location;
                 post1.LatLong = post2.LatLong;

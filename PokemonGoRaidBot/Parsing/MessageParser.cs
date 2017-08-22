@@ -18,7 +18,7 @@ namespace PokemonGoRaidBot.Parsing
         private static int colorIndex = 0;
 
         public ParserLanguage Language;
-        private static string[] discordColors = new string[] { "css", "brainfuck", "fix", "apache", "" };
+        private static string[] discordColors = new string[] { "css", "fix", "apache", "" };
         private const string googleGeocodeApiUrl = "https://maps.googleapis.com/maps/api/geocode/json?address={0}&key={1}";
 
         private const int latLongComparisonMaxMeters = 30;
@@ -147,10 +147,12 @@ namespace PokemonGoRaidBot.Parsing
                 }
                 //the word was not matched, add it to the cleaned array to check for location
 
-                if (Regex.IsMatch(word, "^at$", RegexOptions.IgnoreCase)) isActualTime = true;
+                if (Language.RegularExpressions["atAliases"].IsMatch(word)) isActualTime = true;
 
-                unmatchedWords.Add(word);
+                unmatchedWords.Add(Language.RegularExpressions["nonAlphaNumeric"].Replace(word, ""));
             }
+
+            var unmatchedString = string.Join(" ", unmatchedWords.ToArray());
 
             //post was invalidated
             if (nopost) result.PokemonId = default(int);
@@ -158,18 +160,19 @@ namespace PokemonGoRaidBot.Parsing
             if (timespan.Ticks > 0)
             {
                 var dt = result.PostDate + timespan;
+                dt = dt.AddSeconds(dt.Second * -1);//make seconds "0"
 
-                if(!isActualTime)
+                if(!isActualTime)//add actual time to end of string for message thread
                     result.Responses[0].Content += string.Format(" ({0:h:mmtt})", dt.AddHours(timeOffset));
-
-                if (!Regex.IsMatch(messageString, @"\b((there|arrive) in|away|my way|omw|out)\b", RegexOptions.IgnoreCase))
+                
+                var joinReg = Language.CombineRegex("joinEnd", "joinStart", "joinMe");
+                if (!(joinReg.IsMatch(messageString) && !joinReg.IsMatch(unmatchedString)))//if it matches the full string but not the cleaned, we know the timespan is not remaining time
                 {
                     result.EndDate = dt;
                     result.HasEndDate = true;
                 }
             }
 
-            var unmatchedString = string.Join(" ", unmatchedWords.ToArray());
             var newUnmatchedString = "";
 
             var joinCount = ParseJoinedUsersCount(unmatchedString, out newUnmatchedString);
@@ -231,7 +234,7 @@ namespace PokemonGoRaidBot.Parsing
                 if(part.Equals("p", StringComparison.OrdinalIgnoreCase))
                     hour += 12;
 
-                var postedDate = DateTime.Today.Add(TimeSpan.Parse(string.Format("{0}:{1}", hour, minute + 1)));
+                var postedDate = DateTime.Today.Add(TimeSpan.Parse(string.Format("{0}:{1}", hour, minute + 1))).AddHours(timeOffset * -1);//subtract offset to convert to bot timezone
                 isActualTime = true;
                 return new TimeSpan(postedDate.Ticks - DateTime.Now.Ticks);
             }
@@ -460,23 +463,24 @@ namespace PokemonGoRaidBot.Parsing
         public string[] GetFullHelpString(BotConfig config, bool admin)
         {
             var result = new List<string>();
-            var helpmessage = string.Format(string.Format("```{0}\n\n", Language.Strings["helpTop"]), config.OutputChannel);
+            var helpheader = string.Format(string.Format("```\n{0}\n```", Language.Strings["helpTop"]), config.OutputChannel);
 
             if (!admin)
-                helpmessage = string.Format("```{0}\n\n", Language.Strings["helpRaidTop"]);
+                helpheader = string.Format("```\n{0}\n```", Language.Strings["helpRaidTop"]);
 
-            helpmessage += string.Format("``````css\n       #{0}:\n", Language.Strings["helpCommands"]);
+            result.Add(helpheader);
+
+            var helpmessage = string.Format("       #{0}:\n", Language.Strings["helpCommands"]);
             helpmessage += string.Format("  {0}(j)oin [id] [number] - {1}\n", config.Prefix, Language.Strings["helpJoin"]);
             helpmessage += string.Format("  {0}(un)join [id] - {1}\n", config.Prefix, Language.Strings["helpUnJoin"]);
             helpmessage += string.Format("  {0}(i)nfo [name] - {1}\n", config.Prefix, Language.Strings["helpInfo"]);
-            helpmessage += string.Format("  {0}(d)elete [id] - *{1}\n", config.Prefix, Language.Strings["helpDelete"]);
+            helpmessage += string.Format("  {0}(d)elete [id] - {1}\n", config.Prefix, Language.Strings["helpDelete"]);
             helpmessage += string.Format("  {0}(m)erge [id1] [id2] - *{1}\n", config.Prefix, Language.Strings["helpMerge"]);
             helpmessage += string.Format("  {0}(h)elp - {1}\n", config.Prefix, Language.Strings["helpHelp"]);
             helpmessage += string.Format("       (){0}\n", Language.Strings["helpParenthesis"]);
             if (admin)
             {
-                result.Add(helpmessage + "```");//getting too long! 2000 char max
-                helpmessage = string.Format("```css\n       #{0}:\n", Language.Strings["helpAdminCommands"]);
+                helpmessage += string.Format("       #{0}:\n", Language.Strings["helpAdminCommands"]);
                 helpmessage += string.Format(string.Format("  {0}channel [name] - {1}\n", config.Prefix, Language.Strings["helpChannel"]), config.OutputChannel);
                 helpmessage += string.Format("  {0}nochannel - {1}\n", config.Prefix, Language.Strings["helpNoChannel"]);
                 helpmessage += string.Format("  {0}alias [pokemon] [alias] - {1}\n", config.Prefix, Language.Strings["helpAlias"]);
@@ -485,13 +489,44 @@ namespace PokemonGoRaidBot.Parsing
                 helpmessage += string.Format("  {0}unpin [channel name] - {1}\n", config.Prefix, Language.Strings["helpUnPin"]);
                 helpmessage += string.Format("  {0}pinall - {1}\n", config.Prefix, Language.Strings["helpPinAll"]);
                 helpmessage += string.Format("  {0}unpinall - {1}\n", config.Prefix, Language.Strings["helpUnPinAll"]);
+                helpmessage += string.Format("  {0}pinlist - {1}\n", config.Prefix, Language.Strings["helpPinList"]);
+                helpmessage += string.Format("  {0}mute [channel name] - {1}\n", config.Prefix, Language.Strings["helpMute"]);
+                helpmessage += string.Format("  {0}unmute [channel name] - {1}\n", config.Prefix, Language.Strings["helpUnMute"]);
+                helpmessage += string.Format("  {0}muteall - {1}\n", config.Prefix, Language.Strings["helpMuteAll"]);
+                helpmessage += string.Format("  {0}unmuteall - {1}\n", config.Prefix, Language.Strings["helpUnMuteAll"]);
+                helpmessage += string.Format("  {0}mutelist - {1}\n", config.Prefix, Language.Strings["helpMuteList"]);
                 helpmessage += string.Format("  {0}timezone [gmt offset] - {1}\n", config.Prefix, Language.Strings["helpTimezone"]);
                 helpmessage += string.Format("  {0}language [language] - {1}\n", config.Prefix, Language.Strings["helpLanguage"]);
                 helpmessage += string.Format("  {0}city [city] - {1}\n", config.Prefix, Language.Strings["helpCity"]);
                 helpmessage += string.Format("  {0}channelcity [channel name] [city] - {1}\n", config.Prefix, Language.Strings["helpChannelCity"]);
             }
-            helpmessage += "```";
-            result.Add(helpmessage);
+            if (helpmessage.Length > 1990)//2000 is max, formatting strings add more
+            {
+                var length = 0;
+                var helpmessages = new List<string>();
+                var helpstring = "```css";
+                var helpcommands = new List<string>(Regex.Split(helpmessage, @"\n"));
+
+
+                foreach (var cmd in helpcommands)
+                {
+                    length += cmd.Length + 2;
+                    if (length < 1990)
+                    {
+                        helpstring += "\n" + cmd;
+                    }
+                    else
+                    {
+                        helpmessages.Add(helpstring + "```");
+                        length = 0;
+                        helpstring = "```css";
+                    }
+                }
+                result.AddRange(helpmessages);
+            }
+            else
+                result.Add($"```css{helpmessage}\n```");
+
             return result.ToArray();
         }
         /// <summary>

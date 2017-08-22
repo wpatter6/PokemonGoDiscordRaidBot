@@ -3,22 +3,24 @@
     "hourAliases": "^(h|hr|hours?)$",
     "minuteAliases": "^(m|mi|min|mins|minutes?)$",
     "aAliases": "^(an?)$",
+    "atAliases": "^(at)$",
     "garbage": "\\b(seen|around|raids?|much|not?|i've|ends?|until|if|or|who|what|when|where|why|how)\\b", //meaningless words that clutter things up and are unlikely to be part of location strings
     "locationCrossStreets": "(([a-zA-Z0-9]* ?[a-zA-Z0-9]+) (\\&|and) ([a-zA-Z0-9]+ ?[a-zA-Z0-9]*))", //Cross streets regex, like 12th and Broadway
     "locationAt": "at ([a-zA-Z0-9 ]*)", //indicates location using word "at"
     "locationLandmark": "([a-zA-Z0-9' ]*\\b(park|school|church|museum|mural|statue|building) ?[a-zA-Z]*\\b?)", //words coming after a landmark name
     "locationExcludeWords": "\\b(at)\\b", //remove these from parsed locations
     "timeActual": "([0-9]{1,2}):?([0-9]{2})?(a|p)", //match where numbers indicate an actual time
-    "timeSpan": "([0-9]):([0-9]{2})", //match where numbers indicate hours and minutes
+    "timeSpan": "(1?[0-9]):([0-9]{2})", //match where numbers indicate hours and minutes
     "timeHour": "([0-2]{1})h", //match where numbers = hour
     "timeMinute": "([0-9]{1,2})m", //match where numbers = minutes
-    "joinEnd": "([0-9]{1,2}) (are|going|people|here|on (the|our)|coming|(just)? arrived|of us)", //indicates the number of people will be joining, with match words coming after #
+    "joinEnd": "([0-9]{1,2}) (join(ed|ing)are|going|people|here|on (the|our)|coming|(just)? arriv(ed|ing)|of us)", //indicates the number of people will be joining, with match words coming after #
     "joinStart": "(have|are|there's|we're) ([0-9]{1,2})", //indicates the number of people will be joining, with match words coming before #
-    "joinMe": "(i'm)?\\b(omw|my way|coming)", //indicates the current user is joining
-    "pokemonInvalidators": "^(any)$" //if this comes before pokemon name, they're asking if any exist
+    "joinMe": "(i'?(m||ll|| am))?\\b(omw|my way|coming|join(ing)?)", //indicates the current user is joining
+    "pokemonInvalidators": "^(any)$", //if this comes before pokemon name, they're asking if any exist,
+    "nonAlphaNumeric": "\\W|_"
   },
   "formats": {
-    "infoLine": "\n{0}:{1}Tier={2} BossCP={3:#,##0} MinCP={4:#,##0} MaxCP={5:#,##0} CatchRate={6}%{7}",//shown for !info command
+    "infoLine": "\n{0}:{1}Tier={2} BossCP={3:#,##0} MinCP={4:#,##0} MaxCP={5:#,##0} CatchRate={6}%{7}", //shown for !info command
     "postHeader": "`[{0}]`__**{1}**__ in <#{2}>{3}{4}\n{5}{6}",
     "postLocation": " at **{0}**",
     "postEnds": ", ends *{0:h:mmtt}*",
@@ -38,32 +40,44 @@
     "commandPostNotFound": "Raid post with Id \"{0}\" not found.",
     "commandPinSuccess": "{0} added to Pin Channels.",
     "commandPinAlreadyDone": "{0} is already in Pin Channels.",
-    "commandGuildNoChannel": "{0} does not contain a channel named \"{1}\".",
-    "commandChannelNotPinned": "{0} has not been added to Pin Channels.",
     "commandUnPinSuccess": "{0} removed from Pin Channels.",
+    "commandUnPinAlreadyDone": "{0} has not been added to Pin Channels.",
+    "commandPinListHeader": "Pinned Channels: {0}",
+    "commandMuteSuccess": "{0} added to Muted Channels.",
+    "commandMuteAlreadyDone": "{0} is already in Muted Channels.",
+    "commandUnMuteSuccess": "{0} removed from Muted Channels.",
+    "commandUnMuteAlreadyDone": "{0} removed from Muted Channels.",
+    "commandMuteListHeader": "Muted Channels: {0}",
+    "commandGuildNoChannel": "{0} does not contain a channel named \"{1}\".",
     "commandTimezoneSuccess": "Time zone for {0} changed to GMT{1}.",
     "commandLanguageSuccess": "Language for {0} changed to \"{1}\".  If language config is not available to the bot, \"en-us\" will be used.",
-    "commandCitySuccess":  "City for {0} changed to \"{1}\"."
+    "commandCitySuccess": "City for {0} changed to \"{1}\"."
   },
   "strings": {
     "aliases": "Aliases",
     "helpTop": "This bot parses discord chat messages to see if a raid is being mentioned.  If a raid is found, it will post to a specific channel, by default \"{0}\".  Channels can be configured to pin the raid instead of posting it to the specific channel.",
     "helpRaidTop": "Posting a raid in chat will cause this bot to either post the raid into a specific channel, or pin it in the current channel.",
     "helpCommands": "Commands",
-    "helpAdminCommands": "Admin Commands",
+    "helpAdminCommands": "AdminCommands",
     "helpJoin": "Joins the specified number of people to the specified raid Id. Overwrites any previous values.",
     "helpUnJoin": "Removes your join information from the raid.",
-    "helpInfo": "Displays information about the selected raid, or all of the raids above rank 3.  Information was taken from https://pokemongo.gamepress.gg.",
+    "helpInfo": "Displays information about the selected raid, or all of the raids if [name] is not entered.",
     "helpChannel": "Changes the bot output channel on this server to the value passed in for [name].  If blank, the override is removed and the value \"{0}\" is used.",
     "helpNoChannel": "Prevents bot from posting in any specific channel.  Pin functionality can still be used in specific channels.",
     "helpAlias": "Adds an alias for a pokemon.",
     "helpRemoveAlias": "Removes an alias for a pokemon.",
-    "helpDelete": "Deletes a raid post with the corresponding Id.",
-    "helpMerge": "Merges two raid posts together.",
+    "helpDelete": "Deletes a raid post with the corresponding Id.  Can only be done by admins or the poster of the raid.",
+    "helpMerge": "Merges the second raid post Id into the first.  Can only be done by admins or the poster of the second raid.",
     "helpPin": "Raids posted in the specified channel will be posted and pinned in the channel itself.  Bot requires \"Manage Messages\" role permission to pin.",
     "helpUnPin": "Removes channel from pin channels.",
     "helpPinAll": "Adds all channels on the server to pin channels.",
     "helpUnPinAll": "Removes all channels on the server from pin channels.",
+    "helpPinList": "Lists all channels which will pin their raids.",
+    "helpMute": "Mutes the bot from using messages from the selected channel to create raids.  Commands can still be used.",
+    "helpUnMute": "Removes the selected channel from the mute list.",
+    "helpMuteAll": "Mutes all channels",
+    "helpUnMuteAll": "Un Mutes all channels.",
+    "helpMuteList": "Lists all channels that are muted.",
     "helpTimezone": "Will set the GMT offset of the discord server [gmt offset] for all time output.",
     "helpLanguage": "Will set the language of the server.  A language file with the matching name must exist in bot config.  Default is \"en-us\"",
     "helpCity": "Will set the city of the current server.  This value gets appended to the location when using the Google geocoding API for better accuracy.",
@@ -74,7 +88,11 @@
     "commandNoAccess": "You do not have the necessary permissions to change this setting.  You must be a server moderator or administrator to make this change.",
     "commandNoChannelSuccess": "Bot will no longer output to a single channel.  Use !channel to undo this.",
     "commandNoPostAccess": "Only the creator of the post, server mods, or administrators can modify raid posts.",
-    "commandUnPinAllSuccess": "All channels removed from Pin Channels.",
-    "commandPinAllSuccess": "All channels added to Pin Channels."
+    "commandUnPinAllSuccess": "All channels removed from pin list.",
+    "commandPinAllSuccess": "All channels added to pin list.",
+    "commandPinListNone": "No channels in Pin List.",
+    "commandMuteListNone": "No channels in Mute List.",
+    "commandUnMuteAllSuccess": "All channels removed from mute list.",
+    "commandMuteAllSuccess": "All channels added to mute list."
   }
 }

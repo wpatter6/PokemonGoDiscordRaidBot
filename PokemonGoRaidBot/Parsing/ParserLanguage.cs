@@ -42,6 +42,11 @@ namespace PokemonGoRaidBot.Parsing
             }
         }
 
+        public Regex CombineRegex(params string[] keys)
+        {
+            return new Regex(string.Join("|", keys), RegexOptions.IgnoreCase);
+        }
+
         private Dictionary<string, string> _formats;
         public Dictionary<string, string> Formats
         {
