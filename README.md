@@ -11,7 +11,7 @@
 *can be done without installing, requires Manage Server role permission*
 1. Join your bot to the server ([help](https://stackoverflow.com/a/37743722/711674)), or if not installing the program, you can join mine using [this link](https://discordapp.com/oauth2/authorize?&client_id=347493806695776256&scope=bot&permissions=0).
 1. Bot requires role permissions of at least "Manage Messages"
-1. Configure which channel is the output channel, and which channels should have pin behavior using !channel and !pin or !pinall commands.
+1. Configure which channel is the output channel using !channel command (or none with !nochannel), and which channels should have pin behavior !pin or !pinall commands.
 1. Configure the timezone of the discord server using the !timezone commands
 1. Configure the city of the discord server using the !city and !channelcity commands.  This greatly improves google maps geolocation accuracy.
 1. Configure the language of the discord server (only "en-us" currently).
