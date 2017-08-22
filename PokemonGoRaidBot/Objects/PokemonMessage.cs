@@ -11,7 +11,7 @@ namespace PokemonGoRaidBot.Objects
             Content = message;
             MessageDate = date;
         }
-        //public string Username;
+
         public ulong UserId;
         public string Username;
         public string Content;

@@ -56,7 +56,6 @@ namespace PokemonGoRaidBot.Parsing
             var messageString = message.Content;
 
             var words = messageString.Split(' ');
-            //if (words.Length < 2) return null;
 
             var timespan = new TimeSpan();
             var i = 0;
@@ -590,8 +589,6 @@ namespace PokemonGoRaidBot.Parsing
         public string[] MakePostStrings(PokemonRaidPost post)
         {
             var response = MakePostHeader(post);
-
-            //if (post.Pin) return new string[] { response };
 
             return MakeResponseStrings(post, response);
         }

@@ -25,7 +25,6 @@ namespace PokemonGoRaidBot
 
         public RaidLogger Logger;
         public readonly BotConfig Config;
-        //public readonly List<PokemonRaidPost> Posts;
 
         Dictionary<ulong, ISocketMessageChannel> channelCache;
 
@@ -36,11 +35,9 @@ namespace PokemonGoRaidBot
 
             Logger = logger;
             Config = botconfig;
-
-            //Send user message to get handled
+            
             bot.MessageReceived += HandleCommand;
             commands = map.GetService<CommandService>();
-            //Posts = new List<PokemonRaidPost>();
             channelCache = new Dictionary<ulong, ISocketMessageChannel>();
         }
         
@@ -234,6 +231,7 @@ namespace PokemonGoRaidBot
                 post.OutputChannelId = outputchannel?.Id ?? 0;
                 post.Pin = pin;
                 post.GuildId = ((SocketGuildChannel)message.Channel).Guild.Id;
+                post.LastMessageDate = DateTime.Now;
                 post = AddPost(post, parser);
 
                 if (post.PokemonId != default(int))
@@ -333,13 +331,16 @@ namespace PokemonGoRaidBot
             //if location matches, must be same.
             var existing = channelPosts.FirstOrDefault(x => parser.CompareLocationStrings(x.Location, post.Location));
 
+            //Lat long comparison, within 30 meters is treated as same
             if(existing == null && post.LatLong.HasValue && channelPosts.Where(x => x.LatLong.HasValue).Count() > 0)
                 existing = channelPosts.Where(x => x.LatLong.HasValue && x.PokemonId == (post.PokemonId > 0 ? post.PokemonId : x.PokemonId))
                     .FirstOrDefault(x => parser.CompareLocationLatLong(x.LatLong.Value, post.LatLong.Value));
 
+            //Final fall through, gets latest post 
             if (existing == null)
                 existing = channelPosts
                     .Where(x => string.IsNullOrEmpty(x.Location) || string.IsNullOrEmpty(post.Location))//either location must be unidentified at this point
+                    .OrderByDescending(x => x.LastMessageDate)
                     .OrderBy(x => x.PokemonId == post.PokemonId ? 0 : 1)//pokemon name match takes priority if the user responded to multiple raids in the channel
                     .FirstOrDefault(x =>
                         x.FromChannelId == post.FromChannelId//Posted in the same channel
@@ -376,6 +377,8 @@ namespace PokemonGoRaidBot
                 post1.Location = post2.Location;
                 post1.LatLong = post2.LatLong;
             }
+
+            post1.LastMessageDate = new DateTime(Math.Max(post1.LastMessageDate.Ticks, post2.LastMessageDate.Ticks));
 
             //overwrite with new values
             foreach (var user in post2.JoinedUsers)

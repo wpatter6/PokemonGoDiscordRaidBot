@@ -15,12 +15,7 @@ namespace PokemonGoRaidBot.Config
 
         public List<GuildConfig> GuildConfigs { get; set; }
 
-        //public Dictionary<ulong, ulong> ServerChannels { get; set; }
-        //public Dictionary<ulong, string> ServerLanguages { get; set; }
-        //public Dictionary<ulong, int> ServerTimezones { get; set; }
-
         public List<PokemonInfo> PokemonInfoList { get; set; }
-        //public List<ulong> PinChannels { get; set; }
 
         public string LinkFormat { get; set; }
 
@@ -58,15 +53,14 @@ namespace PokemonGoRaidBot.Config
             string file = Path.Combine(AppContext.BaseDirectory, dir);
             var result = JsonConvert.DeserializeObject<BotConfig>(File.ReadAllText(file));
 
-            /*Make sure all properties are populated*/
+            //Make sure all properties are populated
             if (result.PokemonInfoList == null) result.PokemonInfoList = GetDefaultPokemonInfoList();
+
             if (string.IsNullOrEmpty(result.OutputChannel)) result.OutputChannel = "raid-bot";
 
             if (string.IsNullOrEmpty(result.LinkFormat)) result.LinkFormat = "https://pokemongo.gamepress.gg/pokemon/{0}#raid-boss-counters";
 
             if (result.GuildConfigs == null) result.GuildConfigs = new List<GuildConfig>();
-
-            //if (result.PinChannels == null) result.PinChannels = new List<ulong>();
 
             result.Save();
             return result;

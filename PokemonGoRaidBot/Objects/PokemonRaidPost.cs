@@ -28,6 +28,8 @@ namespace PokemonGoRaidBot.Objects
 
         public DateTime EndDate;
 
+        public DateTime LastMessageDate;
+
         public int PokemonId;
 
         public string PokemonName;

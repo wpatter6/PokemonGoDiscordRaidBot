@@ -61,21 +61,18 @@ namespace PokemonGoRaidBot
                 Console.WriteLine("Please enter the following information to save into your configuration/config.json file");
 
                 Console.Write("Bot Token: ");
-                config.Token = Console.ReadLine();              // Read the bot token from console.
+                config.Token = Console.ReadLine();//Read the bot token from console.
 
-                Console.Write("Google Geocoding Api Key:");
-                config.GoogleApiKey = Console.ReadLine();
+                Console.Write("Google Geocoding Api Key: ");
+                config.GoogleApiKey = Console.ReadLine();//Read google API key from console
 
-                Console.Write("Bot Command Prefix (!): ");
-                config.Prefix = Console.ReadLine();
+                Console.Write("Bot Command Prefix (ex: !): ");
+                config.Prefix = Console.ReadLine();//Read the bot prefix from console.
 
-                Console.Write("Bot Default Output Channel Name:");
-                config.OutputChannel = Console.ReadLine();
+                Console.Write("Bot Default Output Channel Name: ");
+                config.OutputChannel = Console.ReadLine();//Read output channel name from console
 
-                //Console.Write("Bot Prefix: ");
-                config.Prefix = "!";// Console.ReadLine();              // Read the bot prefix from console.
-
-                config.Save();                                  // Save the new configuration object to file.
+                config.Save();//Save the new configuration object to file.
             }
             Console.WriteLine("Configuration has been loaded");
         }
