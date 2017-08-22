@@ -44,7 +44,6 @@
 * `!(d)elete [id]` Deletes a raid post with the corresponding Id.
 * `!(m)erge [id1] [id2]` Merges two raid posts together.
 * `!(h)elp` Shows help message.
-*Parenthesis indicate a shorthand version of the command*
 
 ## Admin Commands:
 *requires Manage Server role permission*
