@@ -29,25 +29,33 @@
   1. Configure the language of the discord server (only "en-us" currently).
 
 ## Bot Commands:
-* !join [id] [number] - Joins the specified number of people to the specified raid Id. Overwrites any previous values.
-* !unjoin [id] - Removes your join information from the raid.
-* !info [name] - Displays information about the selected raid, or all of the raids above rank 3.  Information was taken from https://pokemongo.gamepress.gg.
-* !channel [name] - *Changes the bot output channel on this server to the value passed in for [name].  If blank, the override is removed and the default value is used.
-* !nochannel - \*Prevents bot from posting in a specific channel. !pin functionality can still be used for specific channels.
-* !alias [pokemon] [alias] - \*Adds an alias for a pokemon.
-* !removealias [pokemon] [alias] - \*Removes an alias for a pokemon.
-* !delete [id] - \*Deletes a raid post with the corresponding Id.
-* !merge [id1] [id2] - \*Merges two raid posts together.
-* !pin [channel name] - \*Raids posted in the specified channel will be posted and pinned in the channel itself.
-* !unpin [channel name] - \*Removes channel from pin channels.
-* !pinall - \*Adds all channels on the server to pin channels.
-* !unpinall - \*Removes all channels on the server from pin channels.
-* !timezone [gmt offset] - \*Will set the GMT offset of the discord server [gmt offset] for all time output.
-* !language [language] - \*Will set the language of the server.  A language file with the matching name must exist in bot config.  Default is \"en-us\"
-* !city [name] - \*Will set the city of the current server.  This value gets appended to the location when using the Google geocoding API for better accuracy.
-* !channelcity [channel name] [city name] - \*Will set the city of the selected channel to be used in Google geocoding.
-* !help - Shows this message.
+* `!join [id] [number]` Joins the specified number of people to the specified raid Id. Overwrites any previous values.
+* `!unjoin [id]` Removes your join information from the raid.
+* `!info [name]` Displays information about the selected raid, or all of the raids if [name] is blank.  Information was taken from https://pokemongo.gamepress.gg.
+* `!delete [id]` Deletes a raid post with the corresponding Id.
+* `!merge [id1] [id2]` Merges two raid posts together.
+* `!help` Shows help message.
+
+## Admin Commands *Requires server admin or "Manage Server" role permission*:
+* `!channel [name]` Changes the bot output channel on this server to the value passed in for [name].  If blank, the override is removed and the default value is used.
+* `!nochannel` Prevents bot from posting in a specific channel. !pin functionality can still be used for specific channels.
+* `!alias [pokemon] [alias]` Adds an alias for a pokemon.
+* `!removealias [pokemon] [alias]` Removes an alias for a pokemon.
+* `!pin [channel name]` Raids posted in the specified channel will be posted and pinned in the channel itself.
+* `!unpin [channel name]` Removes channel from pin channels.
+* `!pinall` Adds all channels on the server to pin channels.
+* `!unpinall` Removes all channels on the server from pin channels.
+* `!pinlist` Lists all pin channels.
+* `!mute [channel name]` Raids posted in the specified channel will not be output or pinned, and will be ignored by the bot.
+* `!unmute [channel name]` Removes channel from mute channels.
+* `!muteall` Adds all channels on the server to mute channels.
+* `!unmuteall` Removes all channels on the server from mute channels.
+* `!mutelist` Lists all muted channels.
+* `!timezone [gmt offset]` Will set the GMT offset of the discord server [gmt offset] for all time output.
+* `!language [language]` Will set the language of the server.  A language file with the matching name must exist in bot config.  Default is \"en-us\"
+* `!city [name]` - Will set the city of the current server.  This value gets appended to the location when using the Google geocoding API for better accuracy.
+* `!channelcity [channel name] [city name]` Will set the city of the selected channel to be used in Google geocoding.
 
 ## How to make a new language:
 * Copy the `Languages/en-us.json` file, and modify the values in that file to translated versions.  This will require a basic knowledge of C# format strings and regular expressions.
-* Contact me with the new language file and I'll add it to the releases!
+* Contact me with the new language file and I'll add it to the release!
