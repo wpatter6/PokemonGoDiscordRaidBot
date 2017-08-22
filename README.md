@@ -1,11 +1,16 @@
 # PokemonGoRaidBot
+## What it does
 - This highly configurable discord bot will parse posts in a discord server and provide clean output to a configured channel on the discord server, and/or it can pin messages in the channel they were posted in.  It does not require the use of explicit commands, allowing users to post raids in chat like they normally do to create formatted raid post entries.
 
 ![Pokemon Go Raid Bot in action](http://i.imgur.com/6iqfkcN.png)
 
-- It identifies responses to a raid post and includes the discussion on the configured output channel's raid post thread as well.  It also parses any time strings in the user's response and outputs the actual time, with configurable GMT time zone.
+- Identifies the raid's location and is usually able to create a link to google maps for directions to the raid.
 
-- It determines the end time of the raid and removes its messages from the chat after the raid has ended.
+- Can tell if users are joining the raid, and how many.  Users can also use explicit commands to join or un-join a raid.
+
+- Identifies responses to a raid post and includes the discussion on the configured output channel's raid post thread as well.  It also parses any time strings in the user's response and outputs the actual time, with configurable GMT time zone.
+
+- Determines the end time of the raid and removes its messages from the chat after the raid has ended.
 
 ## How to configure in discord:
 *can be done without installing, requires Manage Server role permission*
@@ -32,16 +37,16 @@
 <hr/>
 
 ## Bot Commands:
+*Parenthesis indicate shorthand version of command*
 * `!(j)oin [id] [number]` Joins the specified number of people to the specified raid Id. Overwrites any previous values.
 * `!(un)join [id]` Removes your join information from the raid.
 * `!(i)nfo [name]` Displays information about the selected raid, or all of the raids if [name] is blank.  Information was taken from https://pokemongo.gamepress.gg.
 * `!(d)elete [id]` Deletes a raid post with the corresponding Id.
 * `!(m)erge [id1] [id2]` Merges two raid posts together.
 * `!(h)elp` Shows help message.
-*Parenthesis indicate a shorthand version of the command*
 
 ## Admin Commands:
-*requires Manage Server role permission**
+*requires Manage Server role permission*
 * `!channel [name]` Changes the bot output channel on this server to the value passed in for [name].  If blank, the override is removed and the default value is used.
 * `!nochannel` Prevents bot from posting in a specific channel. !pin functionality can still be used for specific channels.
 * `!alias [pokemon] [alias]` Adds an alias for a pokemon.
