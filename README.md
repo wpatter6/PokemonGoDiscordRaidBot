@@ -20,13 +20,14 @@
   1. Default output channel should be the channel name from your discord server that the bot should post into.
   1. These values will be stored in the `configuration\config.json` file.  If you wish to change them in the future, you can do so in this file, or delete it and re-enter them the next time you run the bot.  If you edit the json directly, you will need to close and restart the bot for the changes to take effect.
 
-## How to configure in discord, can be done without installing:
-  1. Join your bot to the server, or if not installing the program, you can join mine using [this link](https://discordapp.com/oauth2/authorize?&client_id=347493806695776256&scope=bot&permissions=0).
-  1. Bot requires role permissions of at least "Manage Messages"
-  1. Configure which channel is the output channel, and which channels should have pin behavior using !channel and !pin or !pinall commands.
-  1. Configure the timezone of the discord server using the !timezone commands
-  1. Configure the city of the discord server using the !city and !channelcity commands.  This greatly improves google maps geolocation accuracy.
-  1. Configure the language of the discord server (only "en-us" currently).
+## How to configure in discord:
+*can be done without installing, requires Manage Server Permission*
+1. Join your bot to the server, or if not installing the program, you can join mine using [this link](https://discordapp.com/oauth2/authorize?&client_id=347493806695776256&scope=bot&permissions=0).
+1. Bot requires role permissions of at least "Manage Messages"
+1. Configure which channel is the output channel, and which channels should have pin behavior using !channel and !pin or !pinall commands.
+1. Configure the timezone of the discord server using the !timezone commands
+1. Configure the city of the discord server using the !city and !channelcity commands.  This greatly improves google maps geolocation accuracy.
+1. Configure the language of the discord server (only "en-us" currently).
 
 ## Bot Commands:
 * `!join [id] [number]` Joins the specified number of people to the specified raid Id. Overwrites any previous values.
@@ -36,7 +37,8 @@
 * `!merge [id1] [id2]` Merges two raid posts together.
 * `!help` Shows help message.
 
-## Admin Commands *Requires server admin or "Manage Server" role permission*:
+## Admin Commands:
+*Requires server admin or "Manage Server" role permission*
 * `!channel [name]` Changes the bot output channel on this server to the value passed in for [name].  If blank, the override is removed and the default value is used.
 * `!nochannel` Prevents bot from posting in a specific channel. !pin functionality can still be used for specific channels.
 * `!alias [pokemon] [alias]` Adds an alias for a pokemon.
