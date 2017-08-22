@@ -1,18 +1,23 @@
 # PokemonGoRaidBot
-- This discord bot will parse posts in a discord guild and provide clean output to a configured channel on the discord server, and can also pin messages in the channel they were posted in.  It does not require explicit commands, and users can post like they normally do to create raid post entries.
+- This highly configurable discord bot will parse posts in a discord server and provide clean output to a configured channel on the discord server, and/or it can pin messages in the channel they were posted in.  It does not require the use of explicit commands, allowing users to post raids in chat like they normally do to create formatted raid post entries.
 
 ![Pokemon Go Raid Bot in action](http://i.imgur.com/6iqfkcN.png)
 
-- It identifies responses to a raid post and includes the discussion on the configured output channel's raid post thread as well.  It also parses any time strings in the user's response and outputs the actual time (currently only in MST but will soon make it configurable)
+- It identifies responses to a raid post and includes the discussion on the configured output channel's raid post thread as well.  It also parses any time strings in the user's response and outputs the actual time, with configurable GMT time zone.
 
-- It determines the end time of the raid and removes its messages from the output chat after the raid has ended.
+- It determines the end time of the raid and removes its messages from the chat after the raid has ended.
 
-## How to Build:
-1. Download the full repository.
-1. Run the publish.ps1 powershell script.  This will delete and re-create the `Releases` folder with zip files containing the builds for windows, ubuntu, and osx.
+## How to configure in discord:
+*can be done without installing, requires Manage Server role permission*
+1. Join your bot to the server ([help](https://stackoverflow.com/a/37743722/711674)), or if not installing the program, you can join mine using [this link](https://discordapp.com/oauth2/authorize?&client_id=347493806695776256&scope=bot&permissions=0).
+1. Bot requires role permissions of at least "Manage Messages"
+1. Configure which channel is the output channel, and which channels should have pin behavior using !channel and !pin or !pinall commands.
+1. Configure the timezone of the discord server using the !timezone commands
+1. Configure the city of the discord server using the !city and !channelcity commands.  This greatly improves google maps geolocation accuracy.
+1. Configure the language of the discord server (only "en-us" currently).
 
 ## How to install:
-1. Get the zip file for your operating system from the `Releases` folder, either by downloading it directly or building using the above  Build instructions.
+1. Get the zip file for your operating system from the `Releases` folder, either by downloading it directly or building using the Build instructions.
 1. Extract the package and run the executable.  It will ask for the following values:
   1. Discord bot token.  Copy this from the bot you created at [here](https://discordapp.com/developers/applications/me)
   1. Google API key to use for location geocoding.
@@ -20,22 +25,20 @@
   1. Default output channel should be the channel name from your discord server that the bot should post into.
   1. These values will be stored in the `configuration\config.json` file.  If you wish to change them in the future, you can do so in this file, or delete it and re-enter them the next time you run the bot.  If you edit the json directly, you will need to close and restart the bot for the changes to take effect.
 
-## How to configure in discord:
-*can be done without installing, requires Manage Server role permission*
-1. Join your bot to the server, or if not installing the program, you can join mine using [this link](https://discordapp.com/oauth2/authorize?&client_id=347493806695776256&scope=bot&permissions=0).
-1. Bot requires role permissions of at least "Manage Messages"
-1. Configure which channel is the output channel, and which channels should have pin behavior using !channel and !pin or !pinall commands.
-1. Configure the timezone of the discord server using the !timezone commands
-1. Configure the city of the discord server using the !city and !channelcity commands.  This greatly improves google maps geolocation accuracy.
-1. Configure the language of the discord server (only "en-us" currently).
+## How to Build:
+1. Download the full repository.
+1. Run the publish.ps1 powershell script.  This will delete and re-create the `Releases` folder with zip files containing the builds for windows, ubuntu, and osx.
+
+<hr/>
 
 ## Bot Commands:
-* `!join [id] [number]` Joins the specified number of people to the specified raid Id. Overwrites any previous values.
-* `!unjoin [id]` Removes your join information from the raid.
-* `!info [name]` Displays information about the selected raid, or all of the raids if [name] is blank.  Information was taken from https://pokemongo.gamepress.gg.
-* `!delete [id]` Deletes a raid post with the corresponding Id.
-* `!merge [id1] [id2]` Merges two raid posts together.
-* `!help` Shows help message.
+* `!(j)oin [id] [number]` Joins the specified number of people to the specified raid Id. Overwrites any previous values.
+* `!(un)join [id]` Removes your join information from the raid.
+* `!(i)nfo [name]` Displays information about the selected raid, or all of the raids if [name] is blank.  Information was taken from https://pokemongo.gamepress.gg.
+* `!(d)elete [id]` Deletes a raid post with the corresponding Id.
+* `!(m)erge [id1] [id2]` Merges two raid posts together.
+* `!(h)elp` Shows help message.
+*Parenthesis indicate a shorthand version of the command*
 
 ## Admin Commands:
 *requires Manage Server role permission**
