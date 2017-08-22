@@ -46,7 +46,7 @@
 *Parenthesis indicate a shorthand version of the command*
 
 ## Admin Commands:
-*requires Manage Server role permission**
+*requires Manage Server role permission*
 * `!channel [name]` Changes the bot output channel on this server to the value passed in for [name].  If blank, the override is removed and the default value is used.
 * `!nochannel` Prevents bot from posting in a specific channel. !pin functionality can still be used for specific channels.
 * `!alias [pokemon] [alias]` Adds an alias for a pokemon.
