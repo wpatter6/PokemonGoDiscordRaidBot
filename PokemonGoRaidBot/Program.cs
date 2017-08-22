@@ -28,13 +28,15 @@ namespace PokemonGoRaidBot
                 LogLevel = LogSeverity.Verbose,
             });
 
-            client.Log += Logger;
+            var logger = new RaidLogger();
+
+            client.Log += logger.Log;
             var config = BotConfig.Load();
             await client.LoginAsync(TokenType.Bot, config.Token);
             await client.StartAsync();
 
             var serviceProvider = ConfigureServices();
-            handler = new CommandHandler(serviceProvider, config);
+            handler = new CommandHandler(serviceProvider, config, logger);
             await handler.ConfigureAsync();
             
 
@@ -43,30 +45,7 @@ namespace PokemonGoRaidBot
             //Block this program untill it is closed
             await Task.Delay(-1);
         }
-        private static Task Logger(LogMessage lmsg)
-        {
-            var cc = Console.ForegroundColor;
-            switch (lmsg.Severity)
-            {
-                case LogSeverity.Critical:
-                case LogSeverity.Error:
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    break;
-                case LogSeverity.Warning:
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    break;
-                case LogSeverity.Info:
-                    Console.ForegroundColor = ConsoleColor.White;
-                    break;
-                case LogSeverity.Verbose:
-                case LogSeverity.Debug:
-                    Console.ForegroundColor = ConsoleColor.DarkGray;
-                    break;
-            }
-            Console.WriteLine($"{DateTime.Now} [{lmsg.Severity,8}] {lmsg.Source}: {lmsg.Message}");
-            Console.ForegroundColor = cc;
-            return Task.CompletedTask;
-        }
+        
 
         public static void EnsureBotConfigExists()
         {

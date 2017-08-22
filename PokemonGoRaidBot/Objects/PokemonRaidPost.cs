@@ -28,7 +28,9 @@ namespace PokemonGoRaidBot.Objects
 
         public DateTime EndDate;
 
-        public PokemonInfo Pokemon;
+        public int PokemonId;
+
+        public string PokemonName;
         
         public List<ulong> OutputMessageIds = new List<ulong>();
 
@@ -36,9 +38,11 @@ namespace PokemonGoRaidBot.Objects
 
         public Dictionary<ulong, int> JoinedUsers = new Dictionary<ulong, int>();
 
-        public ISocketMessageChannel FromChannel;
+        public ulong GuildId;
 
-        public ISocketMessageChannel OutputChannel;
+        public ulong FromChannelId;
+
+        public ulong OutputChannelId;
 
         public string UniqueId;
 

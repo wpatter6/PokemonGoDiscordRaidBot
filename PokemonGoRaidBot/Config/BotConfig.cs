@@ -20,7 +20,7 @@ namespace PokemonGoRaidBot.Config
         //public Dictionary<ulong, int> ServerTimezones { get; set; }
 
         public List<PokemonInfo> PokemonInfoList { get; set; }
-        public List<ulong> PinChannels { get; set; }
+        //public List<ulong> PinChannels { get; set; }
 
         public string LinkFormat { get; set; }
 
@@ -45,11 +45,6 @@ namespace PokemonGoRaidBot.Config
             Prefix = "!";
             Token = "";
             GuildConfigs = new List<GuildConfig>();
-            PinChannels = new List<ulong>();
-
-            //ServerChannels = new Dictionary<ulong, ulong>();
-            //ServerLanguages = new Dictionary<ulong, string>();
-            //ServerTimezones = new Dictionary<ulong, int>();
         }
 
         public void Save(string dir = "configuration/config.json")
@@ -57,6 +52,7 @@ namespace PokemonGoRaidBot.Config
             string file = Path.Combine(AppContext.BaseDirectory, dir);
             File.WriteAllText(file, ToJson());
         }
+
         public static BotConfig Load(string dir = "configuration/config.json")
         {
             string file = Path.Combine(AppContext.BaseDirectory, dir);
@@ -70,15 +66,15 @@ namespace PokemonGoRaidBot.Config
 
             if (result.GuildConfigs == null) result.GuildConfigs = new List<GuildConfig>();
 
-            if (result.PinChannels == null) result.PinChannels = new List<ulong>();
+            //if (result.PinChannels == null) result.PinChannels = new List<ulong>();
 
             result.Save();
             return result;
         }
+
         public string ToJson()
             => JsonConvert.SerializeObject(this, Formatting.Indented);
-
-
+        
         private static List<PokemonInfo> GetDefaultPokemonInfoList()
         {
             var result = JsonConvert.DeserializeObject<List<PokemonInfo>>(File.ReadAllText("RaidInfo.json"));

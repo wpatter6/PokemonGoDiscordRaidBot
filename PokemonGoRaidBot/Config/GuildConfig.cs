@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using PokemonGoRaidBot.Objects;
 
 namespace PokemonGoRaidBot.Config
 {
@@ -9,6 +10,8 @@ namespace PokemonGoRaidBot.Config
         public GuildConfig()
         {
             ChannelCities = new Dictionary<ulong, string>();
+            PokemonAliases = new Dictionary<int, List<string>>();
+            Posts = new List<PokemonRaidPost>();
         }
         public ulong Id { get; set; }
         public ulong? OutputChannelId { get; set; }
@@ -17,5 +20,8 @@ namespace PokemonGoRaidBot.Config
         public string Language { get; set; }
         public string City { get; set; }
         public Dictionary<ulong, string> ChannelCities { get; set; }
+        public Dictionary<int, List<string>> PokemonAliases { get; set; }
+        public List<PokemonRaidPost> Posts { get; set; }
+        public List<ulong> PinChannels { get; set; }
     }
 }

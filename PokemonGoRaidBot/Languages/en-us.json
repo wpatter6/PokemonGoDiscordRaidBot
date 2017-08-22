@@ -1,22 +1,24 @@
 {
-  "minuteAliases": [ "m", "mi", "min", "mins", "minutes", "minute" ],
-  "hourAliases": [ "h", "hr", "hour", "hours" ],
-  "regularExpressions": {
-    "locationCrossStreets": "(([a-zA-Z0-9]*) (\\&|and) ([a-zA-Z0-9]*))",
-    "locationAt": "at ([a-zA-Z0-9 ]*)",
-    "locationLandmark": "([a-zA-Z0-9 ]*\\b(park|school|church|museum|mural|statue) ?[a-zA-Z]*\\b?)",
-    "locationExcludeWords": "\\b(until|at|if|or|when|the)\\b",
-    "timeActual": "([0-9]{1,2}):?([0-9]{2})?(a|p)",
-    "timeSpan": "([0-9]):([0-9]{2})",
-    "timeHour": "([0-2]{1})h",
-    "timeMinute": "([0-9]{1,2})m",
-    "joinEnd": "([0-9]{1,2}) (people|here|on (the|our)|coming)",
-    "joinStart": "(have|are|there's) ([0-9]{1,2})",
-    "joinMe": "(i'm)?\\b(omw|my way|coming)",
-    "pokemonInvalidators": "^(any)$"
+  "regularExpressions": { //these will be the hard things to translate
+    "hourAliases": "^(h|hr|hours?)$",
+    "minuteAliases": "^(m|mi|min|mins|minutes?)$",
+    "aAliases": "^(an?)$",
+    "garbage": "\\b(seen|around|raids?|much|not?|i've|ends?|until|if|or|who|what|when|where|why|how)\\b", //meaningless words that clutter things up and are unlikely to be part of location strings
+    "locationCrossStreets": "(([a-zA-Z0-9]* ?[a-zA-Z0-9]+) (\\&|and) ([a-zA-Z0-9]+ ?[a-zA-Z0-9]*))", //Cross streets regex, like 12th and Broadway
+    "locationAt": "at ([a-zA-Z0-9 ]*)", //indicates location using word "at"
+    "locationLandmark": "([a-zA-Z0-9' ]*\\b(park|school|church|museum|mural|statue|building) ?[a-zA-Z]*\\b?)", //words coming after a landmark name
+    "locationExcludeWords": "\\b(at)\\b", //remove these from parsed locations
+    "timeActual": "([0-9]{1,2}):?([0-9]{2})?(a|p)", //match where numbers indicate an actual time
+    "timeSpan": "([0-9]):([0-9]{2})", //match where numbers indicate hours and minutes
+    "timeHour": "([0-2]{1})h", //match where numbers = hour
+    "timeMinute": "([0-9]{1,2})m", //match where numbers = minutes
+    "joinEnd": "([0-9]{1,2}) (are|going|people|here|on (the|our)|coming|(just)? arrived|of us)", //indicates the number of people will be joining, with match words coming after #
+    "joinStart": "(have|are|there's|we're) ([0-9]{1,2})", //indicates the number of people will be joining, with match words coming before #
+    "joinMe": "(i'm)?\\b(omw|my way|coming)", //indicates the current user is joining
+    "pokemonInvalidators": "^(any)$" //if this comes before pokemon name, they're asking if any exist
   },
   "formats": {
-    "infoLine": "\n{0}:{1}Tier={2} BossCP={3:#,##0} MinCP={4:#,##0} MaxCP={5:#,##0} CatchRate={6}%{7}",
+    "infoLine": "\n{0}:{1}Tier={2} BossCP={3:#,##0} MinCP={4:#,##0} MaxCP={5:#,##0} CatchRate={6}%{7}",//shown for !info command
     "postHeader": "`[{0}]`__**{1}**__ in <#{2}>{3}{4}\n{5}{6}",
     "postLocation": " at **{0}**",
     "postEnds": ", ends *{0:h:mmtt}*",

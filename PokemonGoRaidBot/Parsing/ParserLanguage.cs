@@ -17,29 +17,9 @@ namespace PokemonGoRaidBot.Parsing
         {
             string file = Path.Combine(AppContext.BaseDirectory, string.Format("Languages/{0}.json", language));
             if (!File.Exists(file))
-                file = Path.Combine(AppContext.BaseDirectory, string.Format("Languages/{0}.json", "en-us"));
+                file = Path.Combine(AppContext.BaseDirectory, "Languages/en-us.json");
 
            Language = JsonConvert.DeserializeObject<dynamic>(File.ReadAllText(file));
-        }
-
-        private string[] _hourAliases;
-        private string[] _minuteAliases;
-
-        public string[] HourAliases
-        {
-            get
-            {
-                if (_hourAliases != null) return _hourAliases;
-                return _hourAliases = ((JArray)Language.hourAliases).ToObject<string[]>();
-            }
-        }
-        public string[] MinuteAliases
-        {
-            get
-            {
-                if (_minuteAliases != null) return _minuteAliases;
-                return _minuteAliases = ((JArray)Language.minuteAliases).ToObject<string[]>();
-            }
         }
 
         private Dictionary<string, Regex> _regularExpressions;
