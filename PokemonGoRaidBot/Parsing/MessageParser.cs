@@ -445,12 +445,21 @@ namespace PokemonGoRaidBot.Parsing
         }
 
 
-        private static string ToTitleCase(string str)
+        private string ToTitleCase(string str)
         {
-            if (str.Length > 1)
-                return char.ToUpper(str[0]) + str.Substring(1);
+            var result = new List<string>();
+            var strs = str.Split(' ');
+            foreach(var word in strs)
+            {
+                if (Language.RegularExpressions["smallWords"].IsMatch(word))
+                    result.Add(word);
+                else if (word.Length > 1)
+                    result.Add(char.ToUpper(word[0]) + word.Substring(1));
+                else
+                    result.Add(word.ToUpperInvariant());
+            }
 
-            return str.ToUpper();
+            return string.Join(" ", result);
         }
         #endregion
 

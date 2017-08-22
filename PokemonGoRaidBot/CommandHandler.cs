@@ -14,6 +14,7 @@ using PokemonGoRaidBot.Parsing;
 using System.Net;
 using Newtonsoft.Json;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace PokemonGoRaidBot
 {
@@ -286,7 +287,8 @@ namespace PokemonGoRaidBot
                 {
                     if(fromChannel != null)
                     {
-                        messageResult = await fromChannel.SendMessageAsync(messages[0]);
+                        var fromChannelMessage = Regex.Replace(messages[0], @" in \<\#[0-9]*\>", "");
+                        messageResult = await fromChannel.SendMessageAsync(fromChannelMessage);
                         try
                         {
                             await messageResult.PinAsync();

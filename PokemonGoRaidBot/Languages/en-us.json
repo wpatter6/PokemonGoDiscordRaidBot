@@ -7,7 +7,7 @@
     "garbage": "\\b(seen|around|raids?|much|not?|i've|ends?|until|if|or|who|what|when|where|why|how)\\b", //meaningless words that clutter things up and are unlikely to be part of location strings
     "locationCrossStreets": "(([a-zA-Z0-9]* ?[a-zA-Z0-9]+) (\\&|and) ([a-zA-Z0-9]+ ?[a-zA-Z0-9]*))", //Cross streets regex, like 12th and Broadway
     "locationAt": "at ([a-zA-Z0-9 ]*)", //indicates location using word "at"
-    "locationLandmark": "([a-zA-Z0-9' ]*\\b(park|school|church|museum|mural|statue|building) ?[a-zA-Z]*\\b?)", //words coming after a landmark name
+    "locationLandmark": "([a-zA-Z0-9' ]*\\b(park|school|church|museum|mural|statue|building|station) ?[a-zA-Z]*\\b?)", //words coming after a landmark name
     "locationExcludeWords": "\\b(at)\\b", //remove these from parsed locations
     "timeActual": "([0-9]{1,2}):?([0-9]{2})?(a|p)", //match where numbers indicate an actual time
     "timeSpan": "(1?[0-9]):([0-9]{2})", //match where numbers indicate hours and minutes
@@ -17,13 +17,14 @@
     "joinStart": "(have|are|there's|we're) ([0-9]{1,2})", //indicates the number of people will be joining, with match words coming before #
     "joinMe": "(i'?(m||ll|| am))?\\b(omw|my way|coming|join(ing)?)", //indicates the current user is joining
     "pokemonInvalidators": "^(any)$", //if this comes before pokemon name, they're asking if any exist,
-    "nonAlphaNumeric": "\\W|_"
+    "nonAlphaNumeric": "\\W|_",
+    "smallWords": "^(at?|the|and|of)$"//These will not be made uppercase if they're found in a location
   },
   "formats": {
     "infoLine": "\n{0}: {1}Tier:{2} BossCP:{3} MaxCP:{5} CatchRate:{6}% {7}", //shown for !info command
     "postHeader": "`[{0}]`__**{1}**__ in <#{2}>{3}{4}\n{5}{6}",
     "postLocation": " at **{0}**",
-    "postEnds": ", ends *{0:h:mmtt}*",
+    "postEnds": " ends *{0:h:mmt}*",
     "postJoined": "*{0} joined:* {1}",
     "postNoneJoined": "None joined yet.  Posted by <@{0}>",
     "commandUnknown": "Unknown Command \"{0}\".  Type {1}help to see valid Commands for this bot.",
