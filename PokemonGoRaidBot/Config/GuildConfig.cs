@@ -11,6 +11,7 @@ namespace PokemonGoRaidBot.Config
         {
             ChannelCities = new Dictionary<ulong, string>();
             PokemonAliases = new Dictionary<int, List<string>>();
+            PinChannels = new List<ulong>();
             Posts = new List<PokemonRaidPost>();
         }
         public ulong Id { get; set; }

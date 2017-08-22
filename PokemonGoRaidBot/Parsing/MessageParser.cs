@@ -453,40 +453,48 @@ namespace PokemonGoRaidBot.Parsing
         #endregion
 
         #region Output
-        public string[] GetHelpString(BotConfig config, bool admin)
+        public string[] GetRaidHelpString(BotConfig config)
+        {
+            return GetFullHelpString(config, false);
+        }
+        public string[] GetFullHelpString(BotConfig config, bool admin)
         {
             var result = new List<string>();
             var helpmessage = string.Format(string.Format("```{0}\n\n", Language.Strings["helpTop"]), config.OutputChannel);
+
+            if (!admin)
+                helpmessage = string.Format("```{0}\n\n", Language.Strings["helpRaidTop"]);
+
             helpmessage += string.Format("``````css\n       #{0}:\n", Language.Strings["helpCommands"]);
-            helpmessage += string.Format("  {0}join [id] [number] - {1}\n", config.Prefix, Language.Strings["helpJoin"]);
-            helpmessage += string.Format("  {0}unjoin [id] - {1}\n", config.Prefix, Language.Strings["helpUnJoin"]);
-            helpmessage += string.Format("  {0}info [name] - {1}\n", config.Prefix, Language.Strings["helpInfo"]);
+            helpmessage += string.Format("  {0}(j)oin [id] [number] - {1}\n", config.Prefix, Language.Strings["helpJoin"]);
+            helpmessage += string.Format("  {0}(un)join [id] - {1}\n", config.Prefix, Language.Strings["helpUnJoin"]);
+            helpmessage += string.Format("  {0}(i)nfo [name] - {1}\n", config.Prefix, Language.Strings["helpInfo"]);
+            helpmessage += string.Format("  {0}(d)elete [id] - *{1}\n", config.Prefix, Language.Strings["helpDelete"]);
+            helpmessage += string.Format("  {0}(m)erge [id1] [id2] - *{1}\n", config.Prefix, Language.Strings["helpMerge"]);
             if (admin)
             { 
                 helpmessage += string.Format(string.Format("  {0}channel [name] - *{1}\n", config.Prefix, Language.Strings["helpChannel"]), config.OutputChannel);
                 helpmessage += string.Format("  {0}nochannel - *{1}\n", config.Prefix, Language.Strings["helpNoChannel"]);
                 helpmessage += string.Format("  {0}alias [pokemon] [alias] - *{1}\n", config.Prefix, Language.Strings["helpAlias"]);
                 helpmessage += string.Format("  {0}removealias [pokemon] [alias] - *{1}\n", config.Prefix, Language.Strings["helpRemoveAlias"]);
-                helpmessage += string.Format("  {0}delete [id] - *{1}\n", config.Prefix, Language.Strings["helpDelete"]);
-                helpmessage += string.Format("  {0}merge [id1] [id2] - *{1}\n", config.Prefix, Language.Strings["helpMerge"]);
                 helpmessage += string.Format("  {0}pin [channel name] - *{1}\n", config.Prefix, Language.Strings["helpPin"]);
                 helpmessage += string.Format("  {0}unpin [channel name] - *{1}\n", config.Prefix, Language.Strings["helpUnPin"]);
                 helpmessage += string.Format("  {0}pinall - *{1}\n", config.Prefix, Language.Strings["helpPinAll"]);
                 helpmessage += string.Format("  {0}unpinall - *{1}\n", config.Prefix, Language.Strings["helpUnPinAll"]);
-                result.Add(helpmessage + "```");
+                result.Add(helpmessage + "```");//getting too long! 2000 char max
                 helpmessage = "```css\n";
                 helpmessage += string.Format("  {0}timezone [gmt offset] - *{1}\n", config.Prefix, Language.Strings["helpTimezone"]);
                 helpmessage += string.Format("  {0}language [language] - *{1}\n", config.Prefix, Language.Strings["helpLanguage"]);
                 helpmessage += string.Format("  {0}city [city] - *{1}\n", config.Prefix, Language.Strings["helpCity"]);
                 helpmessage += string.Format("  {0}channelcity [channel name] [city] - *{1}\n", config.Prefix, Language.Strings["helpChannelCity"]);
-                //helpmessage += string.Format("  {{0}}timezone - TODO Configure server GMT offset and apply it everywhere times are determined";
-                helpmessage += string.Format("  {0}help - {1}\n", config.Prefix, Language.Strings["helpHelp"]);
+                helpmessage += string.Format("  {0}(h)elp - {1}\n", config.Prefix, Language.Strings["helpHelp"]);
                 helpmessage += string.Format("        *{0}", Language.Strings["helpAdmin"]);
             }
             else
             {
                 helpmessage += string.Format("  {0}help - {1}\n", config.Prefix, Language.Strings["helpHelp"]);
             }
+            helpmessage += string.Format("       (){0}", Language.Strings["helpParenthesis"]);
             helpmessage += "```";
             result.Add(helpmessage);
             return result.ToArray();
@@ -504,7 +512,9 @@ namespace PokemonGoRaidBot.Parsing
                 padding = paddingSize - info.BossNameFormatted.Length;
 
             var allAliases = new List<string>(info.Aliases);
-            allAliases.AddRange(config.GetGuildConfig(guildId).PokemonAliases[info.Id]);
+
+            if(config.GetGuildConfig(guildId).PokemonAliases.ContainsKey(info.Id))
+                allAliases.AddRange(config.GetGuildConfig(guildId).PokemonAliases[info.Id]);
 
             return string.Format(lineFormat,
                 info.BossNameFormatted,

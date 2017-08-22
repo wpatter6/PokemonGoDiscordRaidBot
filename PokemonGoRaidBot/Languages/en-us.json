@@ -48,6 +48,7 @@
   "strings": {
     "aliases": "Aliases",
     "helpTop": "This bot parses discord chat messages to see if a raid is being mentioned.  If a raid is found, it will post to a specific channel, by default \"{0}\".  Channels can be configured to pin the raid instead of posting it to the specific channel.",
+    "helpRaidTop": "Posting a raid in chat will cause this bot to either post the raid into a specific channel, or pin it in the current channel.",
     "helpCommands": "Commands",
     "helpJoin": "Joins the specified number of people to the specified raid Id. Overwrites any previous values.",
     "helpUnJoin": "Removes your join information from the raid.",
@@ -68,6 +69,7 @@
     "helpChannelCity": "Will set the city of the selected channel",
     "helpHelp": "Shows this message.",
     "helpAdmin": "Requires Server Admin or Manage Server Permissions.",
+    "helpParenthesis": "Indicates command can be shortened to value in parenthesis.",
     "commandNoAccess": "You do not have the necessary permissions to change this setting.  You must be a server moderator or administrator to make this change.",
     "commandNoChannelSuccess": "Bot will no longer output to a single channel.  Use !channel to undo this.",
     "commandNoPostAccess": "Only the creator of the post, server mods, or administrators can modify raid posts.",

@@ -45,19 +45,21 @@ namespace PokemonGoRaidBot
         {
             try
             {
-                MethodInfo[] methodInfos = GetType()
-                               .GetMethods(BindingFlags.NonPublic | BindingFlags.Instance);
+                MethodInfo[] methodInfos = GetType().GetMethods(BindingFlags.NonPublic | BindingFlags.Instance);
                 bool found = false;
 
                 foreach (var method in methodInfos)
                 {
-                    var attr = method.GetCustomAttribute<RaidBotCommandAttribute>();
-                    if (attr != null && attr.Command == Command[0])
-                    {
-                        Task result = (Task)method.Invoke(this, new object[] { });
-                        await result;
-                        found = true;
-                        break;
+                    var attrs = method.GetCustomAttributes<RaidBotCommandAttribute>();
+                    foreach(var attr in attrs)
+                    { 
+                        if (attr != null && attr.Command == Command[0])
+                        {
+                            Task result = (Task)method.Invoke(this, new object[] { });
+                            await result;
+                            found = true;
+                            break;
+                        }
                     }
                 }
 
@@ -72,7 +74,8 @@ namespace PokemonGoRaidBot
             }
         }
 
-        [RaidBotCommand("join")] 
+        [RaidBotCommand("j")]
+        [RaidBotCommand("join")]
         private async Task Join()
         {
             var post = GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[1]);
@@ -92,7 +95,8 @@ namespace PokemonGoRaidBot
             post.JoinedUsers[Message.Author.Id] = num;
             await Handler.MakePost(post, Parser);
         }
-
+        
+        [RaidBotCommand("uj")]
         [RaidBotCommand("unjoin")]
         private async Task UnJoin()
         {
@@ -108,6 +112,7 @@ namespace PokemonGoRaidBot
             await Handler.MakePost(post, Parser);
         }
 
+        [RaidBotCommand("i")]
         [RaidBotCommand("info")]
         private async Task Info()
         {
@@ -161,6 +166,52 @@ namespace PokemonGoRaidBot
                 foreach (var str in strings)
                     await Message.Channel.SendMessageAsync(str);
             }
+        }
+
+        [RaidBotCommand("m")]
+        [RaidBotCommand("merge")]
+        private async Task Merge()
+        {
+            var post1 = GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[1]);
+            if (post1 == null)
+            {
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[1]));//$"Post with Unique Id \"{Command[1]}\" not found.");
+                return;
+            }
+
+            var post2 = GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[2]);
+            if (post2 == null)
+            {
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[2]));//$"Post with Unique Id \"{Command[2]}\" not found.");
+                return;
+            }
+            if (post1.UserId != Message.Author.Id && post2.UserId != Message.Author.Id && !IsAdmin)
+            {
+                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoPostAccess"]);
+            }
+
+            Handler.MergePosts(post1, post2);
+            
+            Handler.DeletePost(post2);
+
+            await Handler.MakePost(post1, Parser);
+        }
+
+        [RaidBotCommand("d")]
+        [RaidBotCommand("delete")]
+        private async Task Delete()
+        {
+            var post = GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[1]);
+            if (post == null)
+            {
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[1]));//"Post with Unique Id \"{Command[1]}\" not found.");
+                return;
+            }
+            if (post.UserId != Message.Author.Id && !IsAdmin)
+            {
+                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoPostAccess"]);
+            }
+            Handler.DeletePost(post);
         }
 
         [RaidBotCommand("language")]
@@ -324,58 +375,6 @@ namespace PokemonGoRaidBot
             await Handler.MakeCommandMessage(Message.Channel, aresp);
         }
 
-        [RaidBotCommand("merge")]
-        private async Task Merge()
-        {
-            var post1 = GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[1]);
-            if (post1 == null)
-            {
-                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[1]));//$"Post with Unique Id \"{Command[1]}\" not found.");
-                return;
-            }
-
-            var post2 = GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[2]);
-            if (post2 == null)
-            {
-                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[2]));//$"Post with Unique Id \"{Command[2]}\" not found.");
-                return;
-            }
-            if (post1.UserId != Message.Author.Id && post2.UserId != Message.Author.Id && !IsAdmin)
-            {
-                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoPostAccess"]);
-            }
-
-            if (post1.HasEndDate)
-            {
-                if (post2.HasEndDate)
-                {
-                    post1.EndDate = new DateTime(Math.Max(post1.EndDate.Ticks, post2.EndDate.Ticks));
-                }
-            }
-            else if (post2.HasEndDate)
-                post1.EndDate = post2.EndDate;
-
-            post1.Responses.AddRange(post2.Responses);
-
-            Handler.DeletePost(post2);
-            await Handler.MakePost(post1, Parser);
-        }
-        
-        [RaidBotCommand("delete")]
-        private async Task Delete()
-        {
-            var post = GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[1]);
-            if (post == null)
-            {
-                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[1]));//"Post with Unique Id \"{Command[1]}\" not found.");
-                return;
-            }
-            if (post.UserId != Message.Author.Id && !IsAdmin)
-            {
-                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoPostAccess"]);
-            }
-            Handler.DeletePost(post);
-        }
 
         [RaidBotCommand("pinall")]
         private async Task PinAll()
@@ -525,10 +524,21 @@ namespace PokemonGoRaidBot
             }
         }
 
+        [RaidBotCommand("raidhelp")]
+        private async Task RaidHelp()
+        {
+            var helpMessage = Parser.GetRaidHelpString(Config);
+            foreach (var message in helpMessage)
+            {
+                await Message.Channel.SendMessageAsync(message);
+            }
+        }
+
+        [RaidBotCommand("h")]
         [RaidBotCommand("help")]
         private async Task Help()
         {
-            var helpMessage = Parser.GetHelpString(Config, IsAdmin);
+            var helpMessage = Parser.GetFullHelpString(Config, IsAdmin);
             foreach(var message in helpMessage)
             {
                 await Message.Channel.SendMessageAsync(message);

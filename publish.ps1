@@ -1,5 +1,6 @@
-
+If (Test-Path Releases) {
 remove-item Releases -recurse
+}
 new-item -Name Releases -ItemType directory
 
 dotnet publish -c release -r win10-x64

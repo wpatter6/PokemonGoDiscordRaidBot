@@ -2,12 +2,7 @@
 
 namespace PokemonGoRaidBot
 {
-    [AttributeUsage(AttributeTargets.Class |
-       AttributeTargets.Constructor |
-       AttributeTargets.Field |
-       AttributeTargets.Method |
-       AttributeTargets.Property,
-       AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
     internal class RaidBotCommandAttribute : Attribute
     {
         public readonly string Command;
