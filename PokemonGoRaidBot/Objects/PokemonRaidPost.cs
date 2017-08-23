@@ -1,4 +1,5 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
+using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
 
@@ -22,7 +23,9 @@ namespace PokemonGoRaidBot.Objects
 
         public string DiscordColor;
 
-        public string Location;
+        public string Location;//used for display
+
+        public string FullLocation;//used for google search
 
         public DateTime PostDate;
 
@@ -51,6 +54,8 @@ namespace PokemonGoRaidBot.Objects
         public string UniqueId;
 
         public KeyValuePair<double, double>? LatLong;
+
+        public int[] Color;
 
         private static String NewId()
         {

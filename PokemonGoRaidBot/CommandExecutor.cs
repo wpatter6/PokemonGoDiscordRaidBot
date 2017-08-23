@@ -160,6 +160,7 @@ namespace PokemonGoRaidBot
 
 
             var builder = new EmbedBuilder();
+            builder.WithDescription("abcd 123 [link1](#raids-pin)");
             builder.Url = "https://www.google.com";
             await Message.Channel.SendMessageAsync("", false, builder);
         }
@@ -200,14 +201,27 @@ namespace PokemonGoRaidBot
             var post = GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[1]);
             if (post == null)
             {
-                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[1]));//"Post with Unique Id \"{Command[1]}\" not found.");
-                return;
+                if(!string.IsNullOrEmpty(Command[1]) && "all".Equals(Command[1]))
+                {
+                    foreach(var allpost in GuildConfig.Posts.Where(x => x.UserId == Message.Author.Id || IsAdmin))
+                    {
+                        Handler.DeletePost(allpost);
+                    }
+                }
+                else
+                { 
+                    await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[1]));//"Post with Unique Id \"{Command[1]}\" not found.");
+                    return;
+                }
             }
-            if (post.UserId != Message.Author.Id && !IsAdmin)//post creators or admins can delete
+            else
             {
-                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoPostAccess"]);
+                if (post.UserId != Message.Author.Id && !IsAdmin)//post creators or admins can delete
+                {
+                    await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoPostAccess"]);
+                }
+                Handler.DeletePost(post);
             }
-            Handler.DeletePost(post);
         }
 
         [RaidBotCommand("language")]
@@ -527,6 +541,14 @@ namespace PokemonGoRaidBot
             {
                 await Message.Channel.SendMessageAsync(message);
             }
+        }
+
+        [RaidBotCommand("version")]
+        private async Task Version()
+        {
+            var version = Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
+
+            await Handler.MakeCommandMessage(Message.Channel, $"PokemonGoRaidBot {version}");
         }
 
         private async Task<bool> CheckAdminAccess()

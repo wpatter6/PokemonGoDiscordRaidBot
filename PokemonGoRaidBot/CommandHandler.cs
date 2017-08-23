@@ -234,17 +234,18 @@ namespace PokemonGoRaidBot
                 var fromChannel = GetChannel(post.FromChannelId);
                 var outputChannel = GetChannel(post.OutputChannelId);
 
-                var messages = parser.MakePostStrings(post);
+                //var messages = parser.MakePostStrings(post);
+                var embed = parser.MakePostWithEmbed(post);
                 RestUserMessage messageResult;
                 if (post.Pin && fromChannel != null)
                 {
                     var changed = true;
-                    var fromChannelMessage = Regex.Replace(messages[0], @" in \<\#[0-9]*\>", "");
+                    var fromChannelMessage = embed.Key.Description;
                     if (post.MessageId != default(ulong))
                     { 
                         deleteMessage = await fromChannel.GetMessageAsync(post.MessageId);
 
-                        changed = !deleteMessage?.Content.Equals(fromChannelMessage, StringComparison.OrdinalIgnoreCase) ?? true;
+                        changed = !deleteMessage?.Embeds.FirstOrDefault()?.Description.Equals(fromChannelMessage, StringComparison.OrdinalIgnoreCase) ?? true;
 
                         if (changed && deleteMessage != null)
                         { 
@@ -257,7 +258,7 @@ namespace PokemonGoRaidBot
                     }
                     if (changed)
                     {
-                        messageResult = await fromChannel.SendMessageAsync(fromChannelMessage);
+                        messageResult = await fromChannel.SendMessageAsync("", false, embed.Key);
                         try
                         {
                             await messageResult.PinAsync();
@@ -280,11 +281,15 @@ namespace PokemonGoRaidBot
                     }
                     post.OutputMessageIds.Clear();
 
+                    messageResult = await outputChannel.SendMessageAsync("", false, embed.Value);
+                    post.OutputMessageIds.Add(messageResult.Id);
+                    /*
                     foreach (var message in messages)
                     {
                         messageResult = await outputChannel.SendMessageAsync(message);
                         post.OutputMessageIds.Add(messageResult.Id);
                     }
+                    */
                 }
             }
             catch (Exception e)
