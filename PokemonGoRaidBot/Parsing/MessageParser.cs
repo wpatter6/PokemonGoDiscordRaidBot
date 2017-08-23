@@ -17,9 +17,10 @@ namespace PokemonGoRaidBot.Parsing
     public class MessageParser
     {
         public ParserLanguage Language;
-        private const string googleGeocodeApiUrlFormat = "https://maps.googleapis.com/maps/api/geocode/json?address={0}&key={1}";
-        private const string googleMapLinkFormat = "https://www.google.com/maps/dir/Current+Location/{0},{1}";
-        private const string pokemonImageUrlFormat = "https://assets.pokemon.com/assets/cms2/img/pokedex/detail/{0}.png";
+        //private const string googleGeocodeApiUrlFormat = "https://maps.googleapis.com/maps/api/geocode/json?address={0}&key={1}";
+        //private const string googleMapLinkFormat = "https://www.google.com/maps/dir/Current+Location/{0},{1}";
+        //private const string pokemonLargeImageUrlFormat = "https://assets.pokemon.com/assets/cms2/img/pokedex/detail/{0}.png";
+        //private const string pokemonSmallImageUrlFormat = "https://assets.pokemon.com/assets/cms2/img/pokedex/detail/{0}.png";
 
         private const int latLongComparisonMaxMeters = 80;
         private const int maxRaidMinutes = 120;
@@ -447,7 +448,7 @@ namespace PokemonGoRaidBot.Parsing
         {
             if (string.IsNullOrEmpty(config.GoogleApiKey)) return null;
 
-            var url = string.Format(googleGeocodeApiUrlFormat, location, config.GoogleApiKey);
+            var url = string.Format(Language.Formats["googleMapGeocodeApi"], location, config.GoogleApiKey);
 
             var request = (HttpWebRequest)WebRequest.Create(url);
             dynamic fullresult;
@@ -648,10 +649,9 @@ namespace PokemonGoRaidBot.Parsing
             builder.WithColor(post.Color[0], post.Color[1], post.Color[2]);
 
             builder.WithDescription(header);
-
-            var paddedId = post.PokemonId.ToString().PadLeft(3, '0');
-
-            builder.WithThumbnailUrl(string.Format(pokemonImageUrlFormat, paddedId));
+            builder.WithUrl(string.Format(Language.Formats["pokemonInfoLink"], post.PokemonId));
+            
+            builder.WithThumbnailUrl(string.Format(Language.Formats["imageUrlLargePokemon"], post.PokemonId));
 
             foreach (var message in post.Responses.OrderBy(x => x.MessageDate).Skip(Math.Max(0, post.Responses.Count() - 24)))//max fields is 25
             {
@@ -667,7 +667,10 @@ namespace PokemonGoRaidBot.Parsing
 
             var headerembed = new EmbedBuilder();
             headerembed.WithColor(post.Color[0], post.Color[1], post.Color[2]);
+            headerembed.WithUrl(string.Format(Language.Formats["pokemonInfoLink"], post.PokemonId));
             headerembed.WithDescription(Language.RegularExpressions["discordChannel"].Replace(header, "").Replace(" in ", " ").Replace("  ", " "));
+
+            headerembed.WithThumbnailUrl(string.Format(Language.Formats["imageUrlSmallPokemon"], post.PokemonId));
 
             return new KeyValuePair<Embed, Embed>(headerembed.Build(), embed);
         }
@@ -680,11 +683,11 @@ namespace PokemonGoRaidBot.Parsing
 
             var location = post.Location;
 
-            if (post.LatLong.HasValue) location = string.Format("[{0}]({1})", location, string.Format(googleMapLinkFormat, post.LatLong.Value.Key, post.LatLong.Value.Value));
+            if (post.LatLong.HasValue) location = string.Format("[{0}]({1})", location, string.Format(Language.Formats["googleMapLink"], post.LatLong.Value.Key, post.LatLong.Value.Value));
 
             string response = string.Format(Language.Formats["postHeader"],
                 post.UniqueId,
-                post.PokemonName,
+                string.Format("[{0}]({1})", post.PokemonName, string.Format(Language.Formats["pokemonInfoLink"], post.PokemonId)),
                 post.FromChannelId,
                 !string.IsNullOrEmpty(location) ? string.Format(Language.Formats["postLocation"], location) : "",
                 string.Format(Language.Formats["postEnds"], post.EndDate.AddHours(timeOffset)),

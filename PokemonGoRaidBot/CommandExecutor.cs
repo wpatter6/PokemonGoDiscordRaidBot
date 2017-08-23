@@ -108,7 +108,7 @@ namespace PokemonGoRaidBot
                 var info = Parser.ParsePokemon(Command[1], Config, Guild.Id);
 
                 if (info != null) {
-                    var message = "```css" + Parser.MakeInfoLine(info, Config, Guild.Id) + "```" + string.Format(Config.LinkFormat, info.Id);
+                    var message = "```css" + Parser.MakeInfoLine(info, Config, Guild.Id) + "```" + string.Format(Parser.Language.Formats["pokemonInfoLink"], info.Id);
                     await Message.Channel.SendMessageAsync(message);
                 } else
                     await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPokemonNotFound"], Command[1]));//$"'{Command[1]}' did not match any raid boss names or aliases.";
@@ -127,9 +127,8 @@ namespace PokemonGoRaidBot
                     list = list.Where(x => x.Tier == tierCommand);
                 }
 
-                var orderedList = list.OrderByDescending(x => x.Id).OrderBy(x => x.CatchRate);
-
-
+                var orderedList = list.OrderByDescending(x => x.Id).OrderByDescending(x => x.BossCP);
+                
                 var maxBossLength = orderedList.Select(x => x.BossNameFormatted.Length).Max();
                 strings.Add("");
                 foreach (var info in orderedList)
@@ -140,7 +139,6 @@ namespace PokemonGoRaidBot
                         strings[strInd] += lineStr;
                     else
                     {
-                        //strings[strInd] += "```";
                         strings.Add(lineStr);
                         strInd++;
                     }
@@ -156,12 +154,13 @@ namespace PokemonGoRaidBot
         private async Task Test()
         {
             var list = Config.PokemonInfoList.Where(x => x.CatchRate > 0);
-            var orderedList = list.OrderByDescending(x => x.Id).OrderByDescending(x => x.Tier);
+            var orderedList = list.OrderByDescending(x => x.BossCP);
 
 
             var builder = new EmbedBuilder();
-            builder.WithDescription("abcd 123 [link1](#raids-pin)");
-            builder.Url = "https://www.google.com";
+            builder.WithDescription("abcd 123 alkdsfja;lsdjf;lkajsd;lfj ;lkjsadlkj sdlkfj lkjfds ljfds lk");
+            builder.WithThumbnailUrl(string.Format(Parser.Language.Formats["imageUrlLargePokemon"], 3));
+            builder.WithUrl("https://pokemongo.gamepress.gg/pokemon/3#raid-boss-counters");
             await Message.Channel.SendMessageAsync("", false, builder);
         }
 

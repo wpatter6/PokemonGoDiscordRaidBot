@@ -137,13 +137,23 @@ namespace PokemonGoRaidBot
                     var fromChannel = GetChannel(post.FromChannelId);
 
                     var messages = new List<IMessage>();
-                    
-                    var m = new IMessage[] { await outputChannel.GetMessageAsync(post.OutputMessageId) };
-                    messages.AddRange(m.Where(x => x != null));
 
+                    if (post.OutputMessageId != default(ulong))
+                    { 
+                        try
+                        {
+
+                            var m = new IMessage[] { await outputChannel.GetMessageAsync(post.OutputMessageId) };
+                            messages.AddRange(m.Where(x => x != null));
+                        }
+                        catch (Exception e)
+                        {
+                            DoError(e);
+                        }
+                    }
                     try
                     {
-                        await outputChannel.DeleteMessagesAsync(messages);
+                        if(messages.Count() > 0) await outputChannel.DeleteMessagesAsync(messages);
                         posts.Remove(post);
                     }
                     catch (Exception e)
@@ -157,10 +167,17 @@ namespace PokemonGoRaidBot
 
                         if (m1.Count() > 0 && m1[0] != null)
                         {
-                            if (m1[0] is RestUserMessage && ((RestUserMessage)m1[0]).IsPinned)
-                                await ((RestUserMessage)m1[0]).UnpinAsync();
+                            try
+                            {
+                                if (m1[0] is RestUserMessage && ((RestUserMessage)m1[0]).IsPinned)
+                                    await ((RestUserMessage)m1[0]).UnpinAsync();
 
-                            await m1[0].DeleteAsync();
+                                await m1[0].DeleteAsync();
+                            }
+                            catch(Exception e)
+                            {
+                                DoError(e);
+                            }
                         }
                     }
                 }

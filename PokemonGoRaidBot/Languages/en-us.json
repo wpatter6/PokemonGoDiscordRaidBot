@@ -56,7 +56,12 @@
     "commandGuildNoChannel": "{0} does not contain a channel named \"{1}\".",
     "commandTimezoneSuccess": "Time zone for {0} changed to GMT{1}.",
     "commandLanguageSuccess": "Language for {0} changed to \"{1}\".  If language config is not available to the bot, \"en-us\" will be used.",
-    "commandCitySuccess": "City for {0} changed to \"{1}\"."
+    "commandCitySuccess": "City for {0} changed to \"{1}\".",
+    "imageUrlLargePokemon": "https://assets.pokemon.com/assets/cms2/img/pokedex/detail/{0}.png",
+    "imageUrlSmallPokemon": "https://assets.pokemon.com/assets/cms2/img/pokedex/detail/{0}.png?width=48&height=48",
+    "googleMapLink": "https://www.google.com/maps/dir/Current+Location/{0},{1}",
+    "googleMapGeocodeApi": "https://maps.googleapis.com/maps/api/geocode/json?address={0}&key={1}",
+    "pokemonInfoLink": "https://pokemongo.gamepress.gg/pokemon/{0}#raid-boss-counters"
   },
   "strings": {
     "and":  "and",//ampersand will be replaced with this

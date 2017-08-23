@@ -17,8 +17,6 @@ namespace PokemonGoRaidBot.Config
 
         public List<PokemonInfo> PokemonInfoList { get; set; }
 
-        public string LinkFormat { get; set; }
-
         public string GoogleApiKey { get; set; }
 
         public GuildConfig GetGuildConfig(ulong id)
@@ -57,8 +55,6 @@ namespace PokemonGoRaidBot.Config
             if (result.PokemonInfoList == null) result.PokemonInfoList = GetDefaultPokemonInfoList();
 
             if (string.IsNullOrEmpty(result.OutputChannel)) result.OutputChannel = "raid-bot";
-
-            if (string.IsNullOrEmpty(result.LinkFormat)) result.LinkFormat = "https://pokemongo.gamepress.gg/pokemon/{0}#raid-boss-counters";
 
             if (result.GuildConfigs == null) result.GuildConfigs = new List<GuildConfig>();
 
