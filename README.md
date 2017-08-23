@@ -1,4 +1,7 @@
 # PokemonGoRaidBot
+
+##### Try it out first in a sandbox environment: https://discord.gg/9SCnYAU (message me in discord if you want to try out admin commands)
+
 ## What it does
 - This highly configurable discord bot will parse posts in a discord server and provide clean output to a configured channel on the discord server, and/or it can pin messages in the channel they were posted in.  
 
