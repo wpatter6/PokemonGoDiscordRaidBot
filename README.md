@@ -22,7 +22,7 @@
 1. Configure the language of the discord server (only "en-us" currently).
 
 ## How to install:
-1. Get the zip file for your operating system from the `Releases` folder, either by downloading it directly or building using the Build instructions.
+1. Get the zip file for your operating system from the [Releases page](https://github.com/wpatter6/PokemonGoDiscordRaidBot/releases) or by building using the following Build instructions.
 1. Extract the package and run the executable.  It will ask for the following values:
     1. Discord bot token.  Copy this from the bot you created [here](https://discordapp.com/developers/applications/me)
     1. Google API key to use for location geocoding.
