@@ -22,8 +22,11 @@ namespace PokemonGoRaidBot.Parsing
         private const string googleGeocodeApiUrl = "https://maps.googleapis.com/maps/api/geocode/json?address={0}&key={1}";
 
         private const int latLongComparisonMaxMeters = 30;
-        private const int maxRaidMinutes = 100;
+        private const int maxRaidMinutes = 120;
         private const string matchedWordReplacement = "#|#|#|#";//when trying to match location, replace pokemon names and time spans with this string
+        private const string matchedPokemonWordReplacement = "#$##$$###";
+        private const string matchedLocationWordReplacement = "&&&&-&-&&&&";
+        private const string matchedTimeWordReplacement = "===!!!===";
         private int timeOffset;
         
         public MessageParser(string language = "en-us", int timeZoneOffset = 0)
@@ -47,8 +50,9 @@ namespace PokemonGoRaidBot.Parsing
                 UserId = message.Author.Id,
                 PostDate = DateTime.Now,//uses local time for bot
                 FromChannelId = message.Channel.Id,
-                Responses = new List<PokemonMessage>() { new PokemonMessage(message.Author.Id, message.Author.Username, message.Content, DateTime.Now) },
-                EndDate = DateTime.Now + new TimeSpan(0, maxRaidMinutes, 0)
+                //Responses = new List<PokemonMessage>() { new PokemonMessage(message.Author.Id, message.Author.Username, message.Content, DateTime.Now) },
+                EndDate = DateTime.Now + new TimeSpan(0, maxRaidMinutes, 0),
+                MentionedRoleIds = new List<ulong>(message.MentionedRoles.Select(x => x.Id))
             };
 
             var guildId = ((SocketGuildChannel)message.Channel).Guild.Id;
@@ -67,8 +71,35 @@ namespace PokemonGoRaidBot.Parsing
             {
                 i++;
 
+                var cleanedword = Language.RegularExpressions["nonAlphaNumeric"].Replace(word, "");
+
+
+                var roleReg = Language.RegularExpressions["discordRole"];
+                var userReg = Language.RegularExpressions["discordUser"];
+                var channelReg = Language.RegularExpressions["discordChannel"];
+
+                //clean up all role, user and channel mentions
+                if (roleReg.IsMatch(word))
+                {
+                    var roleId = Convert.ToUInt64(roleReg.Match(word).Groups[1].Value);
+                    cleanedword = message.MentionedRoles.FirstOrDefault(x => x.Id == roleId)?.Name ?? cleanedword;
+                    messageString = messageString.Replace(word, $"@{cleanedword}").Replace("  ", " ").Trim(); //roleReg.Replace(messageString, "@" + cleanedword).Replace("  ", " ").Trim();
+                }
+                else if (userReg.IsMatch(word))
+                {
+                    var userId = Convert.ToUInt64(userReg.Match(word).Groups[1].Value);
+                    cleanedword = message.MentionedUsers.FirstOrDefault(x => x.Id == userId)?.Username ?? cleanedword;
+                    messageString = messageString.Replace(word, $"@{cleanedword}").Replace("  ", " ").Trim(); //userReg.Replace(messageString, "@" + cleanedword).Replace("  ", " ").Trim();
+                }
+                else if (channelReg.IsMatch(word))
+                {
+                    var channelId = Convert.ToUInt64(channelReg.Match(word).Groups[1].Value);
+                    cleanedword = message.MentionedChannels.FirstOrDefault(x => x.Id == channelId)?.Name ?? cleanedword;
+                    messageString = messageString.Replace(word, $"#{cleanedword}").Replace("  ", " ").Trim();// channelReg.Replace(messageString, "#" + cleanedword).Replace("  ", " ").Trim();
+                }
+
                 var garbageRegex = Language.RegularExpressions["garbage"];
-                if (garbageRegex.IsMatch(word))
+                if (garbageRegex.IsMatch(cleanedword))
                 {
                     unmatchedWords.Add(matchedWordReplacement);
                     continue;
@@ -76,7 +107,7 @@ namespace PokemonGoRaidBot.Parsing
 
                 if (result.PokemonId == default(int))
                 {
-                    var pokemon = ParsePokemon(word, config, guildId);
+                    var pokemon = ParsePokemon(cleanedword, config, guildId);
                     if(pokemon != null)
                     {
                         result.PokemonId = pokemon.Id;
@@ -85,7 +116,7 @@ namespace PokemonGoRaidBot.Parsing
                         if (i > 1 && Language.RegularExpressions["pokemonInvalidators"].IsMatch(words[i - 2]))//if previous word invalidates -- ex "any Snorlax?"
                             nopost = true;
 
-                        unmatchedWords.Add(matchedWordReplacement);
+                        unmatchedWords.Add(matchedPokemonWordReplacement);
                         continue;
                     }
                 }
@@ -94,40 +125,40 @@ namespace PokemonGoRaidBot.Parsing
                 if (ts.Ticks > 0)
                 {
                     timespan = timespan.Add(ts);
-                    unmatchedWords.Add(matchedWordReplacement);
+                    unmatchedWords.Add(matchedTimeWordReplacement);
                     continue;
                 }
 
-                if (Language.RegularExpressions["minuteAliases"].IsMatch(word) && i > 1)//go back and get the previous word
+                if (Language.RegularExpressions["minuteAliases"].IsMatch(cleanedword) && i > 1)//go back and get the previous word
                 {
                     var mins = words[i - 2];
                     var min = 0;
                     var isminute = false;
 
-                    if (Int32.TryParse(mins, out min))
+                    if (int.TryParse(mins, out min))
                     { 
                         timespan = timespan.Add(new TimeSpan(0, min, 0));
                         isminute = true;
                     }
-                    else if (Language.RegularExpressions["aAliases"].IsMatch(mins))
+                    else if (Language.RegularExpressions["aAliases"].IsMatch(cleanedword))
                     { 
                         timespan = timespan.Add(new TimeSpan(0, 1, 0));
                         isminute = true;
                     }
                     if (isminute)
                     {
-                        unmatchedWords[unmatchedWords.Count() - 1] = matchedWordReplacement;
-                        unmatchedWords.Add(matchedWordReplacement);
+                        unmatchedWords[unmatchedWords.Count() - 1] = matchedTimeWordReplacement;
+                        unmatchedWords.Add(matchedTimeWordReplacement);
                         continue;
                     }
                 }
 
-                if (Language.RegularExpressions["hourAliases"].IsMatch(word) && i > 1)//go back and get the previous word
+                if (Language.RegularExpressions["hourAliases"].IsMatch(cleanedword) && i > 1)//go back and get the previous word
                 {
                     var hrs = words[i - 2];
                     var hr = 0;
                     var ishour = false;
-                    if (Int32.TryParse(hrs, out hr))
+                    if (int.TryParse(hrs, out hr))
                     { 
                         timespan = timespan.Add(new TimeSpan(hr, 0, 0));
                         ishour = true;
@@ -139,16 +170,16 @@ namespace PokemonGoRaidBot.Parsing
                     }
                     if (ishour)
                     {
-                        unmatchedWords[unmatchedWords.Count() - 1] = matchedWordReplacement;
-                        unmatchedWords.Add(matchedWordReplacement);
+                        unmatchedWords[unmatchedWords.Count() - 1] = matchedTimeWordReplacement;
+                        unmatchedWords.Add(matchedTimeWordReplacement);
                         continue;
                     }
                 }
                 //the word was not matched, add it to the cleaned array to check for location
 
-                if (Language.RegularExpressions["atAliases"].IsMatch(word)) isActualTime = true;
+                if (Language.RegularExpressions["atAliases"].IsMatch(cleanedword)) isActualTime = true;
 
-                unmatchedWords.Add(Language.RegularExpressions["nonAlphaNumeric"].Replace(word, ""));
+                unmatchedWords.Add(cleanedword);
             }
 
             var unmatchedString = string.Join(" ", unmatchedWords.ToArray());
@@ -162,7 +193,7 @@ namespace PokemonGoRaidBot.Parsing
                 dt = dt.AddSeconds(dt.Second * -1);//make seconds "0"
 
                 if(!isActualTime)//add actual time to end of string for message thread
-                    result.Responses[0].Content += string.Format(" ({0:h:mmtt})", dt.AddHours(timeOffset));
+                    messageString += string.Format(" ({0:h:mmtt})", dt.AddHours(timeOffset));
                 
                 var joinReg = Language.CombineRegex("joinEnd", "joinStart", "joinMe");
                 if (!(joinReg.IsMatch(messageString) && !joinReg.IsMatch(unmatchedString)))//if it matches the full string but not the cleaned, we know the timespan is not remaining time
@@ -185,6 +216,8 @@ namespace PokemonGoRaidBot.Parsing
             {
                 result.LatLong = await GetLocationLatLong(result.Location, (SocketGuildChannel)message.Channel, config);
             }
+
+            result.Responses.Add(new PokemonMessage(message.Author.Id, message.Author.Username, messageString, DateTime.Now));
 
             return result;
         }
@@ -358,7 +391,7 @@ namespace PokemonGoRaidBot.Parsing
         }
         public int? ParseJoinedUsersCount(string message, out string messageout)
         {
-            var endreg = Language.RegularExpressions["joinEnd"];//new Regex(@"([0-9]{1,2}) (people|here|on (the|our))", RegexOptions.IgnoreCase);
+            var endreg = Language.RegularExpressions["joinEnd"];
 
             if (endreg.IsMatch(message))
             {
@@ -367,18 +400,32 @@ namespace PokemonGoRaidBot.Parsing
 
                 if (message.Contains("?")) return null;
 
-                return Convert.ToInt32(endmatch.Groups[1].Value);
+                var num = endmatch.Groups[1].Value;
+                var result = 0;
+
+                if (!int.TryParse(num, out result))
+                    result = WordToInteger(num);
+
+                if (result == -1) return null;
+                return result;
             }
 
-            var startReg = Language.RegularExpressions["joinStart"];//new Regex(@"(have|are|there's) ([0-9]{1,2})", RegexOptions.IgnoreCase);
+            var startReg = Language.RegularExpressions["joinStart"];
             if (startReg.IsMatch(message))
             {
                 var startmatch = endreg.Match(message);
                 messageout = endreg.Replace(message, matchedWordReplacement);
 
                 if (message.Contains("?")) return null;
+                
+                var num = startmatch.Groups[2].Value;
+                var result = 0;
 
-                return Convert.ToInt32(startmatch.Groups[2].Value);
+                if (!int.TryParse(num, out result))
+                    result = WordToInteger(num);
+
+                if (result == -1) return null;
+                return result;
             }
 
             var meReg = Language.RegularExpressions["joinMe"];
@@ -444,6 +491,13 @@ namespace PokemonGoRaidBot.Parsing
             }
         }
 
+        //todo add this nonsense to language file -- why the hell do people write numbers this way in chat??
+        private int WordToInteger(string str)
+        {
+            var arr = new List<string>(new string [] { "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten" });
+
+            return arr.IndexOf(str.ToLowerInvariant());
+        }
 
         private string ToTitleCase(string str)
         {
@@ -603,10 +657,8 @@ namespace PokemonGoRaidBot.Parsing
         }
         public string MakePostHeader(PokemonRaidPost post)
         {
-            var joinString = "";
-
-            foreach (var user in post.JoinedUsers.Where(x => x.Value > 0))
-                joinString += string.Format("<@{0}>({1})", user.Key, user.Value);
+            var joinString = string.Join(",", post.JoinedUsers.Where(x => x.Value > 0).Select(x => string.Format("<@{0}>({1})", x.Key, x.Value)));
+            var roleString = string.Join(",", post.MentionedRoleIds.Where(x => x > 0).Select(x => string.Format("<@&{0}>", x)));
 
             var joinCount = post.JoinedUsers.Sum(x => x.Value);
 
@@ -617,7 +669,8 @@ namespace PokemonGoRaidBot.Parsing
                 !string.IsNullOrEmpty(post.Location) ? string.Format(Language.Formats["postLocation"], post.Location) : "",
                 string.Format(Language.Formats["postEnds"], post.EndDate.AddHours(timeOffset)),
                 post.LatLong.HasValue ? string.Format("https://www.google.com/maps/dir/Current+Location/{0},{1}\n", post.LatLong.Value.Key, post.LatLong.Value.Value) : "",
-                joinCount > 0 ? string.Format(Language.Formats["postJoined"], joinCount, joinString) : string.Format(Language.Formats["postNoneJoined"], post.UserId)
+                joinCount > 0 ? string.Format(Language.Formats["postJoined"], joinCount, joinString) : string.Format(Language.Formats["postNoneJoined"], post.UserId),
+                post.MentionedRoleIds.Count() > 0 ? string.Format(Language.Formats["postRolesTagged"], roleString) : ""
                 );
             return response;
         }

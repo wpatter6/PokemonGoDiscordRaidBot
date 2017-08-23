@@ -72,7 +72,7 @@ namespace PokemonGoRaidBot
             }
 
             int num;
-            if(!Int32.TryParse(Command[2], out num))
+            if(!int.TryParse(Command[2], out num))
             {
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandInvalidNumber"], Command[2]));//$"Invalid number of raid joiners \"{Command[2]}\".");
                 return;
@@ -122,7 +122,7 @@ namespace PokemonGoRaidBot
 
                 var list = Config.PokemonInfoList.Where(x => x.CatchRate > 0);
 
-                if (Command.Length > 1 && Int32.TryParse(Command[1], out tierCommand))
+                if (Command.Length > 1 && int.TryParse(Command[1], out tierCommand))
                 {
                     list = list.Where(x => x.Tier == tierCommand);
                 }
@@ -226,7 +226,7 @@ namespace PokemonGoRaidBot
             if (!await CheckAdminAccess()) return;
 
             int timezoneOut = int.MinValue;
-            var isvalid = Int32.TryParse(Command[1], out timezoneOut);
+            var isvalid = int.TryParse(Command[1], out timezoneOut);
 
             if(!isvalid || timezoneOut > 12 || timezoneOut < -11)
             {

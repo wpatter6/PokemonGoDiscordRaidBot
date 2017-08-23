@@ -36,6 +36,8 @@ namespace PokemonGoRaidBot.Objects
         
         public List<ulong> OutputMessageIds = new List<ulong>();
 
+        public List<ulong> MentionedRoleIds = new List<ulong>();
+
         public List<PokemonMessage> Responses = new List<PokemonMessage>();
 
         public Dictionary<ulong, int> JoinedUsers = new Dictionary<ulong, int>();
