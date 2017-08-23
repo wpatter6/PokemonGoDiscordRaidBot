@@ -29,7 +29,7 @@
 1. Configure which channels should have pin behavior !pin or !pinall commands.
 1. Configure the timezone of the discord server using the !timezone commands
 1. Configure the city of the discord server using the !city and !channelcity commands.  This greatly improves google maps geolocation accuracy by basically appending this value to the lat/long search each time a location is identified.
-1. ~~Configure the language of the discord server (only "en-us" currently).~~
+1. ~~Configure the language of the discord server~~ (only "en-us" currently).
 
 ## How to install:
 1. Get the zip file for your operating system from the [Releases page](https://github.com/wpatter6/PokemonGoDiscordRaidBot/releases) or by building using the below Build instructions.
