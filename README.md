@@ -23,18 +23,19 @@
 
 ## How to configure in discord:
 *can be done without installing, requires Manage Server role permission*
-1. Join your bot to the server ([help](https://stackoverflow.com/a/37743722/711674)), or if not installing the program, you can join mine using [this link](https://discordapp.com/oauth2/authorize?&client_id=347493806695776256&scope=bot&permissions=0).
-1. Bot requires role permissions of at least "Manage Messages"
-1. Configure which channel is the output channel using !channel command (or none with !nochannel), and which channels should have pin behavior !pin or !pinall commands.
+1. Either [use my bot](https://discordapp.com/oauth2/authorize?&client_id=347493806695776256&scope=bot&permissions=0) or join your installed bot to the server ([help](https://stackoverflow.com/a/37743722/711674)).
+1. Bot requires role permission "Manage Messages" in order to pin.
+1. Configure which channel is the output channel using !channel command (or none with !nochannel)
+1. Configure which channels should have pin behavior !pin or !pinall commands.
 1. Configure the timezone of the discord server using the !timezone commands
-1. Configure the city of the discord server using the !city and !channelcity commands.  This greatly improves google maps geolocation accuracy.
-1. Configure the language of the discord server (only "en-us" currently).
+1. Configure the city of the discord server using the !city and !channelcity commands.  This greatly improves google maps geolocation accuracy by basically appending this value to the lat/long search each time a location is identified.
+1. ~~Configure the language of the discord server (only "en-us" currently).~~
 
 ## How to install:
-1. Get the zip file for your operating system from the [Releases page](https://github.com/wpatter6/PokemonGoDiscordRaidBot/releases) or by building using the following Build instructions.
+1. Get the zip file for your operating system from the [Releases page](https://github.com/wpatter6/PokemonGoDiscordRaidBot/releases) or by building using the below Build instructions.
 1. Extract the package and run the executable.  It will ask for the following values:
     1. Discord bot token.  Copy this from the bot you created [here](https://discordapp.com/developers/applications/me)
-    1. Google API key to use for location geocoding.
+    1. Google API key to use for location geocoding.  Get this [from google](https://developers.google.com/maps/documentation/geocoding/get-api-key)
     1. Command Prefix will be the prefix for the below commands (ex: "!")
     1. Default output channel should be the channel name from your discord server that the bot should post into.
     1. These values will be stored in the `configuration\config.json` file.  If you wish to change them in the future, you can do so in this file, or delete it and re-enter them the next time you run the bot.  If you edit the json directly, you will need to close and restart the bot for the changes to take effect.
