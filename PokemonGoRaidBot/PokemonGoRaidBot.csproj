@@ -35,5 +35,21 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-
+  
+  <PropertyGroup>
+    <VersionPrefix>1.0.0</VersionPrefix>
+    <VersionSuffix>beta</VersionSuffix>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+    <Authors>wpatter6</Authors>
+    <Company>wpatter6</Company>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <AssemblyTitle>PokemonGoRaidBot</AssemblyTitle>
+    <Description>
+      Discord bot for pokemon go raids.
+    </Description>
+    <Copyright>PokemonGoRaidBot</Copyright>
+    <UserSecretsId>aaabbbcccddd_eeefffggghhh</UserSecretsId>
+  </PropertyGroup>
 </Project>

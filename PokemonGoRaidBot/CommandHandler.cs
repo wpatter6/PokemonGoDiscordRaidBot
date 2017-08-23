@@ -258,36 +258,29 @@ namespace PokemonGoRaidBot
                 var fromChannel = GetChannel(post.FromChannelId);
                 var outputChannel = GetChannel(post.OutputChannelId);
 
-                if (post.Pin && post.MessageId != default(ulong))
-                {
-                    if(fromChannel != null)
-                    {
-                        deleteMessage = await fromChannel.GetMessageAsync(post.MessageId);
-                        if (deleteMessage.IsPinned)
-                        {
-                            await ((RestUserMessage)deleteMessage).UnpinAsync();
-                        }
-                        await deleteMessage.DeleteAsync();
-                    }
-                }
-                if(outputChannel != null)
-                {
-                    foreach (var messageId in post.OutputMessageIds)
-                    {
-                        deleteMessage = await outputChannel.GetMessageAsync(messageId);
-                        await deleteMessage.DeleteAsync();
-                    }
-                }
-
-                RestUserMessage messageResult;
-
                 var messages = parser.MakePostStrings(post);
-
-                if (post.Pin)
+                RestUserMessage messageResult;
+                if (post.Pin && fromChannel != null)
                 {
-                    if(fromChannel != null)
+                    var changed = true;
+                    var fromChannelMessage = Regex.Replace(messages[0], @" in \<\#[0-9]*\>", "");
+                    if (post.MessageId != default(ulong))
+                    { 
+                        deleteMessage = await fromChannel.GetMessageAsync(post.MessageId);
+
+                        changed = !deleteMessage?.Content.Equals(fromChannelMessage, StringComparison.OrdinalIgnoreCase) ?? true;
+
+                        if (changed)
+                        { 
+                            if (deleteMessage.IsPinned)
+                            {
+                                await ((RestUserMessage)deleteMessage).UnpinAsync();
+                            }
+                            await deleteMessage.DeleteAsync();
+                        }
+                    }
+                    if (changed)
                     {
-                        var fromChannelMessage = Regex.Replace(messages[0], @" in \<\#[0-9]*\>", "");
                         messageResult = await fromChannel.SendMessageAsync(fromChannelMessage);
                         try
                         {
@@ -298,12 +291,19 @@ namespace PokemonGoRaidBot
                             DoError(e);
                         }
                         post.MessageId = messageResult.Id;
-                    }
-                }
 
-                post.OutputMessageIds.Clear();
-                if (outputChannel != null)
+                    }
+
+                }
+                if(outputChannel != null)
                 {
+                    foreach (var messageId in post.OutputMessageIds)
+                    {
+                        deleteMessage = await outputChannel.GetMessageAsync(messageId);
+                        await deleteMessage.DeleteAsync();
+                    }
+                    post.OutputMessageIds.Clear();
+
                     foreach (var message in messages)
                     {
                         messageResult = await outputChannel.SendMessageAsync(message);
