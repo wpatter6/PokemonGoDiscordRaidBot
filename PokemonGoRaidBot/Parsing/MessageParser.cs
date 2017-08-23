@@ -304,16 +304,16 @@ namespace PokemonGoRaidBot.Parsing
             }
                 
 
-            var atReg = Language.RegularExpressions["locationAt"]; //new Regex("at ([a-zA-Z0-9 ]*)");//timespans should be removed already, so "at [blah blah]" should indicate location
+            var startReg = Language.RegularExpressions["locationStart"]; //new Regex("at ([a-zA-Z0-9 ]*)");//timespans should be removed already, so "at [blah blah]" should indicate location
 
-            if (atReg.IsMatch(message))
-                return atReg.Match(message).Groups[1].Value;
+            if (startReg.IsMatch(message))
+                return startReg.Match(message).Groups[1].Value;
 
 
-            var parkReg = Language.RegularExpressions["locationLandmark"]; //new Regex(@"([a-zA-Z0-9 ]*\b(park|school|church|museum|mural|statue) ?[a-zA-Z]*\b?)", RegexOptions.IgnoreCase);
+            var endReg = Language.RegularExpressions["locationEnd"]; //new Regex(@"([a-zA-Z0-9 ]*\b(park|school|church|museum|mural|statue) ?[a-zA-Z]*\b?)", RegexOptions.IgnoreCase);
 
-            if (parkReg.IsMatch(message))
-                return parkReg.Match(message).Groups[1].Value;
+            if (endReg.IsMatch(message))
+                return endReg.Match(message).Groups[1].Value;
             
             return "";
         }
