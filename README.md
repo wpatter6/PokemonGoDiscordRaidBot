@@ -16,7 +16,7 @@
 - Determines the end time of the raid and removes its messages from the chat after the raid has ended.
 
 ###### *Posts formatted and pinned into their original channel*
-![Pinning messages posted in channel](http://i.imgur.com/9FDPGW9.png)
+![Pinning messages posted in channel](http://i.imgur.com/5QZBYk7.png)
 
 ###### *All channels formatting and outputting to their specific channel as 'threads'*
 ![All output to specific channel](http://i.imgur.com/rnAVUck.png)
