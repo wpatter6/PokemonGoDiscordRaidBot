@@ -1,16 +1,22 @@
 # PokemonGoRaidBot
 ## What it does
-- This highly configurable discord bot will parse posts in a discord server and provide clean output to a configured channel on the discord server, and/or it can pin messages in the channel they were posted in.  It does not require the use of explicit commands, allowing users to post raids in chat like they normally do to create formatted raid post entries.
+- This highly configurable discord bot will parse posts in a discord server and provide clean output to a configured channel on the discord server, and/or it can pin messages in the channel they were posted in.  
 
-![Pokemon Go Raid Bot in action](http://i.imgur.com/6iqfkcN.png)
+- It does not require the use of explicit commands, allowing users to post raids in chat like they normally do to create formatted raid post entries.
 
-- Identifies the raid's location and is usually able to create a link to google maps for directions to the raid.
+- Identifies the raid's location and is usually able to create a link to google maps for directions to the raid.  Cities can be applied by server and by channel to give better accuracy.
 
 - Can tell if users are joining the raid, and how many.  Users can also use explicit commands to join or un-join a raid.
 
 - Identifies responses to a raid post and includes the discussion on the configured output channel's raid post thread as well.  It also parses any time strings in the user's response and outputs the actual time, with configurable GMT time zone.
 
 - Determines the end time of the raid and removes its messages from the chat after the raid has ended.
+
+![Pinning messages posted in channel](http://i.imgur.com/AkXFcPi.png)
+
+![All non-muted messages being output to specific channel](http://i.imgur.com/csmjW5D.png)
+
+![info command provides quick and easy access to relevant raid information and link directly to best counters for each boss](http://i.imgur.com/qlIGKwU.png)
 
 ## How to configure in discord:
 *can be done without installing, requires Manage Server role permission*
