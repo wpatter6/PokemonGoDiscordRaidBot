@@ -137,12 +137,9 @@ namespace PokemonGoRaidBot
                     var fromChannel = GetChannel(post.FromChannelId);
 
                     var messages = new List<IMessage>();
-
-                    foreach (var messageId in post.OutputMessageIds)
-                    {
-                        var m = new IMessage[] { await outputChannel.GetMessageAsync(messageId) };
-                        messages.AddRange(m.Where(x => x != null));
-                    }
+                    
+                    var m = new IMessage[] { await outputChannel.GetMessageAsync(post.OutputMessageId) };
+                    messages.AddRange(m.Where(x => x != null));
 
                     try
                     {
@@ -274,22 +271,14 @@ namespace PokemonGoRaidBot
                 }
                 if(outputChannel != null)
                 {
-                    foreach (var messageId in post.OutputMessageIds)
-                    {
-                        deleteMessage = await outputChannel.GetMessageAsync(messageId);
+                    if(post.OutputMessageId != default(ulong))
+                    { 
+                        deleteMessage = await outputChannel.GetMessageAsync(post.OutputMessageId);
                         await deleteMessage.DeleteAsync();
                     }
-                    post.OutputMessageIds.Clear();
 
                     messageResult = await outputChannel.SendMessageAsync("", false, embed.Value);
-                    post.OutputMessageIds.Add(messageResult.Id);
-                    /*
-                    foreach (var message in messages)
-                    {
-                        messageResult = await outputChannel.SendMessageAsync(message);
-                        post.OutputMessageIds.Add(messageResult.Id);
-                    }
-                    */
+                    post.OutputMessageId = messageResult.Id;
                 }
             }
             catch (Exception e)

@@ -16,13 +16,13 @@
 - Determines the end time of the raid and removes its messages from the chat after the raid has ended.
 
 ###### *Posts formatted and pinned into their original channel*
-![Pinning messages posted in channel](http://i.imgur.com/AkXFcPi.png)
+![Pinning messages posted in channel](http://i.imgur.com/9FDPGW9.png)
 
 ###### *All channels formatting and outputting to their specific channel as 'threads'*
-![All output to specific channel](http://i.imgur.com/csmjW5D.png)
+![All output to specific channel](http://i.imgur.com/rnAVUck.png)
 
 ###### *info command will give useful information about the raid with a link to boss counters*
-![info command](http://i.imgur.com/qlIGKwU.png)
+![info command](http://i.imgur.com/7LN3Asy.png)
 
 ## How to configure in discord:
 *can be done without installing, requires Manage Server role permission*

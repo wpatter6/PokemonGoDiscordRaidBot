@@ -667,7 +667,7 @@ namespace PokemonGoRaidBot.Parsing
 
             var headerembed = new EmbedBuilder();
             headerembed.WithColor(post.Color[0], post.Color[1], post.Color[2]);
-            headerembed.WithDescription(Language.RegularExpressions["discordChannel"].Replace(header, "").Replace(" in ", " "));
+            headerembed.WithDescription(Language.RegularExpressions["discordChannel"].Replace(header, "").Replace(" in ", " ").Replace("  ", " "));
 
             return new KeyValuePair<Embed, Embed>(headerembed.Build(), embed);
         }
