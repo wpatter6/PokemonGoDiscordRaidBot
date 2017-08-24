@@ -73,7 +73,7 @@ namespace PokemonGoRaidBot.Parsing
             {
                 i++;
 
-                var cleanedword = Language.RegularExpressions["nonAlphaNumeric"].Replace(word, "");
+                var cleanedword = Language.RegularExpressions["nonAlphaNumericWithPunctuation"].Replace(word, "");
                 
                 var roleReg = Language.RegularExpressions["discordRole"];
                 var userReg = Language.RegularExpressions["discordUser"];
@@ -400,10 +400,10 @@ namespace PokemonGoRaidBot.Parsing
 
             if (endreg.IsMatch(message))
             {
-                var endmatch = endreg.Match(message);
                 messageout = endreg.Replace(message, matchedWordReplacement);
+                if (message.Contains(Language.Strings["questionMark"])) return null;
 
-                if (message.Contains("?")) return null;
+                var endmatch = endreg.Match(message);
 
                 if (Language.RegularExpressions["joinLess"].IsMatch(message)) isLess = true;
                 else if (Language.RegularExpressions["joinMore"].IsMatch(message)) isMore = true;
@@ -421,10 +421,10 @@ namespace PokemonGoRaidBot.Parsing
             var startReg = Language.RegularExpressions["joinStart"];
             if (startReg.IsMatch(message))
             {
-                var startmatch = endreg.Match(message);
-                messageout = endreg.Replace(message, matchedWordReplacement);
+                messageout = startReg.Replace(message, matchedWordReplacement);
+                if (message.Contains(Language.Strings["questionMark"])) return null;
 
-                if (message.Contains("?")) return null;
+                var startmatch = startReg.Match(message);
 
                 if (Language.RegularExpressions["joinLess"].IsMatch(message)) isLess = true;
                 else if (Language.RegularExpressions["joinMore"].IsMatch(message)) isMore = true;
@@ -443,12 +443,16 @@ namespace PokemonGoRaidBot.Parsing
             if (meReg.IsMatch(message))
             {
                 messageout = meReg.Replace(message, matchedWordReplacement);
+                if (message.Contains(Language.Strings["questionMark"])) return null;
                 return 1;
             }
 
             var moreReg = Language.RegularExpressions["joinMore"];
             if (moreReg.IsMatch(message))
             {
+                messageout = moreReg.Replace(message, matchedWordReplacement);
+                if (message.Contains(Language.Strings["questionMark"])) return null;
+
                 var morematch = moreReg.Match(message);
 
                 var num = morematch.Groups[2].Value;
@@ -457,7 +461,6 @@ namespace PokemonGoRaidBot.Parsing
                 if (!int.TryParse(num, out result))
                     result = WordToInteger(num);
 
-                messageout = moreReg.Replace(message, matchedWordReplacement);
                 isMore = true;
                 return result;
             }
@@ -465,6 +468,9 @@ namespace PokemonGoRaidBot.Parsing
             var lessReg = Language.RegularExpressions["joinLess"];
             if (lessReg.IsMatch(message))
             {
+                messageout = lessReg.Replace(message, matchedWordReplacement);
+                if (message.Contains(Language.Strings["questionMark"])) return null;
+
                 var lessmatch = lessReg.Match(message);
 
                 var num = lessmatch.Groups[1].Value;
@@ -473,7 +479,7 @@ namespace PokemonGoRaidBot.Parsing
                 if (!int.TryParse(num, out result))
                     result = WordToInteger(num);
 
-                messageout = moreReg.Replace(message, matchedWordReplacement);
+
                 isLess = true;
                 return result;
             }
