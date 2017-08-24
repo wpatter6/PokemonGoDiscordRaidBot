@@ -8,7 +8,7 @@
     "locationCrossStreets": "(([a-zA-Z0-9]* ?[a-zA-Z0-9]+) (\\&|and) ([a-zA-Z0-9]+ ?[a-zA-Z0-9]*))", //Cross streets regex, like 12th and Broadway
     "locationStart": "\\bat ([a-zA-Z0-9(\\bn\\.|\\bs\\.|\\be\\.|\\bw\\.) ]*)", //indicates location using word "at", includes n. s. e. w.
     "locationEnd": "([a-zA-Z0-9' ]*\\b(park|school|church|museum|mural|statue|building|station|theat(er|re)|course|sign)( (n(orth)?|s(outh)?|e(ast)?|w(est))\\b)?)", //words coming after a landmark name
-    "locationExcludeWords": "\\b(at|to|any(one)?|in|_)\\b|\\?|\\.", //remove these from parsed locations
+    "locationExcludeWords": "\\b(at|to|any(one)?|in|_)\\b|\\?|\\.|,", //remove these from parsed locations
     "timeActual": "([0-9]{1,2}):?([0-9]{2})?(a|p)", //match where numbers indicate an actual time
     "timeSpan": "(1?[0-9]):([0-9]{2})", //match where numbers indicate hours and minutes
     "timeHour": "([0-2]{1})h", //match where numbers = hour
@@ -19,7 +19,7 @@
     "joinMore": "^((?!need|use).)*\\b([0-9]{1,2}|\\b(one|two|three|four|five|six|seven|eight|nine|ten)) more\\b", //indicates more are joining, add to existing value
     "joinLess": "\\b([0-9]{1,2}|\\b(one|two|three|four|five|six|seven|eight|nine|ten)) (people |ppl |person )?((are |had to )?(leav(ing|e)|go)|just left)\\b", //indicates some are leaving, subtract from existing value
     "pokemonInvalidators": "^(any)$", //if this comes before pokemon name, they're asking if any exist,
-    "nonAlphaNumericWithPunctuation": "[^a-zA-Z0-9 ?\\.]",
+    "nonAlphaNumericWithPunctuation": "[^a-zA-Z0-9 ?\\.,]",
     "smallWords": "^(at?|the|and|of)$", //These will not be made uppercase if they're found in a location
     "discordRole": "\\<\\@\\&([0-9]+)\\>",
     "discordUser": "\\<\\@([0-9]+)\\>",
@@ -82,6 +82,7 @@
     "helpRemoveAlias": "Removes an alias for a pokemon.",
     "helpDelete": "Deletes a raid post with the corresponding Id.  Can only be done by admins or the poster of the raid.",
     "helpMerge": "Merges the second raid post Id into the first.  Can only be done by admins or the poster of the second raid.",
+    "helpLocation": "Allows the poster of the raid or server managers to change the location of a post.",
     "helpPin": "Raids posted in the specified channel will be posted and pinned in the channel itself.  Bot requires \"Manage Messages\" role permission to pin.",
     "helpUnPin": "Removes channel from pin channels.",
     "helpPinAll": "Adds all channels on the server to pin channels.",

@@ -64,6 +64,7 @@
 * `!(i)nfo [name]` Displays information about the selected raid, or all of the raids if [name] is blank.  Information was taken from https://pokemongo.gamepress.gg.
 * `!(d)elete [id]` Deletes a raid post with the corresponding Id.
 * `!(m)erge [id1] [id2]` Merges two raid posts together.
+* `!(loc)ation [id] [new location]` Allows the poster of the raid or server managers to change the location of a post.
 * `!(h)elp` Shows help message.
 
 ## Admin Commands:

@@ -233,6 +233,7 @@ namespace PokemonGoRaidBot
                     {
                         Handler.DeletePost(allpost);
                     }
+                    return;
                 }
                 else
                 { 
@@ -240,14 +241,32 @@ namespace PokemonGoRaidBot
                     return;
                 }
             }
-            else
+            if (post.UserId != Message.Author.Id && !IsAdmin)//post creators or admins can delete
             {
-                if (post.UserId != Message.Author.Id && !IsAdmin)//post creators or admins can delete
-                {
-                    await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoPostAccess"]);
-                }
-                Handler.DeletePost(post);
+                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoPostAccess"]);
+                return;
             }
+            Handler.DeletePost(post);
+        }
+
+        [RaidBotCommand("loc")]
+        [RaidBotCommand("location")]
+        private async Task Location()
+        {
+            var post = GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[1]);
+            if (post == null)
+            {
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[1]));//"Post with Unique Id \"{Command[1]}\" not found.");
+                return;
+            }
+            if (post.UserId != Message.Author.Id && !IsAdmin)//post creators or admins can delete
+            {
+                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoPostAccess"]);
+                return;
+            }
+            post.Location = Parser.ToTitleCase(string.Join(" ", Command.Skip(2)));
+            post.LatLong = await Parser.GetLocationLatLong(post.Location, (SocketGuildChannel)Message.Channel, Config);
+            await Handler.MakePost(post, Parser);
         }
 
         [RaidBotCommand("language")]

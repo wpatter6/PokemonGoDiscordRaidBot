@@ -237,7 +237,7 @@ namespace PokemonGoRaidBot.Parsing
         {
             if (name.Length < 3) return null;
 
-            var cleanedName = Regex.Replace(name, @"\W", "").ToLowerInvariant();
+            var cleanedName = Regex.Replace(name, @"\W", "").ToLowerInvariant();//never want any special characters in string
 
             var guildConfig = config.GetGuildConfig(guildId);
 
@@ -543,7 +543,7 @@ namespace PokemonGoRaidBot.Parsing
 
             return arr.IndexOf(str.ToLowerInvariant());
         }
-        private string ToTitleCase(string str)
+        public string ToTitleCase(string str)
         {
             var result = new List<string>();
             var strs = str.Split(' ');
@@ -598,7 +598,8 @@ namespace PokemonGoRaidBot.Parsing
             helpmessage += string.Format("  {0}(un)join [id] - {1}\n", config.Prefix, Language.Strings["helpUnJoin"]);
             helpmessage += string.Format("  {0}(i)nfo [name] - {1}\n", config.Prefix, Language.Strings["helpInfo"]);
             helpmessage += string.Format("  {0}(d)elete [id] - {1}\n", config.Prefix, Language.Strings["helpDelete"]);
-            helpmessage += string.Format("  {0}(m)erge [id1] [id2] - *{1}\n", config.Prefix, Language.Strings["helpMerge"]);
+            helpmessage += string.Format("  {0}(m)erge [id1] [id2] - {1}\n", config.Prefix, Language.Strings["helpMerge"]);
+            helpmessage += string.Format("  {0}(loc)ation [id] [new location] - {1}\n", config.Prefix, Language.Strings["helpLocation"]);
             helpmessage += string.Format("  {0}(h)elp - {1}\n", config.Prefix, Language.Strings["helpHelp"]);
             helpmessage += string.Format("       (){0}\n", Language.Strings["helpParenthesis"]);
             if (admin)
