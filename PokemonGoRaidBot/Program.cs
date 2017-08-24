@@ -18,6 +18,7 @@ namespace PokemonGoRaidBot
 
         private DiscordSocketClient client;
         private CommandHandler handler;
+        private Timer timer;
 
         public async Task Start()
         {
@@ -40,7 +41,7 @@ namespace PokemonGoRaidBot
             await handler.ConfigureAsync();
             
 
-            var timer = new Timer(handler.PurgePosts, null, 0, 60000);
+            timer = new Timer(handler.PurgePosts, null, 1000, 60000);
 
             //Block this program untill it is closed
             await Task.Delay(-1);
