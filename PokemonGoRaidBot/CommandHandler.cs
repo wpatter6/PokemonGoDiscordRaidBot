@@ -126,75 +126,82 @@ namespace PokemonGoRaidBot
         /// <param name="stateInfo"></param>
         public async void PurgePosts(Object stateInfo = null)
         {
-            var now = DateTime.Now;
-            int remaining = 0, deleted = 0;
-            foreach(var guild in bot.Guilds)
+            try
             {
-                var deletedPosts = new List<PokemonRaidPost>();
-                var posts = Config.GetGuildConfig(guild.Id).Posts;
-                foreach (var post in posts)
+                var now = DateTime.Now;
+                int remaining = 0, deleted = 0;
+                foreach (var guild in bot.Guilds)
                 {
-                    if (post.EndDate < now)
+                    var deletedPosts = new List<PokemonRaidPost>();
+                    var posts = Config.GetGuildConfig(guild.Id).Posts;
+                    foreach (var post in posts)
                     {
-                        deletedPosts.Add(post);
-                        deleted++;
+                        if (post.EndDate < now)
+                        {
+                            deletedPosts.Add(post);
+                            deleted++;
+                        }
+                        else remaining++;
                     }
-                    else remaining++;
-                }
 
-                foreach (var post in deletedPosts)
-                {
-                    var outputChannel = GetChannel(post.OutputChannelId);
-                    var fromChannel = GetChannel(post.FromChannelId);
+                    foreach (var post in deletedPosts)
+                    {
+                        var outputChannel = GetChannel(post.OutputChannelId);
+                        var fromChannel = GetChannel(post.FromChannelId);
 
-                    var messages = new List<IMessage>();
+                        var messages = new List<IMessage>();
 
-                    if (post.OutputMessageId != default(ulong))
-                    { 
+                        if (post.OutputMessageId != default(ulong))
+                        {
+                            try
+                            {
+
+                                var m = new IMessage[] { await outputChannel.GetMessageAsync(post.OutputMessageId) };
+                                messages.AddRange(m.Where(x => x != null));
+                            }
+                            catch (Exception e)
+                            {
+                                DoError(e);
+                            }
+                        }
                         try
                         {
-
-                            var m = new IMessage[] { await outputChannel.GetMessageAsync(post.OutputMessageId) };
-                            messages.AddRange(m.Where(x => x != null));
+                            if (messages.Count() > 0) await outputChannel.DeleteMessagesAsync(messages);
+                            posts.Remove(post);
                         }
                         catch (Exception e)
                         {
                             DoError(e);
                         }
-                    }
-                    try
-                    {
-                        if(messages.Count() > 0) await outputChannel.DeleteMessagesAsync(messages);
-                        posts.Remove(post);
-                    }
-                    catch (Exception e)
-                    {
-                        DoError(e);
-                    }
 
-                    if(post.MessageId > 0)
-                    {
-                        var m1 = new IMessage[] { await fromChannel.GetMessageAsync(post.MessageId) };
-
-                        if (m1.Count() > 0 && m1[0] != null)
+                        if (post.MessageId > 0)
                         {
-                            try
-                            {
-                                if (m1[0] is RestUserMessage && ((RestUserMessage)m1[0]).IsPinned)
-                                    await ((RestUserMessage)m1[0]).UnpinAsync();
+                            var m1 = new IMessage[] { await fromChannel.GetMessageAsync(post.MessageId) };
 
-                                await m1[0].DeleteAsync();
-                            }
-                            catch(Exception e)
+                            if (m1.Count() > 0 && m1[0] != null)
                             {
-                                DoError(e);
+                                try
+                                {
+                                    if (m1[0] is RestUserMessage && ((RestUserMessage)m1[0]).IsPinned)
+                                        await ((RestUserMessage)m1[0]).UnpinAsync();
+
+                                    await m1[0].DeleteAsync();
+                                }
+                                catch (Exception e)
+                                {
+                                    DoError(e);
+                                }
                             }
                         }
                     }
                 }
+                Config.Save();
+                await Logger.Log(new LogMessage(LogSeverity.Debug, "handler", string.Format("deleted:{0}; remaining:{1}", deleted, remaining)));
             }
-            Config.Save();
-            await Logger.Log(new LogMessage(LogSeverity.Debug, "handler", string.Format("deleted:{0}; remaining:{1}", deleted, remaining)));
+            catch (Exception e)
+            {
+                DoError(e);
+            }
         }
         /// <summary>
         /// Output an error to the bot console.
