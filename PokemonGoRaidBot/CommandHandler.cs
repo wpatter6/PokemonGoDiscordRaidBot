@@ -391,7 +391,7 @@ namespace PokemonGoRaidBot
         /// <returns></returns>
         public PokemonRaidPost MergePosts(PokemonRaidPost post1, PokemonRaidPost post2)
         {
-            if (post2.HasEndDate)
+            if (post2.HasEndDate && (!post1.HasEndDate || post2.UserId == post1.UserId))
             {
                 post1.HasEndDate = true;
                 post1.EndDate = post2.EndDate;
