@@ -72,7 +72,7 @@
     "helpRaidTop": "Posting a raid in chat will cause this bot to either post the raid into a specific channel, or pin it in the current channel.",
     "helpCommands": "Commands",
     "helpAdminCommands": "AdminCommands",
-    "helpJoin": "Joins the specified number of people to the specified raid Id. Overwrites any previous values.",
+    "helpJoin": "Joins the specified number of people to the specified raid Id. Overwrites any existing values. Adding + or - before the number will add or subtract from an existing value.",
     "helpUnJoin": "Removes your join information from the raid.",
     "helpInfo": "Displays information about the selected raid, or all of the raids if [name] is not entered.",
     "helpChannel": "Changes the bot output channel on this server to the value passed in for [name].  If blank, the override is removed and the value \"{0}\" is used.",

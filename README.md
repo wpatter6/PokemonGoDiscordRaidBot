@@ -16,10 +16,10 @@
 - Determines the end time of the raid and removes its messages from the chat after the raid has ended.
 
 ###### *Posts formatted and pinned into their original channel*
-![Pinning messages posted in channel](http://i.imgur.com/5QZBYk7.png)
+![Pinning messages posted in channel](http://i.imgur.com/mZVyF16.png)
 
 ###### *All channels formatting and outputting to their specific channel as 'threads'*
-![All output to specific channel](http://i.imgur.com/rnAVUck.png)
+![All output to specific channel](http://i.imgur.com/wa8HNye.png)
 
 ###### *info command will give useful information about the raid with a link to boss counters*
 ![info command](http://i.imgur.com/7LN3Asy.png)
@@ -29,7 +29,7 @@
 1. Either [use my bot](https://discordapp.com/oauth2/authorize?&client_id=347493806695776256&scope=bot&permissions=0) or join your installed bot to the server ([help](https://stackoverflow.com/a/37743722/711674)).
 1. Bot requires role permission "Manage Messages" in order to pin.
 1. Configure which channel is the output channel using !channel command (or none with !nochannel)
-1. Configure which channels should have pin behavior !pin or !pinall commands.
+1. Configure which channels should have pin behavior !pin or !pinall commands.  On the first load in a server, all channels are added to the pin list.
 1. Configure the timezone of the discord server using the !timezone commands
 1. Configure the city of the discord server using the !city and !channelcity commands.  This greatly improves google maps geolocation accuracy by basically appending this value to the lat/long search each time a location is identified.
 1. ~~Configure the language of the discord server~~ (only "en-us" currently).
@@ -59,7 +59,7 @@
 
 ## Bot Commands:
 *Parenthesis indicate shorthand version of command*
-* `!(j)oin [id] [number]` Joins the specified number of people to the specified raid Id. Overwrites any previous values.
+* `!(j)oin [id] [number]` Joins the specified number of people to the specified raid Id. Overwrites any previous values.  Adding + or - before the number will add or subtract from an existing value.
 * `!(un)join [id]` Removes your join information from the raid.
 * `!(i)nfo [name]` Displays information about the selected raid, or all of the raids if [name] is blank.  Information was taken from https://pokemongo.gamepress.gg.
 * `!(d)elete [id]` Deletes a raid post with the corresponding Id.

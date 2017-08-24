@@ -72,6 +72,20 @@ namespace PokemonGoRaidBot
             }
 
             int num;
+
+            bool isMore = false, isLess = false;
+
+            if(Command[2].StartsWith("+"))
+            {
+                isMore = true;
+                Command[2] = Command[2].Substring(1);
+            }
+            else if (Command[2].StartsWith("-"))
+            {
+                isLess = true;
+                Command[2] = Command[2].Substring(1);
+            }
+
             if(!int.TryParse(Command[2], out num))
             {
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandInvalidNumber"], Command[2]));//$"Invalid number of raid joiners \"{Command[2]}\".");
@@ -82,7 +96,15 @@ namespace PokemonGoRaidBot
             if (joinedUser == null)
                 post.JoinedUsers.Add(new PokemonRaidJoinedUser(Message.Author.Id, Message.Author.Username, num));
             else
-                joinedUser.Count = num;
+            {
+                if (isMore)
+                    joinedUser.Count += num;
+                else if (isLess)
+                    joinedUser.Count -= num;
+                else
+                    joinedUser.Count = num;
+            }
+                
 
             await Handler.MakePost(post, Parser);
         }
