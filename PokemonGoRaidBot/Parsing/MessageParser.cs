@@ -51,7 +51,6 @@ namespace PokemonGoRaidBot.Parsing
                 UserId = message.Author.Id,
                 PostDate = DateTime.Now,//uses local time for bot
                 FromChannelId = message.Channel.Id,
-                //Responses = new List<PokemonMessage>() { new PokemonMessage(message.Author.Id, message.Author.Username, message.Content, DateTime.Now) },
                 EndDate = DateTime.Now + new TimeSpan(0, maxRaidMinutes, 0),
                 MentionedRoleIds = new List<ulong>(message.MentionedRoles.Select(x => x.Id)),
                 Color = GetRandomColorRGB()
@@ -85,16 +84,19 @@ namespace PokemonGoRaidBot.Parsing
                 {
                     var roleId = Convert.ToUInt64(roleReg.Match(word).Groups[1].Value);
                     cleanedword = message.MentionedRoles.FirstOrDefault(x => x.Id == roleId)?.Name ?? cleanedword;
+                    messageString = messageString.Replace(word, cleanedword);//This must be done so mentions display properly in embed with android
                 }
                 else if (userReg.IsMatch(word))
                 {
                     var userId = Convert.ToUInt64(userReg.Match(word).Groups[1].Value);
                     cleanedword = message.MentionedUsers.FirstOrDefault(x => x.Id == userId)?.Username ?? cleanedword;
+                    messageString = messageString.Replace(word, cleanedword);
                 }
                 else if (channelReg.IsMatch(word))
                 {
                     var channelId = Convert.ToUInt64(channelReg.Match(word).Groups[1].Value);
                     cleanedword = message.MentionedChannels.FirstOrDefault(x => x.Id == channelId)?.Name ?? cleanedword;
+                    messageString = messageString.Replace(word, cleanedword);
                 }
 
                 var garbageRegex = Language.RegularExpressions["garbage"];

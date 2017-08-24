@@ -40,7 +40,7 @@ namespace PokemonGoRaidBot
             await handler.ConfigureAsync();
 
             await Task.Delay(5000);
-            //Block this program untill it is closed
+            //Block this program until it is closed
             while (1 == 1)
             {
                 handler.PurgePosts();

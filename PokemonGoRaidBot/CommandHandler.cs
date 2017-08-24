@@ -124,7 +124,7 @@ namespace PokemonGoRaidBot
         /// Used as a recurring method which will remove old posts to keep the output channel clean of expired raids.
         /// </summary>
         /// <param name="stateInfo"></param>
-        public async void PurgePosts(Object stateInfo = null)
+        public async void PurgePosts()
         {
             try
             {
