@@ -19,6 +19,11 @@ namespace PokemonGoRaidBot.Config
 
         public string GoogleApiKey { get; set; }
 
+        public bool HasGuildConfig(ulong id)
+        {
+            return GuildConfigs.Where(x => x.Id == id).Count() > 0;
+        }
+
         public GuildConfig GetGuildConfig(ulong id)
         {
             var result = GuildConfigs.FirstOrDefault(x => x.Id == id);

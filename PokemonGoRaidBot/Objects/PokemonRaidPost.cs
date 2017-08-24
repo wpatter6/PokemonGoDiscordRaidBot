@@ -43,7 +43,7 @@ namespace PokemonGoRaidBot.Objects
 
         public List<PokemonMessage> Responses = new List<PokemonMessage>();
 
-        public Dictionary<ulong, int> JoinedUsers = new Dictionary<ulong, int>();
+        public List<PokemonRaidJoinedUser> JoinedUsers = new List<PokemonRaidJoinedUser>();
 
         public ulong GuildId;
 

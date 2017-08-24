@@ -17,10 +17,6 @@ namespace PokemonGoRaidBot.Parsing
     public class MessageParser
     {
         public ParserLanguage Language;
-        //private const string googleGeocodeApiUrlFormat = "https://maps.googleapis.com/maps/api/geocode/json?address={0}&key={1}";
-        //private const string googleMapLinkFormat = "https://www.google.com/maps/dir/Current+Location/{0},{1}";
-        //private const string pokemonLargeImageUrlFormat = "https://assets.pokemon.com/assets/cms2/img/pokedex/detail/{0}.png";
-        //private const string pokemonSmallImageUrlFormat = "https://assets.pokemon.com/assets/cms2/img/pokedex/detail/{0}.png";
 
         private const int latLongComparisonMaxMeters = 80;
         private const int maxRaidMinutes = 120;
@@ -63,7 +59,7 @@ namespace PokemonGoRaidBot.Parsing
 
             var guildId = ((SocketGuildChannel)message.Channel).Guild.Id;
             var guildConfig = config.GetGuildConfig(guildId);
-            var messageString = message.Content.Replace(" & ", $" {Language.Strings["and"]} ");
+            var messageString = message.Content.Replace(" & ", $" {Language.Strings["and"]} ").Replace(" @ ", $" {Language.Strings["at"]} ");
 
             var words = messageString.Split(' ');
 
@@ -198,7 +194,7 @@ namespace PokemonGoRaidBot.Parsing
                 if (!isActualTime)//add actual time to end of string for message thread
                     messageString += string.Format(" ({0:h:mmtt})", dt.AddHours(timeOffset));
 
-                var joinReg = Language.CombineRegex("joinEnd", "joinStart", "joinMe");
+                var joinReg = Language.CombineRegex("joinEnd", "joinStart", "joinMe", "joinMore");
                 if (!(joinReg.IsMatch(messageString) && !joinReg.IsMatch(unmatchedString)))//if it matches the full string but not the cleaned, we know the timespan is not remaining time
                 {
                     result.EndDate = dt;
@@ -207,11 +203,11 @@ namespace PokemonGoRaidBot.Parsing
             }
 
             var newUnmatchedString = "";
-
-            var joinCount = ParseJoinedUsersCount(unmatchedString, out newUnmatchedString);
+            bool isMore, isLess;
+            var joinCount = ParseJoinedUsersCount(unmatchedString, out newUnmatchedString, out isMore, out isLess);
 
             if (joinCount.HasValue)
-                result.JoinedUsers[message.Author.Id] = joinCount.Value;
+                result.JoinedUsers.Add(new PokemonRaidJoinedUser(message.Author.Id, message.Author.Username, joinCount.Value, isMore, isLess));
 
             result.Location = ParseLocation(newUnmatchedString);
 
@@ -395,8 +391,9 @@ namespace PokemonGoRaidBot.Parsing
             var distance = DistanceBetweenTwoPoints(ll1, ll2);
             return distance < latLongComparisonMaxMeters;
         }
-        public int? ParseJoinedUsersCount(string message, out string messageout)
+        public int? ParseJoinedUsersCount(string message, out string messageout, out bool isMore, out bool isLess)
         {
+            isLess = isMore = false;
             var endreg = Language.RegularExpressions["joinEnd"];
 
             if (endreg.IsMatch(message))
@@ -405,6 +402,9 @@ namespace PokemonGoRaidBot.Parsing
                 messageout = endreg.Replace(message, matchedWordReplacement);
 
                 if (message.Contains("?")) return null;
+
+                if (Language.RegularExpressions["joinLess"].IsMatch(message)) isLess = true;
+                else if (Language.RegularExpressions["joinMore"].IsMatch(message)) isMore = true;
 
                 var num = endmatch.Groups[1].Value;
                 var result = 0;
@@ -424,6 +424,9 @@ namespace PokemonGoRaidBot.Parsing
 
                 if (message.Contains("?")) return null;
 
+                if (Language.RegularExpressions["joinLess"].IsMatch(message)) isLess = true;
+                else if (Language.RegularExpressions["joinMore"].IsMatch(message)) isMore = true;
+
                 var num = startmatch.Groups[2].Value;
                 var result = 0;
 
@@ -439,6 +442,38 @@ namespace PokemonGoRaidBot.Parsing
             {
                 messageout = meReg.Replace(message, matchedWordReplacement);
                 return 1;
+            }
+
+            var moreReg = Language.RegularExpressions["joinMore"];
+            if (moreReg.IsMatch(message))
+            {
+                var morematch = moreReg.Match(message);
+
+                var num = morematch.Groups[2].Value;
+                var result = 0;
+
+                if (!int.TryParse(num, out result))
+                    result = WordToInteger(num);
+
+                messageout = moreReg.Replace(message, matchedWordReplacement);
+                isMore = true;
+                return result;
+            }
+
+            var lessReg = Language.RegularExpressions["joinLess"];
+            if (lessReg.IsMatch(message))
+            {
+                var lessmatch = lessReg.Match(message);
+
+                var num = lessmatch.Groups[1].Value;
+                var result = 0;
+
+                if (!int.TryParse(num, out result))
+                    result = WordToInteger(num);
+
+                messageout = moreReg.Replace(message, matchedWordReplacement);
+                isLess = true;
+                return result;
             }
 
             messageout = message;
@@ -655,31 +690,47 @@ namespace PokemonGoRaidBot.Parsing
 
             foreach (var message in post.Responses.OrderBy(x => x.MessageDate).Skip(Math.Max(0, post.Responses.Count() - 24)))//max fields is 25
             {
-                builder.AddField(message.Username, message.Content);
+                builder.AddField(message.Username + ":", message.Content);
             }
             
             return builder.Build();
         }
-        public KeyValuePair<Embed, Embed> MakePostWithEmbed(PokemonRaidPost post)
+        public void MakePostWithEmbed(PokemonRaidPost post, out Embed header, out Embed response, out string mentions)
         {
-            var header = MakePostHeader(post);
-            var embed = MakeResponseEmbed(post, header);
+            var headerstring = MakePostHeader(post);
+            response = MakeResponseEmbed(post, headerstring);
+            header = MakeHeaderEmbed(post, headerstring);
 
+            var joinedUserIds = post.JoinedUsers.Select(x => x.Id);
+            var mentionUserIds = post.Responses.Select(x => x.UserId.ToString()).Distinct().ToList();
+
+            mentionUserIds.AddRange(post.JoinedUsers.Select(x => x.Id.ToString()).Distinct());
+
+
+            var channel = $"<#{post.FromChannelId}>";
+            var users = mentionUserIds.Count() > 0 ? $",<@{string.Join(">,<@", mentionUserIds.Distinct())}>" : "";
+            var roles = post.MentionedRoleIds.Count() > 0 ? $",<@&{string.Join(">,<@&", post.MentionedRoleIds.Distinct())}>" : "";
+
+            mentions = channel + users + roles;
+        }
+        public Embed MakeHeaderEmbed(PokemonRaidPost post, string text = null)
+        {
+            if (string.IsNullOrEmpty(text)) text = MakePostHeader(post);
             var headerembed = new EmbedBuilder();
             headerembed.WithColor(post.Color[0], post.Color[1], post.Color[2]);
             headerembed.WithUrl(string.Format(Language.Formats["pokemonInfoLink"], post.PokemonId));
-            headerembed.WithDescription(Language.RegularExpressions["discordChannel"].Replace(header, "").Replace(" in ", " ").Replace("  ", " "));
+            headerembed.WithDescription(Language.RegularExpressions["discordChannel"].Replace(text, "").Replace(" in ", " ").Replace("  ", " "));
 
             headerembed.WithThumbnailUrl(string.Format(Language.Formats["imageUrlSmallPokemon"], post.PokemonId));
-
-            return new KeyValuePair<Embed, Embed>(headerembed.Build(), embed);
+            return headerembed.Build();
         }
+
         public string MakePostHeader(PokemonRaidPost post)
         {
-            var joinString = string.Join(",", post.JoinedUsers.Where(x => x.Value > 0).Select(x => string.Format("<@{0}>({1})", x.Key, x.Value)));
-            var roleString = string.Join(",", post.MentionedRoleIds.Where(x => x > 0).Select(x => string.Format("<@&{0}>", x)));
+            var joinString = string.Join(",", post.JoinedUsers.Where(x => x.Count > 0).Select(x => string.Format("@{0}({1})", x.Name, x.Count)));
+            //var roleString = string.Join(",", post.MentionedRoleIds.Where(x => x > 0).Select(x => string.Format("<@&{0}>", x)));
 
-            var joinCount = post.JoinedUsers.Sum(x => x.Value);
+            var joinCount = post.JoinedUsers.Sum(x => x.Count);
 
             var location = post.Location;
 
@@ -688,11 +739,9 @@ namespace PokemonGoRaidBot.Parsing
             string response = string.Format(Language.Formats["postHeader"],
                 post.UniqueId,
                 string.Format("[{0}]({1})", post.PokemonName, string.Format(Language.Formats["pokemonInfoLink"], post.PokemonId)),
-                post.FromChannelId,
                 !string.IsNullOrEmpty(location) ? string.Format(Language.Formats["postLocation"], location) : "",
                 string.Format(Language.Formats["postEnds"], post.EndDate.AddHours(timeOffset)),
-                joinCount > 0 ? string.Format(Language.Formats["postJoined"], joinCount, joinString) : string.Format(Language.Formats["postNoneJoined"], post.UserId),
-                post.MentionedRoleIds.Count() > 0 ? string.Format(Language.Formats["postRolesTagged"], roleString) : ""
+                joinCount > 0 ? string.Format(Language.Formats["postJoined"], joinCount, joinString) : Language.Strings["postNoneJoined"]
                 );
             return response;
         }

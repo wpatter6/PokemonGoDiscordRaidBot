@@ -62,7 +62,18 @@ namespace PokemonGoRaidBot
                     return;
 
                 var guild = ((SocketGuildChannel)message.Channel).Guild;
+
+                var firstLoad = !Config.HasGuildConfig(guild.Id);
+
                 var guildConfig = Config.GetGuildConfig(guild.Id);
+
+                if (firstLoad)//pin all on first load
+                {
+                    foreach(var channel in ((SocketGuildChannel)message.Channel).Guild.Channels)
+                    {
+                        guildConfig.PinChannels.Add(channel.Id);
+                    }
+                }
 
                 ISocketMessageChannel outputchannel = null;
                 var pin = guildConfig.PinChannels.Contains(message.Channel.Id);
@@ -249,12 +260,16 @@ namespace PokemonGoRaidBot
                 var outputChannel = GetChannel(post.OutputChannelId);
 
                 //var messages = parser.MakePostStrings(post);
-                var embed = parser.MakePostWithEmbed(post);
+                Embed headerEmbed, responsesEmbed;
+                string mentionString;
+
+                parser.MakePostWithEmbed(post, out headerEmbed, out responsesEmbed, out mentionString);
+
                 RestUserMessage messageResult;
                 if (post.Pin && fromChannel != null)
                 {
                     var changed = true;
-                    var fromChannelMessage = embed.Key.Description;
+                    var fromChannelMessage = headerEmbed.Description;
                     if (post.MessageId != default(ulong))
                     { 
                         deleteMessage = await fromChannel.GetMessageAsync(post.MessageId);
@@ -262,7 +277,7 @@ namespace PokemonGoRaidBot
                         changed = !deleteMessage?.Embeds.FirstOrDefault()?.Description.Equals(fromChannelMessage, StringComparison.OrdinalIgnoreCase) ?? true;
 
                         if (changed && deleteMessage != null)
-                        { 
+                        {
                             if (deleteMessage.IsPinned)
                             {
                                 await ((RestUserMessage)deleteMessage).UnpinAsync();
@@ -272,7 +287,7 @@ namespace PokemonGoRaidBot
                     }
                     if (changed)
                     {
-                        messageResult = await fromChannel.SendMessageAsync("", false, embed.Key);
+                        messageResult = await fromChannel.SendMessageAsync(mentionString, false, headerEmbed);
                         try
                         {
                             await messageResult.PinAsync();
@@ -294,7 +309,7 @@ namespace PokemonGoRaidBot
                         await deleteMessage.DeleteAsync();
                     }
 
-                    messageResult = await outputChannel.SendMessageAsync("", false, embed.Value);
+                    messageResult = await outputChannel.SendMessageAsync(mentionString, false, responsesEmbed);
                     post.OutputMessageId = messageResult.Id;
                 }
             }
@@ -323,7 +338,7 @@ namespace PokemonGoRaidBot
             {
                 existing = guildConfig.Posts.OrderByDescending(x => x.Responses.Max(xx => xx.MessageDate))
                     .FirstOrDefault(x => x.FromChannelId == message.Channel.Id
-                        && (x.Responses.Where(xx => xx.UserId == mentionedUser.Id).Count() > 0 || x.JoinedUsers.Where(xx => xx.Key == mentionedUser.Id).Count() > 0)
+                        && (x.Responses.Where(xx => xx.UserId == mentionedUser.Id).Count() > 0 || x.JoinedUsers.Where(xx => xx.Id == mentionedUser.Id).Count() > 0)
                         && x.PokemonId == (post.PokemonId == 0 ? x.PokemonId : post.PokemonId));
 
                 if (existing != null)
@@ -348,7 +363,7 @@ namespace PokemonGoRaidBot
                         x.FromChannelId == post.FromChannelId//Posted in the same channel
                         && ((post.PokemonId != default(int) && x.PokemonId == post.PokemonId)//Either pokemon matches OR
                             || (post.PokemonId == default(int) && (x.Responses.Where(xx => xx.UserId == post.UserId).Count() > 0) 
-                                || x.JoinedUsers.Where(xx => xx.Key == post.UserId).Count() > 0))//User already in the thread
+                                || x.JoinedUsers.Where(xx => xx.Id == post.UserId).Count() > 0))//User already in the thread
                     );
 
             if (existing != null)
@@ -385,16 +400,27 @@ namespace PokemonGoRaidBot
 
             //overwrite with new values
             foreach (var user in post2.JoinedUsers)
-                post1.JoinedUsers[user.Key] = user.Value;
+            {
+                if (post1.JoinedUsers.FirstOrDefault(x => x.Id == user.Id) == null)
+                    post1.JoinedUsers.Add(new PokemonRaidJoinedUser(user.Id, user.Name, user.Count));
+                else if (post2.UserId == user.Id)
+                {
+                    var postUser = post1.JoinedUsers.FirstOrDefault(x => x.Id == post2.UserId);
+                    if (postUser != null)
+                    {
+                        if (user.IsMore)//if they said "x more" we add to existing value
+                            postUser.Count += user.Count;
+                        else if (user.IsLess)
+                            postUser.Count -= user.Count;
+                        else
+                            postUser.Count = user.Count;
+                    }
+                }
+            }
 
             post1.Responses.AddRange(post2.Responses);
             post1.MentionedRoleIds.AddRange(post2.MentionedRoleIds.Where(x => !post1.MentionedRoleIds.Contains(x)));
-
-            foreach (var joinuser in post2.JoinedUsers)
-            {
-                if (!post1.JoinedUsers.ContainsKey(joinuser.Key) || post1.JoinedUsers[joinuser.Key] == 1)
-                    post1.JoinedUsers[joinuser.Key] = joinuser.Value;
-            }
+            
             return post1;
         }
         /// <summary>

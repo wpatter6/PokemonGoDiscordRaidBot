@@ -78,7 +78,12 @@ namespace PokemonGoRaidBot
                 return;
             }
 
-            post.JoinedUsers[Message.Author.Id] = num;
+            var joinedUser = post.JoinedUsers.FirstOrDefault(x => x.Id == Message.Author.Id);
+            if (joinedUser == null)
+                post.JoinedUsers.Add(new PokemonRaidJoinedUser(Message.Author.Id, Message.Author.Username, num));
+            else
+                joinedUser.Count = num;
+
             await Handler.MakePost(post, Parser);
         }
         
@@ -95,7 +100,7 @@ namespace PokemonGoRaidBot
                 return;
             }
 
-            post.JoinedUsers.Remove(Message.Author.Id);
+            post.JoinedUsers.RemoveAll(x => x.Id == Message.Author.Id);
             await Handler.MakePost(post, Parser);
         }
 
@@ -402,7 +407,7 @@ namespace PokemonGoRaidBot
             }
 
             if (string.IsNullOrEmpty(pinstring)) pinstring = Parser.Language.Strings["commandPinListNone"];//"No channels in Pin List."
-            else pinstring = string.Format(Parser.Language.Formats["commandPinlistHeader"], pinstring);// "Pinned Channels:" + pinstring;
+            else pinstring = string.Format(Parser.Language.Formats["commandPinListHeader"], pinstring);// "Pinned Channels:" + pinstring;
 
             await Handler.MakeCommandMessage(Message.Channel, pinstring);
         }
