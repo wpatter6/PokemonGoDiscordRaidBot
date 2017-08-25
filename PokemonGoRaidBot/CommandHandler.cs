@@ -263,7 +263,6 @@ namespace PokemonGoRaidBot
         {
             try
             {
-                IMessage deleteMessage;
                 var fromChannel = GetChannel(post.FromChannelId);
                 var outputChannel = GetChannel(post.OutputChannelId);
 
