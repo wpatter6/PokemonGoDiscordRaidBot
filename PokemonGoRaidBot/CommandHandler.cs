@@ -27,6 +27,8 @@ namespace PokemonGoRaidBot
         public RaidLogger Logger;
         public readonly BotConfig Config;
 
+        private List<MessageParser> ParserCache = new List<MessageParser>();
+
         Dictionary<ulong, ISocketMessageChannel> channelCache;
 
         public CommandHandler(IServiceProvider provider, BotConfig botconfig, RaidLogger logger)
@@ -85,14 +87,16 @@ namespace PokemonGoRaidBot
                     outputchannel = (ISocketMessageChannel)guild.Channels.FirstOrDefault(x => x.Name == Config.OutputChannel);
 
                 var context = new SocketCommandContext(bot, message);
+
                 //get configured guild language or default "en-us"
                 var lang = guildConfig.Language ?? "en-us";
                 //timezone of the bot machine
                 var botTimezone = TimeZoneInfo.Local.GetUtcOffset(DateTime.Now).Hours - (TimeZoneInfo.Local.IsDaylightSavingTime(DateTime.Now) ? 1 : 0);
                 //get configured timezone
                 var serverTimezone = guildConfig.Timezone ?? botTimezone;
+                var timeOffset = serverTimezone - botTimezone;
 
-                var parser = new MessageParser(lang, serverTimezone - botTimezone);
+                var parser = GetParser(lang, timeOffset);//new MessageParser(lang, serverTimezone - botTimezone);
 
                 var doPost = (outputchannel != null || pin) && !guildConfig.MuteChannels.Contains(message.Channel.Id);
 
@@ -182,8 +186,8 @@ namespace PokemonGoRaidBot
                             {
                                 try
                                 {
-                                    if (m1[0] is RestUserMessage && ((RestUserMessage)m1[0]).IsPinned)
-                                        await ((RestUserMessage)m1[0]).UnpinAsync();
+                                    if (m1[0] is SocketUserMessage && ((SocketUserMessage)m1[0]).IsPinned)
+                                        await ((SocketUserMessage)m1[0]).UnpinAsync();
 
                                     await m1[0].DeleteAsync();
                                 }
@@ -222,7 +226,6 @@ namespace PokemonGoRaidBot
             var executor = new CommandExecutor(this, message, parser);
             await executor.Execute();
         }
-
         /// <summary>
         /// Performs the raid post behavior
         /// </summary>
@@ -244,9 +247,7 @@ namespace PokemonGoRaidBot
                 post = AddPost(post, parser, message);
 
                 if (post.PokemonId != default(int))
-                { 
                     await MakePost(post, parser);
-                }
             }
 
             Config.Save();
@@ -272,27 +273,19 @@ namespace PokemonGoRaidBot
 
                 parser.MakePostWithEmbed(post, out headerEmbed, out responsesEmbed, out mentionString);
 
-                RestUserMessage messageResult;
+                IUserMessage messageResult;
                 if (post.Pin && fromChannel != null)
                 {
-                    var changed = true;
                     var fromChannelMessage = headerEmbed.Description;
                     if (post.MessageId != default(ulong))
-                    { 
-                        deleteMessage = await fromChannel.GetMessageAsync(post.MessageId);
-
-                        changed = !deleteMessage?.Embeds.FirstOrDefault()?.Description.Equals(fromChannelMessage, StringComparison.OrdinalIgnoreCase) ?? true;
-
-                        if (changed && deleteMessage != null)
-                        {
-                            if (deleteMessage.IsPinned)
-                            {
-                                await ((RestUserMessage)deleteMessage).UnpinAsync();
-                            }
-                            await deleteMessage.DeleteAsync();
-                        }
+                    {
+                        messageResult = (IUserMessage)await fromChannel.GetMessageAsync(post.MessageId);
+                        
+                        //only modify post if something changed
+                        if (!messageResult?.Embeds.FirstOrDefault()?.Description.Equals(fromChannelMessage, StringComparison.OrdinalIgnoreCase) ?? true)
+                            await messageResult.ModifyAsync(x => { x.Content = mentionString; x.Embed = headerEmbed; });
                     }
-                    if (changed)
+                    else
                     {
                         messageResult = await fromChannel.SendMessageAsync(mentionString, false, headerEmbed);
                         try
@@ -311,13 +304,17 @@ namespace PokemonGoRaidBot
                 if(outputChannel != null)
                 {
                     if(post.OutputMessageId != default(ulong))
-                    { 
-                        deleteMessage = await outputChannel.GetMessageAsync(post.OutputMessageId);
-                        await deleteMessage.DeleteAsync();
+                    {
+                        messageResult = (IUserMessage)await outputChannel.GetMessageAsync(post.OutputMessageId);
+                        await messageResult.ModifyAsync(x => { x.Embed = responsesEmbed; x.Content = mentionString; });
                     }
+                    else
+                    {
 
-                    messageResult = await outputChannel.SendMessageAsync(mentionString, false, responsesEmbed);
-                    post.OutputMessageId = messageResult.Id;
+                        messageResult = await outputChannel.SendMessageAsync(mentionString, false, responsesEmbed);
+
+                        post.OutputMessageId = messageResult.Id;
+                    }
                 }
             }
             catch (Exception e)
@@ -370,7 +367,7 @@ namespace PokemonGoRaidBot
                         x.FromChannelId == post.FromChannelId//Posted in the same channel
                         && ((post.PokemonId != default(int) && x.PokemonId == post.PokemonId)//Either pokemon matches OR
                             || (post.PokemonId == default(int) && (x.Responses.Where(xx => xx.UserId == post.UserId).Count() > 0) 
-                                || x.JoinedUsers.Where(xx => xx.Id == post.UserId).Count() > 0))//User already in the thread
+                                || post.PokemonId == default(int) && x.JoinedUsers.Where(xx => xx.Id == post.UserId).Count() > 0))//User already in the thread
                     );
 
             if (existing != null)
@@ -455,6 +452,15 @@ namespace PokemonGoRaidBot
             if (channelCache.ContainsKey(id)) return channelCache[id];
             
             return channelCache[id] = (ISocketMessageChannel)bot.GetChannel(id);
+        }
+        private MessageParser GetParser(string lang, int offset)
+        {
+            var parser = ParserCache.FirstOrDefault(x => x.Lang == lang && x.TimeOffset == offset);
+            if (parser != null) return parser;
+
+            parser = new MessageParser(lang, offset);
+            ParserCache.Add(parser);
+            return parser;
         }
     }
 }

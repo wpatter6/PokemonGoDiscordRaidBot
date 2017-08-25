@@ -25,15 +25,14 @@ namespace PokemonGoRaidBot.Parsing
         private const string matchedLocationWordReplacement = "&&&&-&-&&&&";
         private const string matchedTimeWordReplacement = "===!!!===";
 
-
-
-
-        private int timeOffset;
+        public string Lang;
+        public int TimeOffset;
 
         public MessageParser(string language = "en-us", int timeZoneOffset = 0)
         {
+            Lang = language;
             Language = new ParserLanguage(language);
-            timeOffset = timeZoneOffset;
+            TimeOffset = timeZoneOffset;
         }
 
         #region Input
@@ -194,9 +193,9 @@ namespace PokemonGoRaidBot.Parsing
                 dt = dt.AddSeconds(dt.Second * -1);//make seconds "0"
 
                 if (!isActualTime)//add actual time to end of string for message thread
-                    messageString += string.Format(" ({0:h:mmtt})", dt.AddHours(timeOffset));
+                    messageString += string.Format(" ({0:h:mmtt})", dt.AddHours(TimeOffset));
 
-                var joinReg = Language.CombineRegex("joinEnd", "joinStart", "joinMe", "joinMore");
+                var joinReg = Language.CombineRegex("|", "joinEnd", "joinStart", "joinMe", "joinMore");
                 if (!(joinReg.IsMatch(messageString) && !joinReg.IsMatch(unmatchedString)))//if it matches the full string but not the cleaned, we know the timespan is not remaining time
                 {
                     result.EndDate = dt;
@@ -241,13 +240,13 @@ namespace PokemonGoRaidBot.Parsing
 
             var guildConfig = config.GetGuildConfig(guildId);
 
-            var result = config.PokemonInfoList.FirstOrDefault(x => guildConfig.PokemonAliases.Where(xx => xx.Value.Contains(name.ToLowerInvariant())).Count() > 0);
+            var result = Language.Pokemon.FirstOrDefault(x => guildConfig.PokemonAliases.Where(xx => xx.Value.Contains(name.ToLowerInvariant())).Count() > 0);
             if (result != null) return result;
 
-            result = config.PokemonInfoList.FirstOrDefault(x => x.Aliases.Contains(cleanedName));
+            result = Language.Pokemon.FirstOrDefault(x => x.Aliases.Contains(cleanedName));
             if (result != null) return result;
 
-            result = config.PokemonInfoList.OrderByDescending(x => x.Id).FirstOrDefault(x => x.Name.ToLowerInvariant().StartsWith(cleanedName));
+            result = Language.Pokemon.OrderByDescending(x => x.Id).FirstOrDefault(x => x.Name.ToLowerInvariant().StartsWith(cleanedName));
             if (result != null) return result;
 
             return null;
@@ -270,7 +269,7 @@ namespace PokemonGoRaidBot.Parsing
                 if (part.Equals("p", StringComparison.OrdinalIgnoreCase))
                     hour += 12;
 
-                var postedDate = DateTime.Today.Add(TimeSpan.Parse(string.Format("{0}:{1}", hour, minute + 1))).AddHours(timeOffset * -1);//subtract offset to convert to bot timezone
+                var postedDate = DateTime.Today.Add(TimeSpan.Parse(string.Format("{0}:{1}", hour, minute + 1))).AddHours(TimeOffset * -1);//subtract offset to convert to bot timezone
                 isActualTime = true;
                 return new TimeSpan(postedDate.Ticks - DateTime.Now.Ticks);
             }
@@ -749,7 +748,7 @@ namespace PokemonGoRaidBot.Parsing
                 post.UniqueId,
                 string.Format("[{0}]({1})", post.PokemonName, string.Format(Language.Formats["pokemonInfoLink"], post.PokemonId)),
                 !string.IsNullOrEmpty(location) ? string.Format(Language.Formats["postLocation"], location) : "",
-                string.Format(Language.Formats["postEnds"], post.EndDate.AddHours(timeOffset)),
+                string.Format(Language.Formats["postEnds"], post.EndDate.AddHours(TimeOffset)),
                 joinCount > 0 ? string.Format(Language.Formats["postJoined"], joinCount, joinString) : Language.Strings["postNoneJoined"]
                 );
             return response;

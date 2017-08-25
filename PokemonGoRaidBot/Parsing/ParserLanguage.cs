@@ -2,11 +2,13 @@
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using PokemonGoRaidBot.Objects;
 
 namespace PokemonGoRaidBot.Parsing
 {
@@ -42,9 +44,19 @@ namespace PokemonGoRaidBot.Parsing
             }
         }
 
-        public Regex CombineRegex(params string[] keys)
+        public Regex CombineRegex(string seperator, params string[] keys)
         {
-            return new Regex(string.Join("|", keys), RegexOptions.IgnoreCase);
+            var regList = (JObject)Language.regularExpressions;
+            var results = new List<string>();
+            foreach (var reg in regList)
+            {
+                if(keys.Contains(reg.Key))
+                {
+                    results.Add((string)reg.Value);
+                }
+            }
+            
+            return new Regex(string.Join(seperator, results), RegexOptions.IgnoreCase);
         }
 
         private Dictionary<string, string> _formats;
@@ -80,6 +92,17 @@ namespace PokemonGoRaidBot.Parsing
                 }
 
                 return _strings = result;
+            }
+        }
+
+        private List<PokemonInfo> _pokemon;
+        public List<PokemonInfo> Pokemon
+        {
+            get
+            {
+                if (_pokemon != null) return _pokemon;
+                
+                return (_pokemon = ((JArray)Language.pokemon).ToObject<List<PokemonInfo>>());
             }
         }
     }

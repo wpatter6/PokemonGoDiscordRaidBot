@@ -15,7 +15,7 @@ namespace PokemonGoRaidBot.Config
 
         public List<GuildConfig> GuildConfigs { get; set; }
 
-        public List<PokemonInfo> PokemonInfoList { get; set; }
+        //public List<PokemonInfo> PokemonInfoList { get; set; }
 
         public string GoogleApiKey { get; set; }
 
@@ -57,7 +57,7 @@ namespace PokemonGoRaidBot.Config
             var result = JsonConvert.DeserializeObject<BotConfig>(File.ReadAllText(file));
 
             //Make sure all properties are populated
-            if (result.PokemonInfoList == null) result.PokemonInfoList = GetDefaultPokemonInfoList();
+            //if (result.PokemonInfoList == null) result.PokemonInfoList = GetDefaultPokemonInfoList();
 
             if (string.IsNullOrEmpty(result.OutputChannel)) result.OutputChannel = "raid-bot";
 

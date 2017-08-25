@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
+using Discord.Rest;
 using System.Threading.Tasks;
 using System.Reflection;
 using PokemonGoRaidBot.Parsing;
@@ -147,7 +148,7 @@ namespace PokemonGoRaidBot
 
                 var tierCommand = 0;
 
-                var list = Config.PokemonInfoList.Where(x => x.CatchRate > 0);
+                var list = Parser.Language.Pokemon.Where(x => x.CatchRate > 0);
 
                 if (Command.Length > 1 && int.TryParse(Command[1], out tierCommand))
                 {
@@ -177,19 +178,19 @@ namespace PokemonGoRaidBot
             }
         }
 
-        [RaidBotCommand("test")]
-        private async Task Test()
-        {
-            var list = Config.PokemonInfoList.Where(x => x.CatchRate > 0);
-            var orderedList = list.OrderByDescending(x => x.BossCP);
+        //[RaidBotCommand("test")]
+        //private async Task Test()
+        //{
+        //    var list = Parser.Language.Pokemon.Where(x => x.CatchRate > 0);
+        //    var orderedList = list.OrderByDescending(x => x.BossCP);
 
 
-            var builder = new EmbedBuilder();
-            builder.WithDescription("abcd 123 alkdsfja;lsdjf;lkajsd;lfj ;lkjsadlkj sdlkfj lkjfds ljfds lk");
-            builder.WithThumbnailUrl(string.Format(Parser.Language.Formats["imageUrlLargePokemon"], 3));
-            builder.WithUrl("https://pokemongo.gamepress.gg/pokemon/3#raid-boss-counters");
-            await Message.Channel.SendMessageAsync("", false, builder);
-        }
+        //    var builder = new EmbedBuilder();
+        //    builder.WithDescription("abcd 123 alkdsfja;lsdjf;lkajsd;lfj ;lkjsadlkj sdlkfj lkjfds ljfds lk");
+        //    builder.WithThumbnailUrl(string.Format(Parser.Language.Formats["imageUrlLargePokemon"], 3));
+        //    builder.WithUrl("https://pokemongo.gamepress.gg/pokemon/3#raid-boss-counters");
+        //    await Message.Channel.SendMessageAsync("", false, builder);
+        //}
 
         [RaidBotCommand("m")]
         [RaidBotCommand("merge")]

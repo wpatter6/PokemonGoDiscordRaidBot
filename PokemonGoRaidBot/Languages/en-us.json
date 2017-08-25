@@ -13,11 +13,13 @@
     "timeSpan": "(1?[0-9]):([0-9]{2})", //match where numbers indicate hours and minutes
     "timeHour": "([0-2]{1})h", //match where numbers = hour
     "timeMinute": "([0-9]{1,2})m", //match where numbers = minutes
-    "joinEnd": "\\b([0-9]{1,2}|(\\b(one|two|three|four|five|six|seven|eight|nine|ten))) (join(ed|ing)are|going|people|left|here|on (the|our)|coming|(just)? arriv(ed|ing)|of us|confirmed|head(ed|ing))\\b", //indicates the number of people will be joining, with match words coming after #
+    "joinEnd": "\\b([0-9]{1,2}|(\\b(one|two|three|four|five|six|seven|eight|nine|ten))) (for|here|join(ed|ing)are|going|people|left|on (the|our)|coming|(just)? arriv(ed|ing)|of us|confirmed|head(ed|ing)|will)\\b", //indicates the number of people will be joining, with match words coming after #
     "joinStart": "\\b(have|are|there'?s|we'?re) ([0-9]{1,2}|(\\b(one|two|three|four|five|six|seven|eight|nine|ten)))\\b", //indicates the number of people will be joining, with match words coming before #
-    "joinMe": "\\b(i'?(m|ll| am))?\\b(omw|my way|coming|go(ing?)?|join(ing)?|can\\b|head(ed|ing))\\b", //indicates the current user is joining
+    "joinMe": "\\b(i'?(m|ll| am))?\\b(omw|my way|coming|go(ing?)?|join(ing)?|can\\b|head(ed|ing)|(be )?there)\\b", //indicates the current user is joining
     "joinMore": "^((?!need|use).)*\\b([0-9]{1,2}|\\b(one|two|three|four|five|six|seven|eight|nine|ten)) more\\b", //indicates more are joining, add to existing value
     "joinLess": "\\b([0-9]{1,2}|\\b(one|two|three|four|five|six|seven|eight|nine|ten)) (people |ppl |person )?((are |had to )?(leav(ing|e)|go)|just left)\\b", //indicates some are leaving, subtract from existing value
+    //joinTimeEnd:"",//todo 1.1.0
+    //joinTimeStart: "",//todo 1.1.0
     "pokemonInvalidators": "^(any)$", //if this comes before pokemon name, they're asking if any exist,
     "nonAlphaNumericWithPunctuation": "[^a-zA-Z0-9 ?\\.,]",
     "smallWords": "^(at?|the|and|of)$", //These will not be made uppercase if they're found in a location
@@ -110,5 +112,314 @@
     "commandUnMuteAllSuccess": "All channels removed from mute list.",
     "commandMuteAllSuccess": "All channels added to mute list.",
     "postNoneJoined": "No one joined yet."
-  }
+  },
+  "pokemon": [
+    {
+      "Id": 129,
+      "Tier": 1,
+      "Name": "Magikarp",
+      "BossCP": 1165,
+      "MinCP": 104,
+      "MaxCP": 125,
+      "CatchRate": 0.59
+    },
+    {
+      "Id": 153,
+      "Tier": 1,
+      "Name": "Bayleef",
+      "BossCP": 4375,
+      "MinCP": 689,
+      "MaxCP": 740,
+      "CatchRate": 0.1
+    },
+    {
+      "Id": 156,
+      "Tier": 1,
+      "Name": "Quilava",
+      "BossCP": 5085,
+      "MinCP": 793,
+      "MaxCP": 847,
+      "CatchRate": 0.1
+    },
+    {
+      "Id": 159,
+      "Tier": 1,
+      "Name": "Croconaw",
+      "BossCP": 5207,
+      "MinCP": 857,
+      "MaxCP": 913,
+      "CatchRate": 0.1
+    },
+    {
+      "Id": 89,
+      "Tier": 2,
+      "Name": "Muk",
+      "BossCP": 12269,
+      "MinCP": 1474,
+      "MaxCP": 1548,
+      "CatchRate": 0.17
+    },
+    {
+      "Id": 103,
+      "Tier": 2,
+      "Name": "Exeggutor",
+      "BossCP": 13839,
+      "MinCP": 1589,
+      "MaxCP": 1666,
+      "CatchRate": 0.17
+    },
+    {
+      "Id": 110,
+      "Tier": 2,
+      "Name": "Weezing",
+      "BossCP": 12318,
+      "MinCP": 1180,
+      "MaxCP": 1247,
+      "CatchRate": 0.17
+    },
+    {
+      "Id": 125,
+      "Tier": 2,
+      "Name": "Electabuzz",
+      "BossCP": 12390,
+      "MinCP": 1188,
+      "MaxCP": 1255,
+      "CatchRate": 0.17
+    },
+    {
+      "Id": 126,
+      "Tier": 2,
+      "Name": "Magmar",
+      "BossCP": 12718,
+      "MinCP": 1220,
+      "MaxCP": 1288,
+      "CatchRate": 0.17
+    },
+    {
+      "Id": 59,
+      "Tier": 3,
+      "Name": "Arcanine",
+      "BossCP": 17832,
+      "MinCP": 1546,
+      "MaxCP": 1622,
+      "CatchRate": 0.08
+    },
+    {
+      "Id": 65,
+      "Tier": 3,
+      "Name": "Alakazam",
+      "BossCP": 22646,
+      "MinCP": 1569,
+      "MaxCP": 1649,
+      "CatchRate": 0.08
+    },
+    {
+      "Id": 68,
+      "Tier": 3,
+      "Name": "Machamp",
+      "BossCP": 18144,
+      "MinCP": 1574,
+      "MaxCP": 1650,
+      "CatchRate": 0.08
+    },
+    {
+      "Id": 94,
+      "Tier": 3,
+      "Name": "Gengar",
+      "BossCP": 19768,
+      "MinCP": 1420,
+      "MaxCP": 1496,
+      "CatchRate": 0.08
+    },
+    {
+      "Id": 134,
+      "Tier": 3,
+      "Name": "Vaporeon",
+      "BossCP": 16696,
+      "MinCP": 1724,
+      "MaxCP": 1804,
+      "CatchRate": 0.1
+    },
+    {
+      "Id": 135,
+      "Tier": 3,
+      "Name": "Jolteon",
+      "BossCP": 19883,
+      "MinCP": 1484,
+      "MaxCP": 1560,
+      "CatchRate": 0.1
+    },
+    {
+      "Id": 136,
+      "Tier": 3,
+      "Name": "Flareon",
+      "BossCP": 21155,
+      "MinCP": 1581,
+      "MaxCP": 1659,
+      "CatchRate": 0.1
+    },
+    {
+      "Id": 3,
+      "Tier": 4,
+      "Name": "Venusaur",
+      "BossCP": 26921,
+      "MinCP": 1395,
+      "MaxCP": 1467,
+      "CatchRate": 0.04
+    },
+    {
+      "Id": 6,
+      "Tier": 4,
+      "Name": "Charizard",
+      "BossCP": 28485,
+      "MinCP": 1461,
+      "MaxCP": 1535,
+      "CatchRate": 0.04
+    },
+    {
+      "Id": 9,
+      "Tier": 4,
+      "Name": "Blastoise",
+      "BossCP": 24162,
+      "MinCP": 1241,
+      "MaxCP": 1309,
+      "CatchRate": 0.04
+    },
+    {
+      "Id": 111,
+      "Tier": 4,
+      "Name": "Rhydon",
+      "BossCP": 30512,
+      "MinCP": 1804,
+      "MaxCP": 1886,
+      "CatchRate": 0.04
+    },
+    {
+      "Id": 131,
+      "Tier": 4,
+      "Name": "Lapras",
+      "BossCP": 21768,
+      "MinCP": 1414,
+      "MaxCP": 1487,
+      "CatchRate": 0.04
+    },
+    {
+      "Id": 143,
+      "Tier": 4,
+      "Name": "Snorlax",
+      "BossCP": 25419,
+      "MinCP": 1833,
+      "MaxCP": 1917,
+      "CatchRate": 0.04
+    },
+    {
+      "Id": 248,
+      "Tier": 4,
+      "Name": "Tyranitar",
+      "BossCP": 34707,
+      "MinCP": 2011,
+      "MaxCP": 2097,
+      "CatchRate": 0.04,
+      "Aliases": [ "ttar" ]
+    },
+    {
+      "Id": 144,
+      "Tier": 5,
+      "Name": "Articuno",
+      "BossCP": 37603,
+      "MinCP": 1599,
+      "MaxCP": 1676,
+      "CatchRate": 0.03
+    },
+    {
+      "Id": 145,
+      "Tier": 5,
+      "Name": "Zapdos",
+      "BossCP": 42691,
+      "MinCP": 1820,
+      "MaxCP": 1902,
+      "CatchRate": 0.03
+    },
+    {
+      "Id": 146,
+      "Tier": 5,
+      "Name": "Moltres",
+      "BossCP": 41953,
+      "MinCP": 1788,
+      "MaxCP": 1870,
+      "CatchRate": 0.03
+    },
+    {
+      "Id": 151,
+      "Tier": 5,
+      "Name": "Mewtwo",
+      "BossCP": 56557,
+      "MinCP": -1,
+      "MaxCP": 2275,
+      "CatchRate": -1
+    },
+    {
+      "Id": 150,
+      "Tier": 5,
+      "Name": "Mew",
+      "BossCP": 37733,
+      "MinCP": -1,
+      "MaxCP": 1762,
+      "CatchRate": -1
+    },
+    {
+      "Id": 243,
+      "Tier": 5,
+      "Name": "Raikou",
+      "BossCP": 42932,
+      "MinCP": -1,
+      "MaxCP": 1913,
+      "CatchRate": -1
+    },
+    {
+      "Id": 244,
+      "Tier": 5,
+      "Name": "Entei",
+      "BossCP": 38628,
+      "MinCP": -1,
+      "MaxCP": 1950,
+      "CatchRate": -1
+    },
+    {
+      "Id": 245,
+      "Tier": 5,
+      "Name": "Suicune",
+      "BossCP": 34471,
+      "MinCP": -1,
+      "MaxCP": 1613,
+      "CatchRate": -1
+    },
+    {
+      "Id": 249,
+      "Tier": 5,
+      "Name": "Lugia",
+      "BossCP": 42753,
+      "MinCP": 1969,
+      "MaxCP": 2056,
+      "CatchRate": 0.02
+    },
+    {
+      "Id": 250,
+      "Tier": 5,
+      "Name": "Ho-Oh",
+      "BossCP": 55251,
+      "MinCP": -1,
+      "MaxCP": 2657,
+      "CatchRate": -1
+    },
+    {
+      "Id": 251,
+      "Tier": 5,
+      "Name": "Celebi",
+      "BossCP": 37726,
+      "MinCP": -1,
+      "MaxCP": 1766,
+      "CatchRate": -1
+    }
+  ]
 }
