@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -10,16 +11,19 @@ namespace PokemonGoRaidBot.Objects
         {
             Id = id;
             Name = name;
-            Count = count;
+            PeopleCount = count;
+            ArriveTime = arriveTime;
             IsMore = isMore;
             IsLess = isLess;
-            ArriveTime = arriveTime;
         }
         public ulong Id { get; set; }
         public string Name { get; set; }
-        public int Count { get; set; }
-        public bool IsMore { get; set; }
-        public bool IsLess { get; set; }
+        public int PeopleCount { get; set; }
         public DateTime? ArriveTime { get; set; }
+
+        [JsonIgnore]
+        public bool IsMore { get; set; }
+        [JsonIgnore]
+        public bool IsLess { get; set; }
     }
 }

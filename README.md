@@ -58,17 +58,17 @@
 <hr/>
 
 ## Bot Commands:
-*Parenthesis indicate shorthand version of command*
-* `!(j)oin [id] [number]` Joins the specified number of people to the specified raid Id. Overwrites any previous values.  Adding + or - before the number will add or subtract from an existing value.
-* `!(un)join [id]` Removes your join information from the raid.
-* `!(i)nfo [name]` Displays information about the selected raid, or all of the raids if [name] is blank.  Information was taken from https://pokemongo.gamepress.gg.
-* `!(d)elete [id]` Deletes a raid post with the corresponding Id.
-* `!(m)erge [id1] [id2]` Merges two raid posts together.
-* `!(loc)ation [id] [new location]` Allows the poster of the raid or server managers to change the location of a post.
+*Parenthesis indicate shorthand version of command, `*` means optional parameter. *
+* `!(j)oin [raid*] [number*] [arrival time*]` Joins the specified number of people to the specified `raid` Id.  Adding + or - before the number will add or subtract from an existing value.  If pokemon name is used instead of Id, will join the most recently posted in channel matching the start of the pokemon name.  If no parameters, will join 1 to the most recently posted raid in that channel.
+* `!(un)join [raid*]` Removes your join information from the raid.  If `raid` is blank, unjoins all.
+* `!(i)nfo [name*]` Displays information about the selected raid, or all of the raids if `name` is blank.  Information was taken from https://pokemongo.gamepress.gg.
+* `!(d)elete [raid]` Deletes a raid post with the corresponding Id.  Use `all` to delete all raids posted by you.
+* `!(m)erge [raid1] [raid2]` Merges `raid2` into `raid1`.  Can only be done by admin or original poster of `raid2`.
+* `!(loc)ation [raid] [new location]` Allows the poster of the raid or admin to change the location of a post.
 * `!(h)elp` Shows help message.
 
 ## Admin Commands:
-*requires Manage Server role permission*
+*requires Manage Server or Admin role permission*
 * `!channel [name]` Changes the bot output channel on this server to the value passed in for [name].  If blank, the override is removed and the default value is used.
 * `!nochannel` Prevents bot from posting in a specific channel. !pin functionality can still be used for specific channels.
 * `!alias [pokemon] [alias]` Adds an alias for a pokemon.

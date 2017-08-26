@@ -28,6 +28,7 @@ namespace PokemonGoRaidBot
         public readonly BotConfig Config;
 
         private List<MessageParser> ParserCache = new List<MessageParser>();
+        private List<GuildConfig> GuildConfigCache = new List<GuildConfig>();
 
         Dictionary<ulong, ISocketMessageChannel> channelCache;
 
@@ -78,7 +79,6 @@ namespace PokemonGoRaidBot
                 }
 
                 ISocketMessageChannel outputchannel = null;
-                var pin = guildConfig.PinChannels.Contains(message.Channel.Id);
 
                 //get output channel
                 if (guildConfig.OutputChannelId.HasValue)
@@ -96,9 +96,11 @@ namespace PokemonGoRaidBot
                 var serverTimezone = guildConfig.Timezone ?? botTimezone;
                 var timeOffset = serverTimezone - botTimezone;
 
-                var parser = GetParser(lang, timeOffset);//new MessageParser(lang, serverTimezone - botTimezone);
+                var parser = GetParser(lang, timeOffset);
 
-                var doPost = (outputchannel != null || pin) && !guildConfig.MuteChannels.Contains(message.Channel.Id);
+                var doPost = (outputchannel != null || 
+                        guildConfig.PinChannels.Contains(message.Channel.Id)) 
+                    && !guildConfig.MuteChannels.Contains(message.Channel.Id);
 
                 var argPos = 0;
 
@@ -108,15 +110,10 @@ namespace PokemonGoRaidBot
                 {
                     await DoCommand(message, parser);
                 }
-                //possibly a response to someone who posted a raid -- MOVING INTO DoPost
-                //else if (doPost && message.MentionedUsers.Count() > 0)
-                //{
-                //    await DoResponse(message, parser);
-                //}
                 //try to see if a raid was posted
                 else if (doPost)
                 {
-                    await DoPost(message, parser, outputchannel, pin);
+                    await DoPost(message, parser, outputchannel);
                 }
             }
             catch (Exception e)
@@ -234,16 +231,13 @@ namespace PokemonGoRaidBot
         /// <param name="outputchannel"></param>
         /// <param name="pin"></param>
         /// <returns></returns>
-        private async Task DoPost(SocketUserMessage message, MessageParser parser, ISocketMessageChannel outputchannel, bool pin)
+        private async Task DoPost(SocketUserMessage message, MessageParser parser, ISocketMessageChannel outputchannel)
         {
             var post = await parser.ParsePost(message, Config);//await DoResponse(message, parser);//returns null if 
 
             if (post != null)
             {
                 post.OutputChannelId = outputchannel?.Id ?? 0;
-                post.Pin = pin;
-                post.GuildId = ((SocketGuildChannel)message.Channel).Guild.Id;
-                post.LastMessageDate = DateTime.Now;
                 post = AddPost(post, parser, message);
 
                 if (post.PokemonId != default(int))
@@ -322,6 +316,24 @@ namespace PokemonGoRaidBot
             }
         }
         /// <summary>
+        /// Use this to notify users when join count changes
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        public async Task NotifyUser(SocketUser user, string message)
+        {
+            var channel = await user.GetOrCreateDMChannelAsync();
+            try
+            {
+                await channel.SendMessageAsync(message);
+            }
+            catch (Exception e)
+            {
+                DoError(e);
+            }
+        }
+        /// <summary>
         /// Adds new post or updates the existing post in the raid post array.
         /// Matches existing posts with the following logic:
         ///     - Message in the same original channel
@@ -330,7 +342,7 @@ namespace PokemonGoRaidBot
         /// </summary>
         /// <param name="post"></param>
         /// <returns>Returns either the new post or the one it matched with.</returns>
-        public PokemonRaidPost AddPost(PokemonRaidPost post, MessageParser parser, SocketUserMessage message)
+        public PokemonRaidPost AddPost(PokemonRaidPost post, MessageParser parser, SocketUserMessage message, bool add = true)
         {
             var guildConfig = Config.GetGuildConfig(post.GuildId);
             var channelPosts = guildConfig.Posts.Where(x => x.FromChannelId == post.FromChannelId);
@@ -360,7 +372,7 @@ namespace PokemonGoRaidBot
             if (existing == null)
                 existing = channelPosts
                     .Where(x => string.IsNullOrEmpty(x.Location) || string.IsNullOrEmpty(post.Location))//either location must be unidentified at this point
-                    .OrderByDescending(x => x.LastMessageDate)
+                    .OrderByDescending(x => x.PostDate)
                     .OrderBy(x => x.PokemonId == post.PokemonId ? 0 : 1)//pokemon name match takes priority if the user responded to multiple raids in the channel
                     .FirstOrDefault(x =>
                         x.FromChannelId == post.FromChannelId//Posted in the same channel
@@ -371,10 +383,11 @@ namespace PokemonGoRaidBot
 
             if (existing != null)
             {
-                existing = MergePosts(existing, post);
+                if(add) existing = MergePosts(existing, post);
+                existing.IsExisting = true;
                 return existing;
             }
-            else if(post.PokemonId != default(int))
+            else if(add && post.PokemonId != default(int))
                 guildConfig.Posts.Add(post);
             
             return post;
@@ -405,18 +418,21 @@ namespace PokemonGoRaidBot
             foreach (var user in post2.JoinedUsers)
             {
                 if (post1.JoinedUsers.FirstOrDefault(x => x.Id == user.Id) == null)
-                    post1.JoinedUsers.Add(new PokemonRaidJoinedUser(user.Id, user.Name, user.Count));
+                    post1.JoinedUsers.Add(new PokemonRaidJoinedUser(user.Id, user.Name, user.PeopleCount));
                 else if (post2.UserId == user.Id)
                 {
                     var postUser = post1.JoinedUsers.FirstOrDefault(x => x.Id == post2.UserId);
                     if (postUser != null)
                     {
-                        if (user.IsMore)//if they said "x more" we add to existing value
-                            postUser.Count += user.Count;
-                        else if (user.IsLess)
-                            postUser.Count -= user.Count;
-                        else
-                            postUser.Count = user.Count;
+                        if (user.IsLess)
+                        {
+                            postUser.PeopleCount -= user.PeopleCount;
+                        }
+                        else if (user.IsMore)
+                        {
+                            postUser.PeopleCount += user.PeopleCount;
+                        }
+                        else if(user.PeopleCount > 0) postUser.PeopleCount = user.PeopleCount;
 
                         if (user.ArriveTime.HasValue) postUser.ArriveTime = user.ArriveTime;//always update arrive time if present
                     }
@@ -463,5 +479,18 @@ namespace PokemonGoRaidBot
             ParserCache.Add(parser);
             return parser;
         }
+        //private GuildConfig Config.GetGuildConfig(ulong Id)
+        //{
+        //    var config = GuildConfigCache.FirstOrDefault(x => x.Id == Id);
+        //    if(config == null)
+        //    {
+        //        config = Config.GetGuildConfig(Id);
+        //        if(config != null)
+        //        {
+        //            GuildConfigCache.Add(config);
+        //        }
+        //    }
+        //    return config;
+        //}
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 
@@ -56,6 +57,9 @@ namespace PokemonGoRaidBot.Objects
         public KeyValuePair<double, double>? LatLong;
 
         public int[] Color;
+
+        [JsonIgnore]
+        public bool IsExisting;
 
         private static String NewId()
         {

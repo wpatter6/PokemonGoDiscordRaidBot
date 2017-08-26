@@ -44,21 +44,25 @@ namespace PokemonGoRaidBot.Parsing
         /// <returns>If return value is null, or property 'Pokemon' is null, raid post is invalid.</returns>
         public async Task<PokemonRaidPost> ParsePost(SocketMessage message, BotConfig config)
         {
-            var result = new PokemonRaidPost()
-            {
-                User = message.Author.Username,
-                UserId = message.Author.Id,
-                PostDate = DateTime.Now,//uses local time for bot
-                FromChannelId = message.Channel.Id,
-                EndDate = DateTime.Now + new TimeSpan(0, maxRaidMinutes, 0),
-                MentionedRoleIds = new List<ulong>(message.MentionedRoles.Select(x => x.Id)),
-                Color = GetRandomColorRGB()
-            };
-
             var guildId = ((SocketGuildChannel)message.Channel).Guild.Id;
             var guildConfig = config.GetGuildConfig(guildId);
-            var messageString = message.Content.Replace(" & ", $" {Language.Strings["and"]} ").Replace(" @ ", $" {Language.Strings["at"]} ");
 
+            var result = new PokemonRaidPost()
+            {
+                GuildId = guildId,
+                PostDate = DateTime.Now,
+                UserId = message.Author.Id,
+                Color = GetRandomColorRGB(),
+                User = message.Author.Username,
+                LastMessageDate = DateTime.Now,
+                FromChannelId = message.Channel.Id,
+                Pin = guildConfig.PinChannels.Contains(message.Channel.Id),
+                EndDate = DateTime.Now + new TimeSpan(0, maxRaidMinutes, 0),
+                MentionedRoleIds = new List<ulong>(message.MentionedRoles.Select(x => x.Id))
+            };
+
+
+            var messageString = message.Content.Replace(" & ", $" {Language.Strings["and"]} ").Replace(" @ ", $" {Language.Strings["at"]} ");
             var words = messageString.Split(' ');
             
             var i = 0;
@@ -259,6 +263,8 @@ namespace PokemonGoRaidBot.Parsing
             raidTimeSpan = null;
             joinTimeSpan = null;
 
+            if (string.IsNullOrEmpty(message)) return;
+
             var joinReg = Language.RegularExpressions["joinTime"];
             var actualRegEnd = Language.RegularExpressions["timeActualEnd"];
             if (actualRegEnd.IsMatch(message))
@@ -327,8 +333,7 @@ namespace PokemonGoRaidBot.Parsing
                 if (joinTimeSpan.HasValue && raidTimeSpan.HasValue)
                     return;
             }
-
-
+            
             var tsRegex = Language.RegularExpressions["timeSpan"];//new Regex("([0-9]):([0-9]{2})");
             if (tsRegex.IsMatch(message))
             {
@@ -715,12 +720,12 @@ namespace PokemonGoRaidBot.Parsing
             result.Add(helpheader);
 
             var helpmessage = string.Format("       #{0}:\n", Language.Strings["helpCommands"]);
-            helpmessage += string.Format("  {0}(j)oin [id] [number] - {1}\n", config.Prefix, Language.Strings["helpJoin"]);
-            helpmessage += string.Format("  {0}(un)join [id] - {1}\n", config.Prefix, Language.Strings["helpUnJoin"]);
+            helpmessage += string.Format("  {0}(j)oin [raid] [number] - {1}\n", config.Prefix, Language.Strings["helpJoin"]);
+            helpmessage += string.Format("  {0}(un)join [raid] - {1}\n", config.Prefix, Language.Strings["helpUnJoin"]);
             helpmessage += string.Format("  {0}(i)nfo [name] - {1}\n", config.Prefix, Language.Strings["helpInfo"]);
-            helpmessage += string.Format("  {0}(d)elete [id] - {1}\n", config.Prefix, Language.Strings["helpDelete"]);
-            helpmessage += string.Format("  {0}(m)erge [id1] [id2] - {1}\n", config.Prefix, Language.Strings["helpMerge"]);
-            helpmessage += string.Format("  {0}(loc)ation [id] [new location] - {1}\n", config.Prefix, Language.Strings["helpLocation"]);
+            helpmessage += string.Format("  {0}(d)elete [raid id] - {1}\n", config.Prefix, Language.Strings["helpDelete"]);
+            helpmessage += string.Format("  {0}(m)erge [raid1] [raid2] - {1}\n", config.Prefix, Language.Strings["helpMerge"]);
+            helpmessage += string.Format("  {0}(loc)ation [raid] [new location] - {1}\n", config.Prefix, Language.Strings["helpLocation"]);
             helpmessage += string.Format("  {0}(h)elp - {1}\n", config.Prefix, Language.Strings["helpHelp"]);
             helpmessage += string.Format("       (){0}\n", Language.Strings["helpParenthesis"]);
             if (admin)
@@ -857,10 +862,10 @@ namespace PokemonGoRaidBot.Parsing
 
         public string MakePostHeader(PokemonRaidPost post)
         {
-            var joinString = string.Join(", ", post.JoinedUsers.Where(x => x.Count > 0).Select(x => string.Format("@{0}(**{1}**{2})", x.Name, x.Count, x.ArriveTime.HasValue ? $" *@{x.ArriveTime.Value.ToString("h:mmt")}*" : "")));
+            var joinString = string.Join(", ", post.JoinedUsers.Where(x => x.PeopleCount > 0).Select(x => string.Format("@{0}(**{1}**{2})", x.Name, x.PeopleCount, x.ArriveTime.HasValue ? $" *@{x.ArriveTime.Value.ToString("h:mmt")}*" : "")));
             //var roleString = string.Join(",", post.MentionedRoleIds.Where(x => x > 0).Select(x => string.Format("<@&{0}>", x)));
 
-            var joinCount = post.JoinedUsers.Sum(x => x.Count);
+            var joinCount = post.JoinedUsers.Sum(x => x.PeopleCount);
 
             var location = post.Location;
 

@@ -15,7 +15,7 @@
     "timeHourMin": "([0-2]{1}) ?(h|hr|hours?) ?([1-6]?[0-9]) ?(m|mi|min|mins|minutes?)", //match where numbers = hour
     "timeHour": "([0-2]{1}) ?(h|hr|hours?)",
     "timeMin": "([1-6]?[0-9]) ?(m|mi|min|mins|minutes?)",
-    "joinEnd": "[^:]\\b([0-9]{1,2}|(\\b(one|two|three|four|five|six|seven|eight|nine|ten))) (for|here|join(ed|ing)are|going|people|on (the|our)|coming|(just)? arriv(ed|ing)|of us|confirmed|head(ed|ing)|will)\\b", //indicates the number of people will be joining, with match words coming after #
+    "joinEnd": "[^:]?\\b([0-9]{1,2}|(\\b(one|two|three|four|five|six|seven|eight|nine|ten))) (for|here|join(ed|ing)are|going|people|on (the|our)|coming|(just)? arriv(ed|ing)|of us|confirmed|head(ed|ing)|will)\\b", //indicates the number of people will be joining, with match words coming after #
     "joinStart": "\\b(have|are|there'?s|we'?re) ([0-9]{1,2}|(\\b(one|two|three|four|five|six|seven|eight|nine|ten)))\\b", //indicates the number of people will be joining, with match words coming before #
     "joinMe": "\\b(i'?(m|ll| am))?\\b(omw|my way|coming|go(ing?)?|join(ing)?|can\\b|head(ed|ing)|(be )?there)\\b", //indicates the current user is joining
     "joinMore": "^((?!need|use).)*\\b([0-9]{1,2}|\\b(one|two|three|four|five|six|seven|eight|nine|ten)) more\\b", //indicates more are joining, add to existing value
@@ -76,15 +76,15 @@
     "helpRaidTop": "Posting a raid in chat will cause this bot to either post the raid into a specific channel, or pin it in the current channel.",
     "helpCommands": "Commands",
     "helpAdminCommands": "AdminCommands",
-    "helpJoin": "Joins the specified number of people to the specified raid Id. Overwrites any existing values. Adding + or - before the number will add or subtract from an existing value.",
-    "helpUnJoin": "Removes your join information from the raid.",
+    "helpJoin": "Joins the specified number of people to the specified [raid] Id.  Adding + or - before the number will add or subtract from an existing value.  If pokemon name is used instead of Id, will join the most recently posted in channel matching the start of the pokemon name.  If no parameters, will join 1 to the most recently posted raid in that channel.",
+    "helpUnJoin": "Removes your join information from the raid.  If [raid] is blank, unjoins all.",
     "helpInfo": "Displays information about the selected raid, or all of the raids if [name] is not entered.",
     "helpChannel": "Changes the bot output channel on this server to the value passed in for [name].  If blank, the override is removed and the value \"{0}\" is used.",
     "helpNoChannel": "Prevents bot from posting in any specific channel.  Pin functionality can still be used in specific channels.",
     "helpAlias": "Adds an alias for a pokemon.",
     "helpRemoveAlias": "Removes an alias for a pokemon.",
-    "helpDelete": "Deletes a raid post with the corresponding Id.  Can only be done by admins or the poster of the raid.",
-    "helpMerge": "Merges the second raid post Id into the first.  Can only be done by admins or the poster of the second raid.",
+    "helpDelete": "Deletes a raid post with the corresponding Id.  Use `all` to delete all raids posted by you.  Can only be done by admins or the poster of the raid.",
+    "helpMerge": "Merges [raid2] into [raid1].  Can only be done by admin or original poster of [raid2]",
     "helpLocation": "Allows the poster of the raid or server managers to change the location of a post.",
     "helpPin": "Raids posted in the specified channel will be posted and pinned in the channel itself.  Bot requires \"Manage Messages\" role permission to pin.",
     "helpUnPin": "Removes channel from pin channels.",
