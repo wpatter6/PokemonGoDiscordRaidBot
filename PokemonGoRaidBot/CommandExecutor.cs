@@ -129,7 +129,7 @@ namespace PokemonGoRaidBot
             var joinedUser = post.JoinedUsers.FirstOrDefault(x => x.Id == Message.Author.Id);
             if (joinedUser == null)
             {
-                joinedUser = new PokemonRaidJoinedUser(Message.Author.Id, Message.Author.Username, number);
+                joinedUser = new PokemonRaidJoinedUser(post, Message.Author.Id, Message.Author.Username, number);
                 post.JoinedUsers.Add(joinedUser);
             }
             else if (isMore)
@@ -160,7 +160,7 @@ namespace PokemonGoRaidBot
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[1]));// $"Raid post with Id \"{Command[1]}\" does not exist.");
                 return;
             }
-            post.JoinedUsers.RemoveAll(x => x.Id == Message.Author.Id);
+            post.JoinedUsers.Remove(post.JoinedUsers.First(x => x.Id == Message.Author.Id));
             await Handler.MakePost(post, Parser);
         }
 

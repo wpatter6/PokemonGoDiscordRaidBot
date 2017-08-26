@@ -1,8 +1,8 @@
-﻿using Discord;
-using Discord.WebSocket;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System;
+using System.Linq;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace PokemonGoRaidBot.Objects
 {
@@ -11,7 +11,34 @@ namespace PokemonGoRaidBot.Objects
         public PokemonRaidPost()
         {
             UniqueId = NewId();
+
+            JoinedUsers.CollectionChanged += JoinedUsers_CollectionChanged;
         }
+
+        private void JoinedUsers_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            int oldCount = 0, newCount = 0;
+            foreach (var item in e.OldItems)
+                oldCount += ((PokemonRaidJoinedUser)item).PeopleCount;
+
+            foreach(var item in e.NewItems)
+                newCount += ((PokemonRaidJoinedUser)item).PeopleCount;
+            
+            OnJoinedUsersChanged(new EventArgs());
+        }
+
+        public void UpdateJoinedUserCount(ulong userId, int count)
+        {
+            var oldCount = JoinedUsers.Sum(x => x.PeopleCount);
+            
+            var user = JoinedUsers.FirstOrDefault(x => x.Id == userId);
+            user.PeopleCount = count;
+
+            var newCount = JoinedUsers.Sum(x => x.PeopleCount);
+            
+            OnJoinedUsersChanged(new EventArgs());
+        }
+
         public bool HasEndDate;
 
         public bool Pin;
@@ -44,7 +71,7 @@ namespace PokemonGoRaidBot.Objects
 
         public List<PokemonMessage> Responses = new List<PokemonMessage>();
 
-        public List<PokemonRaidJoinedUser> JoinedUsers = new List<PokemonRaidJoinedUser>();
+        public ObservableCollection<PokemonRaidJoinedUser> JoinedUsers = new ObservableCollection<PokemonRaidJoinedUser>();
 
         public ulong GuildId;
 
@@ -57,9 +84,22 @@ namespace PokemonGoRaidBot.Objects
         public KeyValuePair<double, double>? LatLong;
 
         public int[] Color;
+        
+        public event EventHandler JoinedUsersChanged;
+        
+        internal void UsersChanged()
+        {
+            OnJoinedUsersChanged(new EventArgs());
+        }
 
         [JsonIgnore]
         public bool IsExisting;
+
+        protected virtual void OnJoinedUsersChanged(EventArgs e)
+        {
+            if (JoinedUsersChanged != null)
+                JoinedUsersChanged(this, e);
+        }
 
         private static String NewId()
         {
