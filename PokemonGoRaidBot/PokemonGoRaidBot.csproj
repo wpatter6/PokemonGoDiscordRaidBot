@@ -34,8 +34,7 @@
   </ItemGroup>
   
   <PropertyGroup>
-    <VersionPrefix>1.0.3</VersionPrefix>
-    <VersionSuffix>beta</VersionSuffix>
+    <VersionPrefix>1.1.0</VersionPrefix>
   </PropertyGroup>
   
   <PropertyGroup>

@@ -417,6 +417,8 @@ namespace PokemonGoRaidBot
                             postUser.Count -= user.Count;
                         else
                             postUser.Count = user.Count;
+
+                        if (user.ArriveTime.HasValue) postUser.ArriveTime = user.ArriveTime;//always update arrive time if present
                     }
                 }
             }

@@ -60,13 +60,11 @@ namespace PokemonGoRaidBot.Parsing
             var messageString = message.Content.Replace(" & ", $" {Language.Strings["and"]} ").Replace(" @ ", $" {Language.Strings["at"]} ");
 
             var words = messageString.Split(' ');
-
-            var timespan = new TimeSpan();
+            
             var i = 0;
             var nopost = false;
 
             var unmatchedWords = new List<string>();
-            var isActualTime = false;
             
             foreach (var word in words)
             {
@@ -120,65 +118,7 @@ namespace PokemonGoRaidBot.Parsing
                         continue;
                     }
                 }
-
-                var ts = ParseTimespan(word, ref isActualTime);
-                if (ts.Ticks > 0)
-                {
-                    timespan = timespan.Add(ts);
-                    unmatchedWords.Add(matchedTimeWordReplacement);
-                    continue;
-                }
-
-                if (Language.RegularExpressions["minuteAliases"].IsMatch(cleanedword) && i > 1)//go back and get the previous word
-                {
-                    var mins = words[i - 2];
-                    var min = 0;
-                    var isminute = false;
-
-                    if (int.TryParse(mins, out min))
-                    {
-                        timespan = timespan.Add(new TimeSpan(0, min, 0));
-                        isminute = true;
-                    }
-                    else if (Language.RegularExpressions["aAliases"].IsMatch(cleanedword))
-                    {
-                        timespan = timespan.Add(new TimeSpan(0, 1, 0));
-                        isminute = true;
-                    }
-                    if (isminute)
-                    {
-                        unmatchedWords[unmatchedWords.Count() - 1] = matchedTimeWordReplacement;
-                        unmatchedWords.Add(matchedTimeWordReplacement);
-                        continue;
-                    }
-                }
-
-                if (Language.RegularExpressions["hourAliases"].IsMatch(cleanedword) && i > 1)//go back and get the previous word
-                {
-                    var hrs = words[i - 2];
-                    var hr = 0;
-                    var ishour = false;
-                    if (int.TryParse(hrs, out hr))
-                    {
-                        timespan = timespan.Add(new TimeSpan(hr, 0, 0));
-                        ishour = true;
-                    }
-                    else if (hrs.ToLowerInvariant() == "a" || hrs.ToLowerInvariant() == "an")
-                    {
-                        timespan = timespan.Add(new TimeSpan(1, 0, 0));
-                        ishour = true;
-                    }
-                    if (ishour)
-                    {
-                        unmatchedWords[unmatchedWords.Count() - 1] = matchedTimeWordReplacement;
-                        unmatchedWords.Add(matchedTimeWordReplacement);
-                        continue;
-                    }
-                }
-                //the word was not matched, add it to the cleaned array to check for location
-
-                if (Language.RegularExpressions["atAliases"].IsMatch(cleanedword)) isActualTime = true;
-
+                
                 unmatchedWords.Add(cleanedword);
             }
 
@@ -187,30 +127,28 @@ namespace PokemonGoRaidBot.Parsing
             //post was invalidated
             if (nopost) result.PokemonId = default(int);
 
-            if (timespan.Ticks > 0)
+            TimeSpan? raidTimeSpan, joinTimeSpan;
+            ParseTimespanFull(ref unmatchedString, out raidTimeSpan, out joinTimeSpan);
+
+            DateTime? joinTime = null;
+
+            if (joinTimeSpan.HasValue) joinTime = DateTime.Now + joinTimeSpan.Value;
+            if (raidTimeSpan.HasValue)
             {
-                var dt = result.PostDate + timespan;
-                dt = dt.AddSeconds(dt.Second * -1);//make seconds "0"
-
-                if (!isActualTime)//add actual time to end of string for message thread
-                    messageString += string.Format(" ({0:h:mmtt})", dt.AddHours(TimeOffset));
-
-                var joinReg = Language.CombineRegex("|", "joinEnd", "joinStart", "joinMe", "joinMore");
-                if (!(joinReg.IsMatch(messageString) && !joinReg.IsMatch(unmatchedString)))//if it matches the full string but not the cleaned, we know the timespan is not remaining time
-                {
-                    result.EndDate = dt;
-                    result.HasEndDate = true;
-                }
+                result.EndDate = DateTime.Now + raidTimeSpan.Value;
+                result.HasEndDate = true;
             }
-
-            var newUnmatchedString = "";
+            
             bool isMore, isLess;
-            var joinCount = ParseJoinedUsersCount(unmatchedString, out newUnmatchedString, out isMore, out isLess);
+
+            var joinCount = ParseJoinedUsersCount(ref unmatchedString, out isMore, out isLess);
+
+            if (!joinCount.HasValue && joinTime.HasValue) joinCount = 1;
 
             if (joinCount.HasValue)
-                result.JoinedUsers.Add(new PokemonRaidJoinedUser(message.Author.Id, message.Author.Username, joinCount.Value, isMore, isLess));
+                result.JoinedUsers.Add(new PokemonRaidJoinedUser(message.Author.Id, message.Author.Username, joinCount.Value, isMore, isLess, joinTime));
 
-            result.Location = ParseLocation(newUnmatchedString);
+            result.Location = ParseLocation(unmatchedString);
 
             if (!string.IsNullOrEmpty(result.Location))
                 result.FullLocation = GetFullLocation(result.Location, guildConfig, message.Channel.Id);
@@ -221,6 +159,10 @@ namespace PokemonGoRaidBot.Parsing
             }
 
             result.Responses.Add(new PokemonMessage(message.Author.Id, message.Author.Username, messageString, DateTime.Now));
+
+            var mention = ((SocketGuildChannel)message.Channel).Guild.Roles.FirstOrDefault(x => x.Name == result.PokemonName && !result.MentionedRoleIds.Contains(x.Id));
+            if (mention != default(SocketRole))
+                result.MentionedRoleIds.Add(mention.Id);
 
             return result;
         }
@@ -256,60 +198,210 @@ namespace PokemonGoRaidBot.Parsing
         /// </summary>
         /// <param name="message"></param>
         /// <returns></returns>
-        public TimeSpan ParseTimespan(string message, ref bool isActualTime)
+        //public TimeSpan ParseTimespan(string message, ref bool isActualTime)
+        //{
+        //    var timeRegex = Language.RegularExpressions["timeActual"];//new Regex("([0-9]{1,2}):?([0-9]{2})?(a|p)", RegexOptions.IgnoreCase);
+        //    if (timeRegex.IsMatch(message))//posting an actual time like "3:30pm" or "10am"
+        //    {
+        //        var match = timeRegex.Match(message);
+
+        //        int hour = Convert.ToInt32(match.Groups[1].Value),
+        //            minute = string.IsNullOrEmpty(match.Groups[2].Value) ? 0 : Convert.ToInt32(match.Groups[2].Value);
+        //        string part = match.Groups[3].Value;
+
+        //        if (part.Equals("p", StringComparison.OrdinalIgnoreCase))
+        //            hour += 12;
+
+        //        var postedDate = DateTime.Today.Add(TimeSpan.Parse(string.Format("{0}:{1}", hour, minute + 1))).AddHours(TimeOffset * -1);//subtract offset to convert to bot timezone
+        //        isActualTime = true;
+        //        return new TimeSpan(postedDate.Ticks - DateTime.Now.Ticks);
+        //    }
+
+        //    var tsRegex = Language.RegularExpressions["timeSpan"];//new Regex("([0-9]):([0-9]{2})");
+        //    if (tsRegex.IsMatch(message))//posting like "1:30" -- ActualTime indicates it was preceeded by the word "at"
+        //    {
+        //        var match = tsRegex.Match(message);
+        //        int hour = Convert.ToInt32(match.Groups[1].Value),
+        //            minute = Convert.ToInt32(match.Groups[2].Value);
+
+        //        if (hour > 2) isActualTime = true;
+
+        //        if (!isActualTime)
+        //            return new TimeSpan(hour, minute, 0);
+        //        else
+        //        {
+        //            if (DateTime.Now.Hour > 9 && hour < 9) hour += 12;//PM is inferred
+        //            var postedDate = DateTime.Today.Add(TimeSpan.Parse(string.Format("{0}:{1}", hour, minute + 1)));
+        //            return new TimeSpan(postedDate.Ticks - DateTime.Now.Ticks);
+        //        }
+        //    }
+
+        //    var ts = new TimeSpan(0);
+        //    var hrRegex = Language.RegularExpressions["timeHour"];//new Regex("([0-2]{1})h", RegexOptions.IgnoreCase);
+        //    if (hrRegex.IsMatch(message))//posting like "1h"
+        //    {
+        //        var match = hrRegex.Match(message);
+        //        string hour = match.Groups[1].Value;//, minute = match.Groups[1].Value;
+        //        ts.Add(new TimeSpan(Convert.ToInt32(hour), 0, 0));
+        //    }
+
+        //    var minRegex = Language.RegularExpressions["timeMinute"];//new Regex("([0-9]{1,2})m");
+        //    if (minRegex.IsMatch(message))
+        //    {
+        //        var match = minRegex.Match(message);
+        //        string min = match.Groups[1].Value;//, minute = match.Groups[1].Value;
+        //        ts = ts.Add(new TimeSpan(0, Convert.ToInt32(min), 0));
+        //    }
+        //    return ts;
+        //}
+        public void ParseTimespanFull(ref string message, out TimeSpan? raidTimeSpan, out TimeSpan? joinTimeSpan)
         {
-            var timeRegex = Language.RegularExpressions["timeActual"];//new Regex("([0-9]{1,2}):?([0-9]{2})?(a|p)", RegexOptions.IgnoreCase);
-            if (timeRegex.IsMatch(message))//posting an actual time like "3:30pm" or "10am"
+            raidTimeSpan = null;
+            joinTimeSpan = null;
+
+            var joinReg = Language.RegularExpressions["joinTime"];
+            var actualRegEnd = Language.RegularExpressions["timeActualEnd"];
+            if (actualRegEnd.IsMatch(message))
             {
-                var match = timeRegex.Match(message);
-                int hour = Convert.ToInt32(match.Groups[1].Value),
-                    minute = string.IsNullOrEmpty(match.Groups[2].Value) ? 0 : Convert.ToInt32(match.Groups[2].Value);
-                string part = match.Groups[3].Value;
+                var matches = actualRegEnd.Matches(message).Cast<Match>();
+                foreach (var match in matches)
+                {
+                    var hr = match.Groups[1].Value;
+                    var min = match.Groups[2].Value;
 
-                if (part.Equals("p", StringComparison.OrdinalIgnoreCase))
-                    hour += 12;
+                    int hour = Convert.ToInt32(hr),
+                        minute = string.IsNullOrEmpty(min) ? 0 : Convert.ToInt32(min);
 
-                var postedDate = DateTime.Today.Add(TimeSpan.Parse(string.Format("{0}:{1}", hour, minute + 1))).AddHours(TimeOffset * -1);//subtract offset to convert to bot timezone
-                isActualTime = true;
-                return new TimeSpan(postedDate.Ticks - DateTime.Now.Ticks);
+                    string part = match.Groups[3].Value;
+                    if (string.IsNullOrEmpty(part)) part = DateTime.Now.Hour < hour ? "p" : DateTime.Now.ToString("tt").ToLowerInvariant();
+
+                    if (part.First() == 'p')
+                        hour += 12;
+
+                    var postedDate = DateTime.Today.Add(TimeSpan.Parse(string.Format("{0}:{1}", hour, minute))).AddHours(TimeOffset * -1);//subtract offset to convert to bot timezone
+
+                    message = message.Replace(match.Groups[0].Value, matchedTimeWordReplacement);
+
+                    if (joinReg.IsMatch(message))
+                    {
+                        message = joinReg.Replace(message, matchedWordReplacement);
+                        joinTimeSpan = new TimeSpan(postedDate.Ticks - DateTime.Now.Ticks);
+                    }
+                    else
+                        raidTimeSpan = new TimeSpan(postedDate.Ticks - DateTime.Now.Ticks);
+                }
+
+                if (joinTimeSpan.HasValue && raidTimeSpan.HasValue)
+                    return;
             }
 
-            var tsRegex = Language.RegularExpressions["timeSpan"];//new Regex("([0-9]):([0-9]{2})");
-            if (tsRegex.IsMatch(message))//posting like "1:30" -- ActualTime indicates it was preceeded by the word "at"
+            var actualRegStart = Language.RegularExpressions["timeActualStart"];
+            if (actualRegStart.IsMatch(message))
             {
-                var match = tsRegex.Match(message);
-                int hour = Convert.ToInt32(match.Groups[1].Value),
-                    minute = Convert.ToInt32(match.Groups[2].Value);
+                var matches = actualRegStart.Matches(message).Cast<Match>();
+                foreach (var match in matches)
+                {
+                    var hr = match.Groups[2].Value;
+                    var min = match.Groups[3].Value;
 
-                if (hour > 2) isActualTime = true;
+                    int hour = Convert.ToInt32(hr),
+                        minute = string.IsNullOrEmpty(min) ? 0 : Convert.ToInt32(min);
 
-                if (!isActualTime)
-                    return new TimeSpan(hour, minute, 0);
+                    string part = DateTime.Now.Hour < hour ? "p" : DateTime.Now.ToString("tt").ToLowerInvariant();
+
+                    if (part.First() == 'p') hour += 12;
+
+                    var postedDate = DateTime.Today.Add(TimeSpan.Parse(string.Format("{0}:{1}", hour, minute))).AddHours(TimeOffset * -1);//subtract offset to convert to bot timezone
+
+                    message = message.Replace(match.Groups[0].Value, matchedTimeWordReplacement);
+
+                    if (joinReg.IsMatch(message))
+                    {
+                        message = joinReg.Replace(message, matchedWordReplacement);
+                        joinTimeSpan = new TimeSpan(postedDate.Ticks - DateTime.Now.Ticks);
+                    }
+                    else
+                        raidTimeSpan = new TimeSpan(postedDate.Ticks - DateTime.Now.Ticks);
+                }
+
+                if (joinTimeSpan.HasValue && raidTimeSpan.HasValue)
+                    return;
+            }
+
+            var hrminReg = Language.RegularExpressions["timeHourMin"];
+            if (hrminReg.IsMatch(message))
+            {
+                var matches = hrminReg.Matches(message).Cast<Match>();
+                foreach(var match in matches)
+                {
+                    var hr = match.Groups[1].Value;
+                    var mi = match.Groups[3].Value;
+
+                    var hour = string.IsNullOrEmpty(hr) ? 0 : Convert.ToInt32(hr);
+                    var min = string.IsNullOrEmpty(mi) ? 0 : Convert.ToInt32(mi);
+
+                    if (min + hour == 0) continue;
+
+                    message = message.Replace(match.ToString(), matchedTimeWordReplacement);
+
+                    if (joinReg.IsMatch(message))
+                    {
+                        message = joinReg.Replace(match.Groups[0].Value, matchedWordReplacement);
+                        joinTimeSpan = new TimeSpan(hour, min, 0);
+                    }
+                    else
+                        raidTimeSpan = new TimeSpan(hour, min, 0);
+                }
+
+                if (joinTimeSpan.HasValue && raidTimeSpan.HasValue)
+                    return;
+            }
+            else
+            {
+                var hrReg = Language.RegularExpressions["timeHour"];
+                if (hrReg.IsMatch(message))
+                {
+                    var matches = hrReg.Matches(message).Cast<Match>();
+                    foreach (var match in matches)
+                    {
+                        var hour = Convert.ToInt32(match.Groups[1].Value);
+
+                        message = message.Replace(match.Groups[0].Value, matchedTimeWordReplacement);
+
+                        if (joinReg.IsMatch(message))
+                        {
+                            message = joinReg.Replace(message, matchedWordReplacement);
+                            joinTimeSpan = new TimeSpan(hour, 0, 0);
+                        }
+                        else
+                            raidTimeSpan = new TimeSpan(hour, 0, 0);
+                    }
+                    if (joinTimeSpan.HasValue && raidTimeSpan.HasValue)
+                        return;
+                }
                 else
                 {
-                    if (DateTime.Now.Hour > 9 && hour < 9) hour += 12;//PM is inferred
-                    var postedDate = DateTime.Today.Add(TimeSpan.Parse(string.Format("{0}:{1}", hour, minute + 1)));
-                    return new TimeSpan(postedDate.Ticks - DateTime.Now.Ticks);
+                    var minReg = Language.RegularExpressions["timeMin"];
+                    if (minReg.IsMatch(message))
+                    {
+                        var matches = minReg.Matches(message).Cast<Match>();
+                        foreach (var match in matches)
+                        {
+                            var min = Convert.ToInt32(match.Groups[1].Value);
+
+                            message = message.Replace(match.Groups[0].Value, matchedTimeWordReplacement);
+                            if (joinReg.IsMatch(message))
+                            {
+                                message = joinReg.Replace(message, matchedWordReplacement);
+                                joinTimeSpan = new TimeSpan(0, min, 0);
+                            }
+                            else
+                                raidTimeSpan = new TimeSpan(0, min, 0);
+                        }
+                    }
                 }
             }
 
-            var ts = new TimeSpan(0);
-            var hrRegex = Language.RegularExpressions["timeHour"];//new Regex("([0-2]{1})h", RegexOptions.IgnoreCase);
-            if (hrRegex.IsMatch(message))//posting like "1h"
-            {
-                var match = hrRegex.Match(message);
-                string hour = match.Groups[1].Value;//, minute = match.Groups[1].Value;
-                ts.Add(new TimeSpan(Convert.ToInt32(hour), 0, 0));
-            }
-
-            var minRegex = Language.RegularExpressions["timeMinute"];//new Regex("([0-9]{1,2})m");
-            if (minRegex.IsMatch(message))
-            {
-                var match = minRegex.Match(message);
-                string min = match.Groups[1].Value;//, minute = match.Groups[1].Value;
-                ts = ts.Add(new TimeSpan(0, Convert.ToInt32(min), 0));
-            }
-            return ts;
         }
         /// <summary>
         /// Attempts to get a location out of a full message string.
@@ -391,17 +483,17 @@ namespace PokemonGoRaidBot.Parsing
             var distance = DistanceBetweenTwoPoints(ll1, ll2);
             return distance < latLongComparisonMaxMeters;
         }
-        public int? ParseJoinedUsersCount(string message, out string messageout, out bool isMore, out bool isLess)
+        public int? ParseJoinedUsersCount(ref string message, out bool isMore, out bool isLess)
         {
             isLess = isMore = false;
             var endreg = Language.RegularExpressions["joinEnd"];
 
             if (endreg.IsMatch(message))
             {
-                messageout = endreg.Replace(message, matchedWordReplacement);
-                if (message.Contains(Language.Strings["questionMark"])) return null;
-
                 var endmatch = endreg.Match(message);
+
+                message = endreg.Replace(message, matchedWordReplacement);
+                if (message.Contains(Language.Strings["questionMark"])) return null;
 
                 if (Language.RegularExpressions["joinLess"].IsMatch(message)) isLess = true;
                 else if (Language.RegularExpressions["joinMore"].IsMatch(message)) isMore = true;
@@ -419,10 +511,10 @@ namespace PokemonGoRaidBot.Parsing
             var startReg = Language.RegularExpressions["joinStart"];
             if (startReg.IsMatch(message))
             {
-                messageout = startReg.Replace(message, matchedWordReplacement);
-                if (message.Contains(Language.Strings["questionMark"])) return null;
-
                 var startmatch = startReg.Match(message);
+
+                message = startReg.Replace(message, matchedWordReplacement);
+                if (message.Contains(Language.Strings["questionMark"])) return null;
 
                 if (Language.RegularExpressions["joinLess"].IsMatch(message)) isLess = true;
                 else if (Language.RegularExpressions["joinMore"].IsMatch(message)) isMore = true;
@@ -440,7 +532,7 @@ namespace PokemonGoRaidBot.Parsing
             var meReg = Language.RegularExpressions["joinMe"];
             if (meReg.IsMatch(message))
             {
-                messageout = meReg.Replace(message, matchedWordReplacement);
+                message = meReg.Replace(message, matchedWordReplacement);
                 if (message.Contains(Language.Strings["questionMark"])) return null;
                 return 1;
             }
@@ -448,11 +540,11 @@ namespace PokemonGoRaidBot.Parsing
             var moreReg = Language.RegularExpressions["joinMore"];
             if (moreReg.IsMatch(message))
             {
-                messageout = moreReg.Replace(message, matchedWordReplacement);
-                if (message.Contains(Language.Strings["questionMark"])) return null;
-
                 var morematch = moreReg.Match(message);
 
+                message = moreReg.Replace(message, matchedWordReplacement);
+                if (message.Contains(Language.Strings["questionMark"])) return null;
+                
                 var num = morematch.Groups[2].Value;
                 var result = 0;
 
@@ -466,11 +558,11 @@ namespace PokemonGoRaidBot.Parsing
             var lessReg = Language.RegularExpressions["joinLess"];
             if (lessReg.IsMatch(message))
             {
-                messageout = lessReg.Replace(message, matchedWordReplacement);
-                if (message.Contains(Language.Strings["questionMark"])) return null;
-
                 var lessmatch = lessReg.Match(message);
 
+                message = lessReg.Replace(message, matchedWordReplacement);
+                if (message.Contains(Language.Strings["questionMark"])) return null;
+                
                 var num = lessmatch.Groups[1].Value;
                 var result = 0;
 
@@ -481,8 +573,7 @@ namespace PokemonGoRaidBot.Parsing
                 isLess = true;
                 return result;
             }
-
-            messageout = message;
+            
             return null;
         }
         public async Task<KeyValuePair<double, double>?> GetLocationLatLong(string location, SocketGuildChannel channel, BotConfig config)
@@ -734,7 +825,7 @@ namespace PokemonGoRaidBot.Parsing
 
         public string MakePostHeader(PokemonRaidPost post)
         {
-            var joinString = string.Join(",", post.JoinedUsers.Where(x => x.Count > 0).Select(x => string.Format("@{0}({1})", x.Name, x.Count)));
+            var joinString = string.Join(", ", post.JoinedUsers.Where(x => x.Count > 0).Select(x => string.Format("@{0}(**{1}**{2})", x.Name, x.Count, x.ArriveTime.HasValue ? $" *@{x.ArriveTime.Value.ToString("h:mmt")}*" : "")));
             //var roleString = string.Join(",", post.MentionedRoleIds.Where(x => x > 0).Select(x => string.Format("<@&{0}>", x)));
 
             var joinCount = post.JoinedUsers.Sum(x => x.Count);
