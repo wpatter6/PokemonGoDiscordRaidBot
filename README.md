@@ -50,10 +50,9 @@
 <hr/>
 
 ## Future Additions:
-* Store and display any roles tagged on the raid
-* Store and display when users plan to arrive
+* Add event handling and user notification for join count and arrive time changing in joined raids
+* Move google geocode off messaging thread so it doesn't slow results sometimes.
 * Continuously improve phrase matching and dicitionary
-* Better formatting and management of threads in output channel
 
 <hr/>
 

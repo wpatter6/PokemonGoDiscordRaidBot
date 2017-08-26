@@ -418,7 +418,7 @@ namespace PokemonGoRaidBot
             foreach (var user in post2.JoinedUsers)
             {
                 if (post1.JoinedUsers.FirstOrDefault(x => x.Id == user.Id) == null)
-                    post1.JoinedUsers.Add(new PokemonRaidJoinedUser(post1, user.Id, user.Name, user.PeopleCount));
+                    post1.JoinedUsers.Add(new PokemonRaidJoinedUser(user.Id, user.Name, user.PeopleCount));
                 else if (post2.UserId == user.Id)
                 {
                     var postUser = post1.JoinedUsers.FirstOrDefault(x => x.Id == post2.UserId);

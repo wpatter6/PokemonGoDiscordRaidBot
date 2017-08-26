@@ -150,7 +150,7 @@ namespace PokemonGoRaidBot.Parsing
             if (!joinCount.HasValue && joinTime.HasValue) joinCount = 1;
 
             if (joinCount.HasValue)
-                result.JoinedUsers.Add(new PokemonRaidJoinedUser(result, message.Author.Id, message.Author.Username, joinCount.Value, isMore, isLess, joinTime));
+                result.JoinedUsers.Add(new PokemonRaidJoinedUser(message.Author.Id, message.Author.Username, joinCount.Value, isMore, isLess, joinTime));
 
             result.Location = ParseLocation(unmatchedString);
 

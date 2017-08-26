@@ -7,11 +7,10 @@ namespace PokemonGoRaidBot.Objects
 {
     public class PokemonRaidJoinedUser
     {
-        public PokemonRaidJoinedUser (PokemonRaidPost post, ulong id, string name, int count, bool isMore = false, bool isLess = false, DateTime? arriveTime = null)
+        public PokemonRaidJoinedUser (ulong id, string name, int count, bool isMore = false, bool isLess = false, DateTime? arriveTime = null)
         {
             Id = id;
             Name = name;
-            Post = post;
             PeopleCount = count;
             ArriveTime = arriveTime;
             IsMore = isMore;
@@ -20,22 +19,30 @@ namespace PokemonGoRaidBot.Objects
         public ulong Id { get; set; }
         public string Name { get; set; }
 
-        private int _peopleCount;
 
-        public int PeopleCount
-        {
+        private int peopleCount;
+
+        public int PeopleCount {
             get
             {
-                return _peopleCount;
+                return peopleCount;
             }
             set
             {
-                _peopleCount = value;
-                Post.UsersChanged();
+                peopleCount = value;
+                OnPeopleCountChanged(new EventArgs());
             }
         }
+
+        protected virtual void OnPeopleCountChanged(EventArgs e)
+        {
+            if (PeopleCountChanged != null)
+                PeopleCountChanged(this, e);
+        }
+
+        public event EventHandler PeopleCountChanged;
+
         public DateTime? ArriveTime { get; set; }
-        public readonly PokemonRaidPost Post;
 
         [JsonIgnore]
         public bool IsMore { get; set; }

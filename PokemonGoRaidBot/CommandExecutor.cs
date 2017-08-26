@@ -129,7 +129,7 @@ namespace PokemonGoRaidBot
             var joinedUser = post.JoinedUsers.FirstOrDefault(x => x.Id == Message.Author.Id);
             if (joinedUser == null)
             {
-                joinedUser = new PokemonRaidJoinedUser(post, Message.Author.Id, Message.Author.Username, number);
+                joinedUser = new PokemonRaidJoinedUser(Message.Author.Id, Message.Author.Username, number);
                 post.JoinedUsers.Add(joinedUser);
             }
             else if (isMore)

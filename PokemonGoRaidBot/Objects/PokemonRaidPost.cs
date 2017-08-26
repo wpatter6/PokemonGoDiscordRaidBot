@@ -17,26 +17,21 @@ namespace PokemonGoRaidBot.Objects
 
         private void JoinedUsers_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
-            int oldCount = 0, newCount = 0;
-            foreach (var item in e.OldItems)
-                oldCount += ((PokemonRaidJoinedUser)item).PeopleCount;
-
-            foreach(var item in e.NewItems)
-                newCount += ((PokemonRaidJoinedUser)item).PeopleCount;
+            if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
+            {
+                foreach(PokemonRaidJoinedUser item in e.NewItems)
+                {
+                    item.PeopleCountChanged -= JoinedUsers_PeopleCountChanged;
+                    item.PeopleCountChanged += JoinedUsers_PeopleCountChanged;
+                }
+            }
             
             OnJoinedUsersChanged(new EventArgs());
         }
 
-        public void UpdateJoinedUserCount(ulong userId, int count)
+        private void JoinedUsers_PeopleCountChanged(object sender, EventArgs e)
         {
-            var oldCount = JoinedUsers.Sum(x => x.PeopleCount);
-            
-            var user = JoinedUsers.FirstOrDefault(x => x.Id == userId);
-            user.PeopleCount = count;
-
-            var newCount = JoinedUsers.Sum(x => x.PeopleCount);
-            
-            OnJoinedUsersChanged(new EventArgs());
+            OnJoinedUsersChanged(e);
         }
 
         public bool HasEndDate;
