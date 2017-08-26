@@ -8,9 +8,9 @@
     "locationCrossStreets": "(([a-zA-Z0-9]* ?[a-zA-Z0-9]+) (\\&|and) ([a-zA-Z0-9]+ ?[a-zA-Z]*))", //Cross streets regex, like 12th and Broadway
     "locationStart": "\\bat ([a-zA-Z0-9(\\bn\\.|\\bs\\.|\\be\\.|\\bw\\.) ]*)", //indicates location using word "at", includes n. s. e. w.
     "locationEnd": "([a-zA-Z0-9' ]*\\b(park|school|lake|church|museum|mural|statue|building|station|theat(er|re)|course|sign|store)( (n(orth)?|s(outh)?|e(ast)?|w(est))\\b)?)", //words coming after a landmark name
-    "locationExcludeWords": "\\b(left|at|to|any(one)?|in|on|near|around)\\b|\\?|\\.|,", //remove these from parsed locations
-    "timeActualEnd": "([0-9]{1,2}):?([0-9]{2})? ?(a|p)", //match where numbers indicate an actual time
-    "timeActualStart": "(at|around) ([0-9]{1,2}):?([0-9]{2})?",
+    "locationExcludeWords": "\\b(left|at|to|any(one)?|in|on|near|around|with(out)?)\\b|\\?|\\.|,", //remove these from parsed locations
+    "timeActualEnd": "\\b([0-9]{1,2}):?([0-9]{2})? ?(am?|pm?)\\b", //match where numbers indicate an actual time
+    "timeActualStart": "\\b(at|around) ([0-9]{1,2}):?([0-9]{2})?\\b",
     "timeSpan": "(1?[0-9]):([0-9]{2})", //match where numbers indicate hours and minutes
     "timeHourMin": "([0-2]{1}) ?(h|hr|hours?) ?([1-6]?[0-9]) ?(m|mi|min|mins|minutes?)", //match where numbers = hour
     "timeHour": "([0-2]{1}) ?(h|hr|hours?)",
@@ -20,7 +20,7 @@
     "joinMe": "\\b(i'?(m|ll| am))?\\b(omw|my way|coming|go(ing?)?|join(ing)?|can\\b|head(ed|ing)|(be )?there)\\b", //indicates the current user is joining
     "joinMore": "^((?!need|use).)*\\b([0-9]{1,2}|\\b(one|two|three|four|five|six|seven|eight|nine|ten)) more\\b", //indicates more are joining, add to existing value
     "joinLess": "\\b([0-9]{1,2}|\\b(one|two|three|four|five|six|seven|eight|nine|ten)) (people |ppl |person )?((are |had to )?(leav(ing|e)|go)|just left)\\b", //indicates some are leaving, subtract from existing value
-    "joinTime": "\\b(be|get|it )?(there|arrive|way) ((in|at) )?===!!!===", //determines if timespan is a "join" time
+    "joinTime": "\\b(be|get|it )?(there|arrive|way|start|begin|go in) ((in|at) )?===!!!===", //determines if timespan is a "join" time
     "pokemonInvalidators": "^(any)$", //if this comes before pokemon name, they're asking if any exist,
     "nonAlphaNumericWithPunctuation": "[^a-zA-Z0-9 ?\\.,:]",
     "smallWords": "^(at?|the|and|of)$", //These will not be made uppercase if they're found in a location

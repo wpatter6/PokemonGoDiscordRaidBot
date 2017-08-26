@@ -9,17 +9,17 @@
 
 - Identifies the raid's location and is usually able to create a link to google maps for directions to the raid.  Cities can be applied by server and by channel to give better accuracy.
 
-- Can tell if users are joining the raid, and how many.  Users can also use explicit commands to join or un-join a raid.
+- Can tell if users are joining the raid, and how many.  Users can also use explicit commands to join or un-join a raid.  Can also determine if the user says at what time they will arrive.
 
 - Identifies responses to a raid post and includes the discussion on the configured output channel's raid post thread as well.  It also parses any time strings in the user's response and outputs the actual time, with configurable GMT time zone.
 
 - Determines the end time of the raid and removes its messages from the chat after the raid has ended.
 
 ###### *Posts formatted and pinned into their original channel*
-![Pinning messages posted in channel](http://i.imgur.com/mZVyF16.png)
+![Pinning messages posted in channel](http://i.imgur.com/1JgHR2F.png)
 
 ###### *All channels formatting and outputting to their specific channel as 'threads'*
-![All output to specific channel](http://i.imgur.com/wa8HNye.png)
+![All output to specific channel](http://i.imgur.com/l12BNJk.png)
 
 ###### *info command will give useful information about the raid with a link to boss counters*
 ![info command](http://i.imgur.com/7LN3Asy.png)

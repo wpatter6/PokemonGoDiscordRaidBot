@@ -48,4 +48,6 @@
     <Copyright>PokemonGoRaidBot</Copyright>
     <UserSecretsId>aaabbbcccddd_eeefffggghhh</UserSecretsId>
   </PropertyGroup>
+  
+  <ProjectExtensions><VisualStudio><UserProperties Languages_4en-us_1json__JSONSchema="http://json.schemastore.org/bower" /></VisualStudio></ProjectExtensions>
 </Project>

@@ -328,6 +328,40 @@ namespace PokemonGoRaidBot.Parsing
                     return;
             }
 
+
+            var tsRegex = Language.RegularExpressions["timeSpan"];//new Regex("([0-9]):([0-9]{2})");
+            if (tsRegex.IsMatch(message))
+            {
+                var matches = tsRegex.Matches(message).Cast<Match>();
+                foreach(var match in matches)
+                {
+                    int hour = Convert.ToInt32(match.Groups[1].Value),
+                        minute = Convert.ToInt32(match.Groups[2].Value);
+                
+                    TimeSpan ts;
+                    if (hour < 2)//this will miss if someone posts an actual time of 1:30 (without pm or matching actualRegEnd, should be rare)
+                        ts = new TimeSpan(hour, minute, 0);
+                    else
+                    {
+                        if (DateTime.Now.Hour > 9 && hour < 9) hour += 12;//PM is inferred
+                        var postedDate = DateTime.Today.Add(TimeSpan.Parse(string.Format("{0}:{1}", hour, minute + 1)));
+                        ts = new TimeSpan(postedDate.Ticks - DateTime.Now.Ticks);
+                    }
+
+                    message = message.Replace(match.Groups[0].Value, matchedTimeWordReplacement);
+
+                    if (joinReg.IsMatch(message))
+                    {
+                        message = joinReg.Replace(message, matchedWordReplacement);
+                        joinTimeSpan = ts;
+                    }
+                    else
+                        raidTimeSpan = ts;
+                }
+                if (joinTimeSpan.HasValue && raidTimeSpan.HasValue)
+                    return;
+            }
+
             var hrminReg = Language.RegularExpressions["timeHourMin"];
             if (hrminReg.IsMatch(message))
             {
@@ -379,25 +413,23 @@ namespace PokemonGoRaidBot.Parsing
                     if (joinTimeSpan.HasValue && raidTimeSpan.HasValue)
                         return;
                 }
-                else
-                {
-                    var minReg = Language.RegularExpressions["timeMin"];
-                    if (minReg.IsMatch(message))
-                    {
-                        var matches = minReg.Matches(message).Cast<Match>();
-                        foreach (var match in matches)
-                        {
-                            var min = Convert.ToInt32(match.Groups[1].Value);
 
-                            message = message.Replace(match.Groups[0].Value, matchedTimeWordReplacement);
-                            if (joinReg.IsMatch(message))
-                            {
-                                message = joinReg.Replace(message, matchedWordReplacement);
-                                joinTimeSpan = new TimeSpan(0, min, 0);
-                            }
-                            else
-                                raidTimeSpan = new TimeSpan(0, min, 0);
+                var minReg = Language.RegularExpressions["timeMin"];
+                if (minReg.IsMatch(message))
+                {
+                    var matches = minReg.Matches(message).Cast<Match>();
+                    foreach (var match in matches)
+                    {
+                        var min = Convert.ToInt32(match.Groups[1].Value);
+
+                        message = message.Replace(match.Groups[0].Value, matchedTimeWordReplacement);
+                        if (joinReg.IsMatch(message))
+                        {
+                            message = joinReg.Replace(message, matchedWordReplacement);
+                            joinTimeSpan = new TimeSpan(0, min, 0);
                         }
+                        else
+                            raidTimeSpan = new TimeSpan(0, min, 0);
                     }
                 }
             }
