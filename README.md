@@ -11,6 +11,8 @@
 
 - Can tell if users are joining the raid, and how many.  Users can also use explicit commands to join or un-join a raid.  Can also determine if the user says at what time they will arrive.
 
+- Once a user has posted or joined a raid, they will be notified by direct message of any users that join or quit the raid.  This behavior can be disabled.
+
 - Identifies responses to a raid post and includes the discussion on the configured output channel's raid post thread as well.  It also parses any time strings in the user's response and outputs the actual time, with configurable GMT time zone.
 
 - Determines the end time of the raid and removes its messages from the chat after the raid has ended.

@@ -553,7 +553,6 @@ namespace PokemonGoRaidBot
             var timeOffset = serverTimezone - botTimezone;
 
             return GetParser(guildConfig.Language ?? "en-us", timeOffset);
-
         }
         private MessageParser GetParser(string lang, int offset)
         {
