@@ -60,8 +60,7 @@ namespace PokemonGoRaidBot.Parsing
                 EndDate = DateTime.Now + new TimeSpan(0, maxRaidMinutes, 0),
                 MentionedRoleIds = new List<ulong>(message.MentionedRoles.Select(x => x.Id))
             };
-
-
+            
             var messageString = message.Content.Replace(" & ", $" {Language.Strings["and"]} ").Replace(" @ ", $" {Language.Strings["at"]} ");
             var words = messageString.Split(' ');
             
@@ -150,7 +149,7 @@ namespace PokemonGoRaidBot.Parsing
             if (!joinCount.HasValue && joinTime.HasValue) joinCount = 1;
 
             if (joinCount.HasValue)
-                result.JoinedUsers.Add(new PokemonRaidJoinedUser(message.Author.Id, message.Author.Username, joinCount.Value, isMore, isLess, joinTime));
+                result.JoinedUsers.Add(new PokemonRaidJoinedUser(message.Author.Id, guildId, result.UniqueId, message.Author.Username, joinCount.Value, isMore, isLess, joinTime));
 
             result.Location = ParseLocation(unmatchedString);
 
@@ -525,12 +524,13 @@ namespace PokemonGoRaidBot.Parsing
             if (endreg.IsMatch(message))
             {
                 var endmatch = endreg.Match(message);
-
-                message = endreg.Replace(message, matchedWordReplacement);
+                
                 if (message.Contains(Language.Strings["questionMark"])) return null;
 
                 if (Language.RegularExpressions["joinLess"].IsMatch(message)) isLess = true;
                 else if (Language.RegularExpressions["joinMore"].IsMatch(message)) isMore = true;
+
+                message = endreg.Replace(message, matchedWordReplacement);
 
                 var num = endmatch.Groups[1].Value;
                 var result = 0;
@@ -547,11 +547,12 @@ namespace PokemonGoRaidBot.Parsing
             {
                 var startmatch = startReg.Match(message);
 
-                message = startReg.Replace(message, matchedWordReplacement);
                 if (message.Contains(Language.Strings["questionMark"])) return null;
 
                 if (Language.RegularExpressions["joinLess"].IsMatch(message)) isLess = true;
                 else if (Language.RegularExpressions["joinMore"].IsMatch(message)) isMore = true;
+
+                message = startReg.Replace(message, matchedWordReplacement);
 
                 var num = startmatch.Groups[2].Value;
                 var result = 0;

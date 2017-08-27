@@ -129,7 +129,7 @@ namespace PokemonGoRaidBot
             var joinedUser = post.JoinedUsers.FirstOrDefault(x => x.Id == Message.Author.Id);
             if (joinedUser == null)
             {
-                joinedUser = new PokemonRaidJoinedUser(Message.Author.Id, Message.Author.Username, number);
+                joinedUser = new PokemonRaidJoinedUser(Message.Author.Id, Guild.Id, post.UniqueId, Message.Author.Username, number);
                 post.JoinedUsers.Add(joinedUser);
             }
             else if (isMore)
@@ -215,19 +215,13 @@ namespace PokemonGoRaidBot
             }
         }
 
-        //[RaidBotCommand("test")]
-        //private async Task Test()
-        //{
-        //    var list = Parser.Language.Pokemon.Where(x => x.CatchRate > 0);
-        //    var orderedList = list.OrderByDescending(x => x.BossCP);
+        [RaidBotCommand("test")]
+        private async Task Test()
+        {
+            var user = Guild.GetUser(235123612351201280);
 
-
-        //    var builder = new EmbedBuilder();
-        //    builder.WithDescription("abcd 123 alkdsfja;lsdjf;lkajsd;lfj ;lkjsadlkj sdlkfj lkjfds ljfds lk");
-        //    builder.WithThumbnailUrl(string.Format(Parser.Language.Formats["imageUrlLargePokemon"], 3));
-        //    builder.WithUrl("https://pokemongo.gamepress.gg/pokemon/3#raid-boss-counters");
-        //    await Message.Channel.SendMessageAsync("", false, builder);
-        //}
+            await Handler.DirectMessageUser(user, "TEST!!");
+        }
 
         [RaidBotCommand("m")]
         [RaidBotCommand("merge")]
@@ -627,7 +621,7 @@ namespace PokemonGoRaidBot
         [RaidBotCommand("version")]
         private async Task Version()
         {
-            var version = Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
+            var version = Config.Version;// Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
 
             await Handler.MakeCommandMessage(Message.Channel, $"PokemonGoRaidBot {version}");
         }

@@ -12,9 +12,9 @@
     "timeActualEnd": "\\b([0-9]{1,2}):?([0-9]{2})? ?(am?|pm?)\\b", //match where numbers indicate an actual time
     "timeActualStart": "\\b(at|around) ([0-9]{1,2}):?([0-9]{2})?\\b",
     "timeSpan": "(1?[0-9]):([0-9]{2})", //match where numbers indicate hours and minute
-    "timeHourMin": "([0-2]{1}) ?(h|hr|hours?) ?([1-6]?[0-9]) ?(m|mi|min|mins|minutes?)", //match where numbers like 1h3m or 1 hour 3 minutes
-    "timeHour": "([0-2]{1}) ?(h|hr|hours?)",
-    "timeMin": "([1-6]?[0-9]) ?(m|mi|min|mins|minutes?)",
+    "timeHourMin": "([0-2]{1}) ?(h|hr|hours?) ?([1-6]?[0-9]) ?(m|mi|min|mins|minutes?)\\b", //match where numbers like 1h3m or 1 hour 3 minutes
+    "timeHour": "([0-2]{1}) ?(h|hr|hours?)\\b",
+    "timeMin": "([1-6]?[0-9]) ?(m|mi|min|mins|minutes?)\\b",
     "joinEnd": "[^:]?\\b([0-9]{1,2}|(\\b(one|two|three|four|five|six|seven|eight|nine|ten))) (for|here|join(ed|ing)are|going|people|on (the|our)|coming|(just)? arriv(ed|ing)|of us|confirmed|head(ed|ing)|will)\\b", //indicates the number of people will be joining, with match words coming after #
     "joinStart": "\\b(have|are|there'?s|we'?re) ([0-9]{1,2}|(\\b(one|two|three|four|five|six|seven|eight|nine|ten)))\\b", //indicates the number of people will be joining, with match words coming before #
     "joinMe": "\\b(i'?(m|ll| am))?\\b(omw|my way|coming|go(ing?)?|join(ing)?|can\\b|head(ed|ing)|(be )?there)\\b", //indicates the current user is joining
@@ -35,6 +35,7 @@
     "postEnds": " ends **{0:h:mmt}**",
     "postJoined": "***{0} joined:*** {1}",
     "postRolesTagged": "; Roles: {0}",
+    "directMessage": "**{0} {1} {2}**{3} ({4}).",
     "commandUnknown": "Unknown Command \"{0}\".  Type {1}help to see valid Commands for this bot.",
     "commandInvalidNumber": "Invalid number \"{0}\".",
     "commandChannelSuccess": "Output channel for {0} changed to {1}.",
@@ -70,8 +71,17 @@
   "strings": {
     "and": "and", //" & " will be replaced with this
     "at": "at", //" @ "will be replaced with this
+    "stop": "stop",
+    "start": "start",
+    "joining": "joining",
+    "quitting": "quitting",
+    "themselves": "themselves",
     "questionMark": "?",
     "aliases": "Aliases",
+    "dmResp": "I can only do stuff in server chat.  ",
+    "dmStop": "Message \"stop\" to me and I won't send you anymore messages.",
+    "dmStart": "Stopping direct messages.  Message \"start\" to undo.",
+    "dmReStart": "Starting direct messages.  Message \"stop\" to undo.",
     "helpTop": "This bot parses discord chat messages to see if a raid is being mentioned.  If a raid is found, it will post to a specific channel, by default \"{0}\".  Channels can be configured to pin the raid instead of posting it to the specific channel.",
     "helpRaidTop": "Posting a raid in chat will cause this bot to either post the raid into a specific channel, or pin it in the current channel.",
     "helpCommands": "Commands",

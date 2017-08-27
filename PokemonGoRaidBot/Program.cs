@@ -68,11 +68,17 @@ namespace PokemonGoRaidBot
                 Console.Write("Google Geocoding Api Key: ");
                 config.GoogleApiKey = Console.ReadLine();//Read google API key from console
 
-                Console.Write("Bot Command Prefix (ex: !): ");
+                Console.Write("Bot Command Prefix (blank for !): ");
                 config.Prefix = Console.ReadLine();//Read the bot prefix from console.
+                if (string.IsNullOrWhiteSpace(config.Prefix)) config.Prefix = "!";
 
-                Console.Write("Bot Default Output Channel Name: ");
+                Console.Write("Bot Default Output Channel Name (blank for raid-bot): ");
                 config.OutputChannel = Console.ReadLine();//Read output channel name from console
+                if (string.IsNullOrWhiteSpace(config.OutputChannel)) config.OutputChannel = "raid-bot";
+
+                Console.Write("Bot Default Language (blank for en-us): ");
+                config.DefaultLanguage = Console.ReadLine();//Read output channel name from console
+                if (string.IsNullOrWhiteSpace(config.DefaultLanguage)) config.DefaultLanguage = "en-us";
 
                 config.Save();//Save the new configuration object to file.
             }

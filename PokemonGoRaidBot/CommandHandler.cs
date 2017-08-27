@@ -64,56 +64,77 @@ namespace PokemonGoRaidBot
                 if (message == null || message.Author == null || message.Author.IsBot)
                     return;
 
-                var guild = ((SocketGuildChannel)message.Channel).Guild;
-
-                var firstLoad = !Config.HasGuildConfig(guild.Id);
-
-                var guildConfig = Config.GetGuildConfig(guild.Id);
-
-                if (firstLoad)//pin all on first load
+                if(message.Channel is SocketDMChannel)
                 {
-                    foreach(var channel in ((SocketGuildChannel)message.Channel).Guild.Channels)
-                    {
-                        guildConfig.PinChannels.Add(channel.Id);
+                    var lang = new ParserLanguage(Config.DefaultLanguage);
+
+                    if(message.Content == lang.Strings["stop"])
+                    { 
+                        await DirectMessageUser(message.Author, lang.Strings["dmStart"]);
+                        Config.NoDMUsers.Add(message.Author.Id);
+                        Config.Save();
                     }
+                    else if (message.Content == lang.Strings["start"])
+                    {
+                        Config.NoDMUsers.RemoveAll(x => x == message.Author.Id);
+                        Config.Save();
+                        await DirectMessageUser(message.Author, lang.Strings["dmReStart"]);
+                    }
+                    else
+                        await DirectMessageUser(message.Author, lang.Strings["dmResp"] + lang.Strings["dmStop"]);
+
+                    return;
                 }
-
-                ISocketMessageChannel outputchannel = null;
-
-                //get output channel
-                if (guildConfig.OutputChannelId.HasValue)
-                    outputchannel = (ISocketMessageChannel)guild.Channels.FirstOrDefault(x => x.Id == guildConfig.OutputChannelId.Value);
-                else
-                    outputchannel = (ISocketMessageChannel)guild.Channels.FirstOrDefault(x => x.Name == Config.OutputChannel);
-
-                var context = new SocketCommandContext(bot, message);
-
-                //get configured guild language or default "en-us"
-                var lang = guildConfig.Language ?? "en-us";
-                //timezone of the bot machine
-                var botTimezone = TimeZoneInfo.Local.GetUtcOffset(DateTime.Now).Hours - (TimeZoneInfo.Local.IsDaylightSavingTime(DateTime.Now) ? 1 : 0);
-                //get configured timezone
-                var serverTimezone = guildConfig.Timezone ?? botTimezone;
-                var timeOffset = serverTimezone - botTimezone;
-
-                var parser = GetParser(lang, timeOffset);
-
-                var doPost = (outputchannel != null || 
-                        guildConfig.PinChannels.Contains(message.Channel.Id)) 
-                    && !guildConfig.MuteChannels.Contains(message.Channel.Id);
-
-                var argPos = 0;
-
-                //begin parsing/execution
-                //Someone is issuing a command, respond in their channel
-                if (message.HasStringPrefix(Config.Prefix, ref argPos))
+                if(message.Channel is SocketGuildChannel)
                 {
-                    await DoCommand(message, parser);
-                }
-                //try to see if a raid was posted
-                else if (doPost)
-                {
-                    await DoPost(message, parser, outputchannel);
+                    var guild = ((SocketGuildChannel)message.Channel).Guild;
+
+                    var firstLoad = !Config.HasGuildConfig(guild.Id);
+
+                    var guildConfig = Config.GetGuildConfig(guild.Id);
+
+                    if (firstLoad)//pin all on first load
+                    {
+                        foreach (var channel in ((SocketGuildChannel)message.Channel).Guild.Channels)
+                        {
+                            guildConfig.PinChannels.Add(channel.Id);
+                        }
+                    }
+
+                    ISocketMessageChannel outputchannel = null;
+
+                    //get output channel
+                    if (guildConfig.OutputChannelId.HasValue)
+                        outputchannel = (ISocketMessageChannel)guild.Channels.FirstOrDefault(x => x.Id == guildConfig.OutputChannelId.Value);
+                    else
+                        outputchannel = (ISocketMessageChannel)guild.Channels.FirstOrDefault(x => x.Name == Config.OutputChannel);
+
+                    var context = new SocketCommandContext(bot, message);
+
+                    //get configured guild language or default "en-us"
+                    var lang = guildConfig.Language ?? "en-us";
+                    //timezone of the bot machine
+                    //get configured timezone
+
+                    var parser = GetParser(guildConfig);
+
+                    var doPost = (outputchannel != null ||
+                            guildConfig.PinChannels.Contains(message.Channel.Id))
+                        && !guildConfig.MuteChannels.Contains(message.Channel.Id);
+
+                    var argPos = 0;
+
+                    //begin parsing/execution
+                    //Someone is issuing a command, respond in their channel
+                    if (message.HasStringPrefix(Config.Prefix, ref argPos))
+                    {
+                        await DoCommand(message, parser);
+                    }
+                    //try to see if a raid was posted
+                    else if (doPost)
+                    {
+                        await DoPost(message, parser, outputchannel);
+                    }
                 }
             }
             catch (Exception e)
@@ -321,8 +342,9 @@ namespace PokemonGoRaidBot
         /// <param name="user"></param>
         /// <param name="message"></param>
         /// <returns></returns>
-        public async Task NotifyUser(SocketUser user, string message)
+        public async Task DirectMessageUser(SocketUser user, string message)
         {
+            if (Config.NoDMUsers.Contains(user.Id)) return;
             var channel = await user.GetOrCreateDMChannelAsync();
             try
             {
@@ -388,7 +410,10 @@ namespace PokemonGoRaidBot
                 return existing;
             }
             else if(add && post.PokemonId != default(int))
+            {
+                post.JoinedUsersChanged += JoinCount_Changed;
                 guildConfig.Posts.Add(post);
+            }
             
             return post;
         }
@@ -418,7 +443,7 @@ namespace PokemonGoRaidBot
             foreach (var user in post2.JoinedUsers)
             {
                 if (post1.JoinedUsers.FirstOrDefault(x => x.Id == user.Id) == null)
-                    post1.JoinedUsers.Add(new PokemonRaidJoinedUser(user.Id, user.Name, user.PeopleCount));
+                    post1.JoinedUsers.Add(new PokemonRaidJoinedUser(user.Id, post1.GuildId, post1.UniqueId, user.Name, user.PeopleCount));
                 else if (post2.UserId == user.Id)
                 {
                     var postUser = post1.JoinedUsers.FirstOrDefault(x => x.Id == post2.UserId);
@@ -464,11 +489,71 @@ namespace PokemonGoRaidBot
             await channel.SendMessageAsync($"```{message}```");
         }
 
+        public void JoinCount_Changed(object sender, JoinedCountChangedEventArgs e)
+        {
+            PokemonRaidPost post = null;
+            GuildConfig guildConfig = null;
+            PokemonRaidJoinedUser joinedUser = null;
+
+            if (sender is PokemonRaidPost)
+            {
+                post = (PokemonRaidPost)sender;
+                guildConfig = Config.GetGuildConfig(post.GuildId);
+            }
+            else if (sender is PokemonRaidJoinedUser)
+            {
+                joinedUser = (PokemonRaidJoinedUser)sender;
+                guildConfig = Config.GetGuildConfig(joinedUser.GuildId);
+                //var guild = bot.Guil
+                post = guildConfig.Posts.FirstOrDefault(x => x.UniqueId == joinedUser.PostId);
+            }
+            
+            if(post != null)
+            {
+                List<Task> tasks = new List<Task>();
+                var parser = GetParser(guildConfig);
+
+                var joinstr = parser.Language.Strings["joining"];
+
+                if (e.ChangeType == JoinCountChangeType.Remove || (e.ChangeType == JoinCountChangeType.Change && e.Count < 0))
+                    joinstr = parser.Language.Strings["quitting"];
+
+                string message = string.Format(parser.Language.Formats["directMessage"],
+                    e.Count,
+                    joinstr,
+                    post.PokemonName,
+                    e.ArriveTime.HasValue && !joinstr.Equals(parser.Language.Strings["quitting"]) ? string.Format(" *at {0:hh:mmt}*", e.ArriveTime.Value) : "",
+                    e.UserName);
+
+                var usersToDM = new List<ulong>();
+                if (post.UserId != e.UserId) usersToDM.Add(post.UserId);
+                usersToDM.AddRange(post.JoinedUsers.Where(x => x.Id != e.UserId).Select(x => x.Id));
+
+                foreach (var id in usersToDM)
+                {
+                    var user = bot.GetUser(id);
+
+                    if(user != default(SocketUser))
+                        tasks.Add(DirectMessageUser(user, $"{message}\n{parser.Language.Strings["dmStop"]}"));//TODO
+                }
+                Task.WaitAll(tasks.ToArray());
+            }
+        }
+
         private ISocketMessageChannel GetChannel(ulong id)
         {
             if (channelCache.ContainsKey(id)) return channelCache[id];
             
             return channelCache[id] = (ISocketMessageChannel)bot.GetChannel(id);
+        }
+        private MessageParser GetParser(GuildConfig guildConfig)
+        {
+            var botTimezone = TimeZoneInfo.Local.GetUtcOffset(DateTime.Now).Hours - (TimeZoneInfo.Local.IsDaylightSavingTime(DateTime.Now) ? 1 : 0);
+            var serverTimezone = guildConfig.Timezone ?? botTimezone;
+            var timeOffset = serverTimezone - botTimezone;
+
+            return GetParser(guildConfig.Language ?? "en-us", timeOffset);
+
         }
         private MessageParser GetParser(string lang, int offset)
         {

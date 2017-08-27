@@ -17,19 +17,24 @@ namespace PokemonGoRaidBot.Objects
 
         private void JoinedUsers_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
+            var changeType = JoinCountChangeType.Add;
+            PokemonRaidJoinedUser joinUser = null;
+
             if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
             {
-                foreach(PokemonRaidJoinedUser item in e.NewItems)
-                {
-                    item.PeopleCountChanged -= JoinedUsers_PeopleCountChanged;
-                    item.PeopleCountChanged += JoinedUsers_PeopleCountChanged;
-                }
+                joinUser = (PokemonRaidJoinedUser)e.NewItems[0];
             }
-            
-            OnJoinedUsersChanged(new EventArgs());
+            else if(e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Remove)
+            {
+                changeType = JoinCountChangeType.Remove;
+                joinUser = (PokemonRaidJoinedUser)e.OldItems[0];
+            }
+
+            if(joinUser != null)
+                OnJoinedUsersChanged(new JoinedCountChangedEventArgs(joinUser.Id, joinUser.Name, joinUser.PeopleCount, joinUser.ArriveTime, changeType));//should always only be one at a time
         }
 
-        private void JoinedUsers_PeopleCountChanged(object sender, EventArgs e)
+        private void JoinedUsers_PeopleCountChanged(object sender, JoinedCountChangedEventArgs e)
         {
             OnJoinedUsersChanged(e);
         }
@@ -80,20 +85,16 @@ namespace PokemonGoRaidBot.Objects
 
         public int[] Color;
         
-        public event EventHandler JoinedUsersChanged;
+        public event JoinedUserCountChangedEventHandler JoinedUsersChanged;
         
-        internal void UsersChanged()
-        {
-            OnJoinedUsersChanged(new EventArgs());
-        }
-
+        public delegate void JoinedUserCountChangedEventHandler(object sender, JoinedCountChangedEventArgs e);
+        
         [JsonIgnore]
         public bool IsExisting;
 
-        protected virtual void OnJoinedUsersChanged(EventArgs e)
+        protected virtual void OnJoinedUsersChanged(JoinedCountChangedEventArgs e)
         {
-            if (JoinedUsersChanged != null)
-                JoinedUsersChanged(this, e);
+            JoinedUsersChanged?.Invoke(this, e);
         }
 
         private static String NewId()
