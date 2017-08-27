@@ -74,55 +74,71 @@ namespace PokemonGoRaidBot
         [RaidBotCommand("join")]
         private async Task Join()
         {
-            string num;
-            string poke;
+            string num = null;
+            string poke = null;
             string time = null;
             bool isMore = false, isLess = false;
 
+            int number = 0;
+
             if (Command.Count() == 2)
-            {//just have a number;
-                poke = "";
-                num = Command[1];
+            {//just have a number or pokemon;
+                if (!int.TryParse(Command[1], out number))
+                {
+                    poke = Command[1];
+                    number = 1;
+                    num = "1";
+                }
+                else
+                {
+                    poke = "";
+                    num = Command[1];
+                }
             }
-            else if (Command.Count() == 3)
+            else if (Command.Count() >= 3)
             {
-                poke = Command[1];
-                num = Command[2];
-            }
-            else if(Command.Count() > 3)
-            {
-                poke = Command[1];
-                num = Command[2];
+                if(!int.TryParse(Command[2], out number))
+                {
+                    if (!int.TryParse(Command[1], out number))
+                    {
+                        await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandInvalidNumber"], Command[2]));
+                        return;
+                    }
+                    else
+                    {
+                        num = Command[1];
+                        poke = Command[2];
+                    }
+                }
+                else
+                { 
+                    poke = Command[1];
+                    num = Command[2];
+                }
+
                 time = string.Join(" ", Command.Skip(3));
             }
-            else
-            {
-                poke = "";
-                num = "1";
-            }
-            int number;
 
             if (num.StartsWith("+"))
             {
                 isMore = true;
-                num = num.Substring(1);
             }
             else if (num.StartsWith("-"))
             {
                 isLess = true;
-                num = num.Substring(1);
+                number = Math.Abs(number);
             }
-
-            if(!int.TryParse(num, out number))
+            
+            if(number == 0 && Command.Count() > 2)
             {
-                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandInvalidNumber"], num));//$"Invalid number of raid joiners \"{Command[2]}\".");
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandInvalidNumber"], Command[2]));
                 return;
             }
 
             var post = await GetPost(poke);
             if (!post.IsExisting)
             {
-                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], num));// $"Raid post with Id \"{Command[1]}\" does not exist.");
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], poke));// $"Raid post with Id \"{Command[1]}\" does not exist.");
                 return;
             }
 
@@ -154,14 +170,29 @@ namespace PokemonGoRaidBot
         [RaidBotCommand("unjoin")]
         private async Task UnJoin()
         {
-            var post = await GetPost(Command[1]);
-            if (!post.IsExisting)
+            if(Command.Count() == 1)
             {
-                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[1]));// $"Raid post with Id \"{Command[1]}\" does not exist.");
-                return;
+                var joinedPosts = GuildConfig.Posts.Where(x => x.JoinedUsers.Where(xx => xx.Id == Message.Author.Id).Count() > 0);
+                var tasks = new List<Task>();
+                foreach(var post in joinedPosts)
+                {
+                    post.JoinedUsers.Remove(post.JoinedUsers.First(x => x.Id == Message.Author.Id));
+                    tasks.Add(Handler.MakePost(post, Parser));
+                }
+                Task.WaitAll(tasks.ToArray());
             }
-            post.JoinedUsers.Remove(post.JoinedUsers.First(x => x.Id == Message.Author.Id));
-            await Handler.MakePost(post, Parser);
+            else
+            {
+                var post = await GetPost(Command[1]);
+                if (!post.IsExisting)
+                {
+                    await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[1]));// $"Raid post with Id \"{Command[1]}\" does not exist.");
+                    return;
+                }
+                post.JoinedUsers.Remove(post.JoinedUsers.First(x => x.Id == Message.Author.Id));
+                await Handler.MakePost(post, Parser);
+            }
+            Config.Save();
         }
 
         [RaidBotCommand("i")]

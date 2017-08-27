@@ -47,7 +47,7 @@
     "commandRemoveAliasNotFound": "Alias \"{0}\" not found on {1}.  ",
     "commandRemoveAliasNotFoundAvaliable": "Aliases that can be removed are: {0}.",
     "commandRemoveAliasNotFoundNone": "No aliases found for {0}",
-    "commandPostNotFound": "Raid post with Id \"{0}\" not found.",
+    "commandPostNotFound": "Raid post with name or Id \"{0}\" not found.",
     "commandPinSuccess": "{0} added to Pin Channels.",
     "commandPinAlreadyDone": "{0} is already in Pin Channels.",
     "commandUnPinSuccess": "{0} removed from Pin Channels.",
