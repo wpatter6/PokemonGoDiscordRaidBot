@@ -74,7 +74,7 @@ namespace PokemonGoRaidBot.Parsing
             {
                 i++;
 
-                var cleanedword = Language.RegularExpressions["nonAlphaNumericWithPunctuation"].Replace(word, "");
+                var cleanedword = word;
                 
                 var roleReg = Language.RegularExpressions["discordRole"];
                 var userReg = Language.RegularExpressions["discordUser"];
@@ -460,22 +460,19 @@ namespace PokemonGoRaidBot.Parsing
         /// <returns></returns>
         private string ParseLocationBase(string message)
         {
-            var crossStreetsReg = Language.RegularExpressions["locationCrossStreets"]; //new Regex(@"([a-zA-Z0-9]* (\&|and) [a-zA-Z0-9]*)", RegexOptions.IgnoreCase);
-
-            if (crossStreetsReg.IsMatch(message))
-            {
-                var match = crossStreetsReg.Match(message);
-                return match.Groups[1].Value;
-            }
-
-
-            var endReg = Language.RegularExpressions["locationEnd"]; //new Regex(@"([a-zA-Z0-9 ]*\b(park|school|church|museum|mural|statue) ?[a-zA-Z]*\b?)", RegexOptions.IgnoreCase);
-
+            var endReg = Language.RegularExpressions["locationEnd"]; //endreg seems to match the best, and generally google directions go to parking more than with cross streets
             if (endReg.IsMatch(message))
                 return endReg.Match(message).Groups[1].Value;
-            
-            var startReg = Language.RegularExpressions["locationStart"]; //new Regex("at ([a-zA-Z0-9 ]*)");//timespans should be removed already, so "at [blah blah]" should indicate location
 
+            var crossStreetsReg = Language.RegularExpressions["locationCrossStreets"]; //pretty reliable but can have some missed matches
+            if (crossStreetsReg.IsMatch(message))
+            {
+                var groups = crossStreetsReg.Match(message).Groups;
+
+                return groups[1].Value.Replace($" {groups[3].Value} ", $" {Language.Strings["and"]} ");
+            }
+            
+            var startReg = Language.RegularExpressions["locationStart"]; //basically "at [foo] [bar].  Not great but decent
             if (startReg.IsMatch(message))
                 return startReg.Match(message).Groups[1].Value;
 
