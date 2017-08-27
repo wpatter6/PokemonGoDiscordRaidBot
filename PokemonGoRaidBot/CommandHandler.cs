@@ -527,7 +527,7 @@ namespace PokemonGoRaidBot
 
                 var usersToDM = new List<ulong>();
                 if (post.UserId != e.UserId) usersToDM.Add(post.UserId);
-                usersToDM.AddRange(post.JoinedUsers.Where(x => x.Id != e.UserId).Select(x => x.Id));
+                usersToDM.AddRange(post.JoinedUsers.Where(x => x.Id != e.UserId && x.Id != post.UserId).Select(x => x.Id));
 
                 foreach (var id in usersToDM)
                 {
