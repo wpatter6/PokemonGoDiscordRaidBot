@@ -32,6 +32,8 @@ namespace PokemonGoRaidBot
 
             client.Log += logger.Log;
             var config = BotConfig.Load();
+
+            await logger.Log("Startup", $"PokemonDiscordRaidBot: Configuration has been loaded.  version {config.Version}.  Copyright 2017 wpatter6.");
             await client.LoginAsync(TokenType.Bot, config.Token);
             await client.StartAsync();
 
@@ -82,7 +84,6 @@ namespace PokemonGoRaidBot
 
                 config.Save();//Save the new configuration object to file.
             }
-            Console.WriteLine("Configuration has been loaded");
         }
 
 

@@ -7,17 +7,17 @@
     "garbage": "\\b(seen|around|raids?|much|not?|i'?ve|ends?|until|if|or|who|what|when|where|why|how|gen)\\b", //meaningless words that clutter things up and are unlikely to be part of location strings
     "locationCrossStreets": "(([a-zA-Z0-9]* ?[a-zA-Z0-9]+) (\\&|a?nd?) ([a-zA-Z0-9]+ ?[a-zA-Z]*))", //Cross streets regex, like 12th and Broadway
     "locationStart": "\\bat ([a-zA-Z0-9(\\bn\\.|\\bs\\.|\\be\\.|\\bw\\.) ]*)", //indicates location using word "at", includes n. s. e. w.
-    "locationEnd": "([a-zA-Z0-9' ]*\\b(park|school|lake|church|museum|mural|statue|building|station|theat(er|re)|course|sign|store)( (n(orth)?|s(outh)?|e(ast)?|w(est))\\b)?)", //words coming after a landmark name
-    "locationExcludeWords": "\\b(left|at|to|any(one)?|in|on|near|around|with(out)?)\\b|\\?|\\.|,", //remove these from parsed locations
+    "locationEnd": "([a-zA-Z0-9' ]*\\b(park|school|lake|church|museum|mural|statue|building|station|theat(er|re)|course|sign|store|cafe|cent(er|re))( (n(orth)?|s(outh)?|e(ast)?|w(est)))?\\b)", //words coming after a landmark name
+    "locationExcludeWords": "\\b(left|at|to|any(one)?|in|on|near|around|with(out)?|has)\\b|\\?|\\.|,", //remove these from parsed locations
     "timeActualEnd": "\\b([0-9]{1,2}):?([0-9]{2})? ?(am?|pm?)\\b", //match where numbers indicate an actual time
     "timeActualStart": "\\b(at|around) ([0-9]{1,2}):?([0-9]{2})?\\b",
     "timeSpan": "(1?[0-9]):([0-9]{2})", //match where numbers indicate hours and minute
-    "timeHourMin": "([0-2]{1}) ?(h|hr|hours?) ?([1-6]?[0-9]) ?(m|mi|min|mins|minutes?)\\b", //match where numbers like 1h3m or 1 hour 3 minutes
-    "timeHour": "([0-2]{1}) ?(h|hr|hours?)\\b",
-    "timeMin": "([1-6]?[0-9]) ?(m|mi|min|mins|minutes?)\\b",
+    "timeHourMin": "([0-2]{1})? ?(h|hr|hours?) ?a?n?d? ?([1-6]?[0-9]) ?(m|mi|min|mins|minutes?)\\b", //match where numbers like 1h3m or 1 hour 3 minutes
+    "timeHour": "([0-2]{1})? ?(h|hr|hours?)\\b",
+    "timeMin": "([1-6]?[0-9]) ?(mi?n?s?|minutes?)\\b",
     "joinEnd": "[^:]?\\b([0-9]{1,2}|(\\b(one|two|three|four|five|six|seven|eight|nine|ten))) (for|here|join(ed|ing)are|going|people|on (the|our)|coming|(just)? arriv(ed|ing)|of us|confirmed|head(ed|ing)|will)\\b", //indicates the number of people will be joining, with match words coming after #
     "joinStart": "\\b(have|are|there'?s|we'?re) ([0-9]{1,2}|(\\b(one|two|three|four|five|six|seven|eight|nine|ten)))\\b", //indicates the number of people will be joining, with match words coming before #
-    "joinMe": "\\b(i'?(m|ll| am))?\\b(omw|my way|coming|go(ing?)?|join(ing)?|can\\b|head(ed|ing)|(be )?there)\\b", //indicates the current user is joining
+    "joinMe": "\\b((i'?(m|ll| am) )?(omw|my way|coming|go(ing?)?|join(ing)?|can\\b|head(ed|ing)|be|(just|only) (me|one))( t?here)?)\\b", //indicates the current user is joining
     "joinMore": "^((?!need|use).)*\\b([0-9]{1,2}|\\b(one|two|three|four|five|six|seven|eight|nine|ten)) more\\b", //indicates more are joining, add to existing value
     "joinLess": "\\b([0-9]{1,2}|\\b(one|two|three|four|five|six|seven|eight|nine|ten)) (people |ppl |person )?((are |had to )?(leav(ing|e)|go)|just left)\\b", //indicates some are leaving, subtract from existing value
     "joinTime": "\\b(be|get|it )?(there|arrive|way|start|begin|go in) ((in|at) )?===!!!===", //determines if timespan is a "join" time

@@ -137,7 +137,7 @@ namespace PokemonGoRaidBot
                     //try to see if a raid was posted
                     else if (doPost)
                     {
-                        var post = await parser.ParsePost(message, Config);
+                        var post = parser.ParsePost(message, Config);
                         await DoPost(post, message, parser, outputchannel);
                     }
                 }
@@ -223,7 +223,7 @@ namespace PokemonGoRaidBot
                     }
                 }
                 Config.Save();
-                await Logger.Log(new LogMessage(LogSeverity.Debug, "handler", string.Format("deleted:{0}; remaining:{1}", deleted, remaining)));
+                await Logger.Log(new LogMessage(LogSeverity.Debug, "Handler", string.Format("deleted:{0}; remaining:{1}", deleted, remaining)));
             }
             catch (Exception e)
             {
@@ -234,7 +234,7 @@ namespace PokemonGoRaidBot
         /// Output an error to the bot console.
         /// </summary>
         /// <param name="e"></param>
-        public void DoError(Exception e, string source = "handler")
+        public void DoError(Exception e, string source = "Handler")
         {
             Logger.Log(new LogMessage(LogSeverity.Error, source, null, e));
         }
@@ -267,7 +267,19 @@ namespace PokemonGoRaidBot
                 post = AddPost(post, parser, message, true, force);
 
                 if (post.PokemonId != default(int))
+                {
+                    IDisposable d = null;
+
+                    if (!post.IsExisting)//it's going to post something and google geocode can take a few secs so we can do the "typing" behavior
+                        d = message.Channel.EnterTypingState();
+
+                    if (!post.LatLong.HasValue && !string.IsNullOrWhiteSpace(post.Location))
+                        post.LatLong = await parser.GetLocationLatLong(post.FullLocation, (SocketGuildChannel)message.Channel, Config);
+
                     await MakePost(post, parser);
+
+                    if (d != null) d.Dispose();
+                }
             }
 
             Config.Save();

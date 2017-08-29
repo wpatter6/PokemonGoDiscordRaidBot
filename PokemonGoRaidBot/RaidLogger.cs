@@ -8,6 +8,10 @@ namespace PokemonGoRaidBot
 {
     public class RaidLogger
     {
+        public Task Log(string src, string msg)
+        {
+            return Log(new LogMessage(LogSeverity.Info, src, msg));
+        }
         public Task Log(LogMessage lmsg)
         {
             var cc = Console.ForegroundColor;

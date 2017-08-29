@@ -42,7 +42,7 @@ namespace PokemonGoRaidBot.Parsing
         /// <param name="message"></param>
         /// <param name="config"></param>
         /// <returns>If return value is null, or property 'Pokemon' is null, raid post is invalid.</returns>
-        public async Task<PokemonRaidPost> ParsePost(SocketMessage message, BotConfig config, bool doLocation = true)
+        public PokemonRaidPost ParsePost(SocketMessage message, BotConfig config)
         {
             var guildId = ((SocketGuildChannel)message.Channel).Guild.Id;
             var guildConfig = config.GetGuildConfig(guildId);
@@ -151,18 +151,10 @@ namespace PokemonGoRaidBot.Parsing
             if (joinCount.HasValue)
                 result.JoinedUsers.Add(new PokemonRaidJoinedUser(message.Author.Id, guildId, result.UniqueId, message.Author.Username, joinCount.Value, isMore, isLess, joinTime));
 
-            if (doLocation)
-            {
-                result.Location = ParseLocation(unmatchedString);
+            result.Location = ParseLocation(unmatchedString);
 
-                if (!string.IsNullOrEmpty(result.Location))
-                    result.FullLocation = GetFullLocation(result.Location, guildConfig, message.Channel.Id);
-
-                if (!string.IsNullOrEmpty(result.FullLocation))
-                {
-                    result.LatLong = await GetLocationLatLong(result.FullLocation, (SocketGuildChannel)message.Channel, config);
-                }
-            }
+            if (!string.IsNullOrEmpty(result.Location))
+                result.FullLocation = GetFullLocation(result.Location, guildConfig, message.Channel.Id);
 
             result.Responses.Add(new PokemonMessage(message.Author.Id, message.Author.Username, messageString, DateTime.Now));
 
@@ -200,66 +192,11 @@ namespace PokemonGoRaidBot.Parsing
             return null;
         }
         /// <summary>
-        /// Attempts to get a time span out of a single word string.
+        /// Gets both the raid time span and joining user timespan from a full message string.
         /// </summary>
         /// <param name="message"></param>
-        /// <returns></returns>
-        //public TimeSpan ParseTimespan(string message, ref bool isActualTime)
-        //{
-        //    var timeRegex = Language.RegularExpressions["timeActual"];//new Regex("([0-9]{1,2}):?([0-9]{2})?(a|p)", RegexOptions.IgnoreCase);
-        //    if (timeRegex.IsMatch(message))//posting an actual time like "3:30pm" or "10am"
-        //    {
-        //        var match = timeRegex.Match(message);
-
-        //        int hour = Convert.ToInt32(match.Groups[1].Value),
-        //            minute = string.IsNullOrEmpty(match.Groups[2].Value) ? 0 : Convert.ToInt32(match.Groups[2].Value);
-        //        string part = match.Groups[3].Value;
-
-        //        if (part.Equals("p", StringComparison.OrdinalIgnoreCase))
-        //            hour += 12;
-
-        //        var postedDate = DateTime.Today.Add(TimeSpan.Parse(string.Format("{0}:{1}", hour, minute + 1))).AddHours(TimeOffset * -1);//subtract offset to convert to bot timezone
-        //        isActualTime = true;
-        //        return new TimeSpan(postedDate.Ticks - DateTime.Now.Ticks);
-        //    }
-
-        //    var tsRegex = Language.RegularExpressions["timeSpan"];//new Regex("([0-9]):([0-9]{2})");
-        //    if (tsRegex.IsMatch(message))//posting like "1:30" -- ActualTime indicates it was preceeded by the word "at"
-        //    {
-        //        var match = tsRegex.Match(message);
-        //        int hour = Convert.ToInt32(match.Groups[1].Value),
-        //            minute = Convert.ToInt32(match.Groups[2].Value);
-
-        //        if (hour > 2) isActualTime = true;
-
-        //        if (!isActualTime)
-        //            return new TimeSpan(hour, minute, 0);
-        //        else
-        //        {
-        //            if (DateTime.Now.Hour > 9 && hour < 9) hour += 12;//PM is inferred
-        //            var postedDate = DateTime.Today.Add(TimeSpan.Parse(string.Format("{0}:{1}", hour, minute + 1)));
-        //            return new TimeSpan(postedDate.Ticks - DateTime.Now.Ticks);
-        //        }
-        //    }
-
-        //    var ts = new TimeSpan(0);
-        //    var hrRegex = Language.RegularExpressions["timeHour"];//new Regex("([0-2]{1})h", RegexOptions.IgnoreCase);
-        //    if (hrRegex.IsMatch(message))//posting like "1h"
-        //    {
-        //        var match = hrRegex.Match(message);
-        //        string hour = match.Groups[1].Value;//, minute = match.Groups[1].Value;
-        //        ts.Add(new TimeSpan(Convert.ToInt32(hour), 0, 0));
-        //    }
-
-        //    var minRegex = Language.RegularExpressions["timeMinute"];//new Regex("([0-9]{1,2})m");
-        //    if (minRegex.IsMatch(message))
-        //    {
-        //        var match = minRegex.Match(message);
-        //        string min = match.Groups[1].Value;//, minute = match.Groups[1].Value;
-        //        ts = ts.Add(new TimeSpan(0, Convert.ToInt32(min), 0));
-        //    }
-        //    return ts;
-        //}
+        /// <param name="raidTimeSpan"></param>
+        /// <param name="joinTimeSpan"></param>
         public void ParseTimespanFull(ref string message, out TimeSpan? raidTimeSpan, out TimeSpan? joinTimeSpan)
         {
             raidTimeSpan = null;
@@ -378,7 +315,7 @@ namespace PokemonGoRaidBot.Parsing
                     var hr = match.Groups[1].Value;
                     var mi = match.Groups[3].Value;
 
-                    var hour = string.IsNullOrEmpty(hr) ? 0 : Convert.ToInt32(hr);
+                    var hour = string.IsNullOrEmpty(hr) ? 1 : Convert.ToInt32(hr);
                     var min = string.IsNullOrEmpty(mi) ? 0 : Convert.ToInt32(mi);
 
                     if (min + hour == 0) continue;
@@ -405,7 +342,7 @@ namespace PokemonGoRaidBot.Parsing
                     var matches = hrReg.Matches(message).Cast<Match>();
                     foreach (var match in matches)
                     {
-                        var hour = Convert.ToInt32(match.Groups[1].Value);
+                        var hour = string.IsNullOrWhiteSpace(match.Groups[1].Value) ? 1 : Convert.ToInt32(match.Groups[1].Value);
 
                         message = message.Replace(match.Groups[0].Value, matchedTimeWordReplacement);
 
@@ -614,6 +551,13 @@ namespace PokemonGoRaidBot.Parsing
             
             return null;
         }
+        /// <summary>
+        /// Uses google geocoding API to get the lat & long from a full location string
+        /// </summary>
+        /// <param name="location"></param>
+        /// <param name="channel"></param>
+        /// <param name="config"></param>
+        /// <returns></returns>
         public async Task<KeyValuePair<double, double>?> GetLocationLatLong(string location, SocketGuildChannel channel, BotConfig config)
         {
             if (string.IsNullOrEmpty(config.GoogleApiKey)) return null;
@@ -622,6 +566,7 @@ namespace PokemonGoRaidBot.Parsing
 
             var request = (HttpWebRequest)WebRequest.Create(url);
             dynamic fullresult;
+            
             using (var response = (HttpWebResponse)await request.GetResponseAsync())
             {
                 using (var responseStream = response.GetResponseStream())
