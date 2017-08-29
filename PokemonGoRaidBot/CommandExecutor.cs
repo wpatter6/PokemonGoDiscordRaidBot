@@ -60,14 +60,72 @@ namespace PokemonGoRaidBot
                 Handler.DoError(e, "executor");
             }
         }
-        
-        private async Task<PokemonRaidPost> GetPost(string name)
+
+        private async Task<bool> CheckAdminAccess()
+        {
+            if (!IsAdmin)
+            {
+                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoAccess"]);
+                return false;
+            }
+            return true;
+        }
+        private async Task<PokemonRaidPost> GetPost(string name, bool idOnly = false)
         {
             var post = GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == name);
-            if (post != null) return post;
+
+            if (idOnly || post != null) return post;
 
             post = Handler.AddPost(await Parser.ParsePost(Message, Config), Parser, Message, false);
             return post;
+        }
+        private async Task<SocketGuildChannel> GetChannelFromName(string name)
+        {
+            var channel = Guild.Channels.FirstOrDefault(x => x.Name.ToLowerInvariant() == name.ToLowerInvariant());
+
+            if (channel == null)
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandGuildNoChannel"], Guild.Name, name));
+
+            return channel;
+        }
+
+        [RaidBotCommand("r")]
+        [RaidBotCommand("raid")]
+        private async Task Raid()
+        {
+            if(Command.Length < 4)
+            {
+                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandInvalidNumberOfParameters"]);
+                return;
+            }
+
+            var post = await Parser.ParsePost(Message, Config, false);
+
+            if(post.PokemonId == default(int))
+            {
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandRaidPokemonInvalid"], Command[1]));
+                return;
+            }
+
+            if (post.HasEndDate == false)
+            {
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandRaidTimespanInvalid"], Command[2]));
+                return;
+            }
+
+            post.Location = Parser.ToTitleCase(string.Join(" ", Command.Skip(4)));
+            post.FullLocation = Parser.GetFullLocation(post.Location, GuildConfig, Message.Channel.Id);
+            post.LatLong = await Parser.GetLocationLatLong(post.FullLocation, (SocketGuildChannel)Message.Channel, Config);
+
+            if (string.IsNullOrWhiteSpace(post.Location) || !post.LatLong.HasValue)
+            {
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandRaidLocationInvalid"], post.Location, Parser.ToTitleCase(GuildConfig.City)));
+                return;
+            }
+
+            var outputchannel = !GuildConfig.OutputChannelId.HasValue || GuildConfig.OutputChannelId == 0 ? null : (ISocketMessageChannel)Guild.GetChannel(GuildConfig.OutputChannelId.Value);
+
+            await Handler.DoPost(post, Message, Parser, outputchannel, true);
         }
 
         [RaidBotCommand("j")]
@@ -117,6 +175,12 @@ namespace PokemonGoRaidBot
                 }
 
                 time = string.Join(" ", Command.Skip(3));
+            }
+            else
+            {
+                num = "1";
+                number = 1;
+                poke = "";
             }
 
             if (num.StartsWith("+"))
@@ -246,26 +310,26 @@ namespace PokemonGoRaidBot
             }
         }
 
-        [RaidBotCommand("test")]
-        private async Task Test()
-        {
-            var user = Guild.GetUser(235123612351201280);
+        //[RaidBotCommand("test")]
+        //private async Task Test()
+        //{
+        //    var user = Guild.GetUser(235123612351201280);
 
-            await Handler.DirectMessageUser(user, "TEST!!");
-        }
+        //    await Handler.DirectMessageUser(user, "TEST!!");
+        //}
 
         [RaidBotCommand("m")]
         [RaidBotCommand("merge")]
         private async Task Merge()
         {
-            var post1 = await GetPost(Command[1]);// GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[1]);
+            var post1 = await GetPost(Command[1], true);// GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[1]);
             if (!post1.IsExisting)
             {
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[1]));// $"Raid post with Id \"{Command[1]}\" does not exist.");
                 return;
             }
 
-            var post2 = await GetPost(Command[2]);//GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[2]);
+            var post2 = await GetPost(Command[2], true);//GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[2]);
             if (!post2.IsExisting)
             {
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[1]));// $"Raid post with Id \"{Command[1]}\" does not exist.");
@@ -328,6 +392,19 @@ namespace PokemonGoRaidBot
             post.Location = Parser.ToTitleCase(string.Join(" ", Command.Skip(2)));
             post.LatLong = await Parser.GetLocationLatLong(post.Location, (SocketGuildChannel)Message.Channel, Config);
             await Handler.MakePost(post, Parser);
+        }
+
+        [RaidBotCommand("h")]
+        [RaidBotCommand("help")]
+        private async Task Help()
+        {
+            //var helpMessage = Parser.GetFullHelpString(Config, IsAdmin);
+            var embed = Parser.GetHelpEmbed(Config, IsAdmin);
+            await Message.Channel.SendMessageAsync(string.Format(Parser.Language.Strings["helpTop"], Config.OutputChannel), false, embed);
+            //foreach (var message in helpMessage)
+            //{
+            //    await Message.Channel.SendMessageAsync(message);
+            //}
         }
 
         [RaidBotCommand("language")]
@@ -631,22 +708,8 @@ namespace PokemonGoRaidBot
         [RaidBotCommand("raidhelp")]
         private async Task RaidHelp()
         {
-            var helpMessage = Parser.GetRaidHelpString(Config);
-            foreach (var message in helpMessage)
-            {
-                await Message.Channel.SendMessageAsync(message);
-            }
-        }
-
-        [RaidBotCommand("h")]
-        [RaidBotCommand("help")]
-        private async Task Help()
-        {
-            var helpMessage = Parser.GetFullHelpString(Config, IsAdmin);
-            foreach(var message in helpMessage)
-            {
-                await Message.Channel.SendMessageAsync(message);
-            }
+            var embed = Parser.GetHelpEmbed(Config, false);
+            await Message.Channel.SendMessageAsync(string.Format(Parser.Language.Strings["helpTop"], Config.OutputChannel), false, embed);
         }
 
         [RaidBotCommand("version")]
@@ -655,25 +718,6 @@ namespace PokemonGoRaidBot
             var version = Config.Version;// Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
 
             await Handler.MakeCommandMessage(Message.Channel, $"PokemonGoRaidBot {version}");
-        }
-
-        private async Task<bool> CheckAdminAccess()
-        {
-            if (!IsAdmin)
-            {
-                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoAccess"]);
-                return false;
-            }
-            return true;
-        }
-        private async Task<SocketGuildChannel> GetChannelFromName(string name)
-        {
-            var channel = Guild.Channels.FirstOrDefault(x => x.Name.ToLowerInvariant() == name.ToLowerInvariant());
-
-            if (channel == null)
-                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandGuildNoChannel"], Guild.Name, name));
-
-            return channel;
         }
     }
 }

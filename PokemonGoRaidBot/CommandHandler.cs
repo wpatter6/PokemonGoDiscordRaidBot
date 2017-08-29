@@ -107,7 +107,11 @@ namespace PokemonGoRaidBot
                     if (guildConfig.OutputChannelId.HasValue)
                         outputchannel = (ISocketMessageChannel)guild.Channels.FirstOrDefault(x => x.Id == guildConfig.OutputChannelId.Value);
                     else
+                    {
                         outputchannel = (ISocketMessageChannel)guild.Channels.FirstOrDefault(x => x.Name == Config.OutputChannel);
+                        guildConfig.OutputChannelId = outputchannel.Id;
+                        Config.Save();
+                    }
 
                     var context = new SocketCommandContext(bot, message);
 
@@ -133,7 +137,8 @@ namespace PokemonGoRaidBot
                     //try to see if a raid was posted
                     else if (doPost)
                     {
-                        await DoPost(message, parser, outputchannel);
+                        var post = await parser.ParsePost(message, Config);
+                        await DoPost(post, message, parser, outputchannel);
                     }
                 }
             }
@@ -252,14 +257,14 @@ namespace PokemonGoRaidBot
         /// <param name="outputchannel"></param>
         /// <param name="pin"></param>
         /// <returns></returns>
-        private async Task DoPost(SocketUserMessage message, MessageParser parser, ISocketMessageChannel outputchannel)
+        public async Task DoPost(PokemonRaidPost post, SocketUserMessage message, MessageParser parser, ISocketMessageChannel outputchannel, bool force = false)
         {
-            var post = await parser.ParsePost(message, Config);//await DoResponse(message, parser);//returns null if 
+            //var post = await parser.ParsePost(message, Config);//await DoResponse(message, parser);//returns null if 
 
             if (post != null)
             {
                 post.OutputChannelId = outputchannel?.Id ?? 0;
-                post = AddPost(post, parser, message);
+                post = AddPost(post, parser, message, true, force);
 
                 if (post.PokemonId != default(int))
                     await MakePost(post, parser);
@@ -364,44 +369,46 @@ namespace PokemonGoRaidBot
         /// </summary>
         /// <param name="post"></param>
         /// <returns>Returns either the new post or the one it matched with.</returns>
-        public PokemonRaidPost AddPost(PokemonRaidPost post, MessageParser parser, SocketUserMessage message, bool add = true)
+        public PokemonRaidPost AddPost(PokemonRaidPost post, MessageParser parser, SocketUserMessage message, bool add = true, bool force = false)
         {
             var guildConfig = Config.GetGuildConfig(post.GuildId);
             var channelPosts = guildConfig.Posts.Where(x => x.FromChannelId == post.FromChannelId);
             PokemonRaidPost existing = null;
-
-            //Check if user in existing post is mentioned, get latest post associated with user
-            foreach (var mentionedUser in message.MentionedUsers)
+            if (!force)
             {
-                existing = guildConfig.Posts.OrderByDescending(x => x.Responses.Max(xx => xx.MessageDate))
-                    .FirstOrDefault(x => x.FromChannelId == message.Channel.Id
-                        && (x.Responses.Where(xx => xx.UserId == mentionedUser.Id).Count() > 0 || x.JoinedUsers.Where(xx => xx.Id == mentionedUser.Id).Count() > 0)
-                        && x.PokemonId == (post.PokemonId == 0 ? x.PokemonId : post.PokemonId));
+                //Check if user in existing post is mentioned, get latest post associated with user
+                foreach (var mentionedUser in message.MentionedUsers)
+                {
+                    existing = guildConfig.Posts.OrderByDescending(x => x.Responses.Max(xx => xx.MessageDate))
+                        .FirstOrDefault(x => x.FromChannelId == message.Channel.Id
+                            && (x.Responses.Where(xx => xx.UserId == mentionedUser.Id).Count() > 0 || x.JoinedUsers.Where(xx => xx.Id == mentionedUser.Id).Count() > 0)
+                            && x.PokemonId == (post.PokemonId == 0 ? x.PokemonId : post.PokemonId));
 
-                if (existing != null)
-                    break;
+                    if (existing != null)
+                        break;
+                }
+                //if location matches, must be same.
+                if(existing == null)
+                    existing = channelPosts.FirstOrDefault(x => parser.CompareLocationStrings(x.Location, post.Location));
+
+                //Lat long comparison, within 30 meters is treated as same
+                if(existing == null && post.LatLong.HasValue && channelPosts.Where(x => x.LatLong.HasValue).Count() > 0)
+                    existing = channelPosts.Where(x => x.LatLong.HasValue && x.PokemonId == (post.PokemonId > 0 ? post.PokemonId : x.PokemonId))
+                        .FirstOrDefault(x => parser.CompareLocationLatLong(x.LatLong.Value, post.LatLong.Value));
+
+                //Final fall through, gets latest post in channel either matching pokemon name or user was involved with
+                if (existing == null)
+                    existing = channelPosts
+                        .Where(x => string.IsNullOrEmpty(x.Location) || string.IsNullOrEmpty(post.Location))//either location must be unidentified at this point
+                        .OrderByDescending(x => x.PostDate)
+                        .OrderBy(x => x.PokemonId == post.PokemonId ? 0 : 1)//pokemon name match takes priority if the user responded to multiple raids in the channel
+                        .FirstOrDefault(x =>
+                            x.FromChannelId == post.FromChannelId//Posted in the same channel
+                            && ((post.PokemonId != default(int) && x.PokemonId == post.PokemonId)//Either pokemon matches OR
+                                || (post.PokemonId == default(int) && (x.Responses.Where(xx => xx.UserId == post.UserId).Count() > 0) 
+                                    || post.PokemonId == default(int) && x.JoinedUsers.Where(xx => xx.Id == post.UserId).Count() > 0))//User already in the thread
+                        );
             }
-            //if location matches, must be same.
-            if(existing == null)
-                existing = channelPosts.FirstOrDefault(x => parser.CompareLocationStrings(x.Location, post.Location));
-
-            //Lat long comparison, within 30 meters is treated as same
-            if(existing == null && post.LatLong.HasValue && channelPosts.Where(x => x.LatLong.HasValue).Count() > 0)
-                existing = channelPosts.Where(x => x.LatLong.HasValue && x.PokemonId == (post.PokemonId > 0 ? post.PokemonId : x.PokemonId))
-                    .FirstOrDefault(x => parser.CompareLocationLatLong(x.LatLong.Value, post.LatLong.Value));
-
-            //Final fall through, gets latest post in channel either matching pokemon name or user was involved with
-            if (existing == null)
-                existing = channelPosts
-                    .Where(x => string.IsNullOrEmpty(x.Location) || string.IsNullOrEmpty(post.Location))//either location must be unidentified at this point
-                    .OrderByDescending(x => x.PostDate)
-                    .OrderBy(x => x.PokemonId == post.PokemonId ? 0 : 1)//pokemon name match takes priority if the user responded to multiple raids in the channel
-                    .FirstOrDefault(x =>
-                        x.FromChannelId == post.FromChannelId//Posted in the same channel
-                        && ((post.PokemonId != default(int) && x.PokemonId == post.PokemonId)//Either pokemon matches OR
-                            || (post.PokemonId == default(int) && (x.Responses.Where(xx => xx.UserId == post.UserId).Count() > 0) 
-                                || post.PokemonId == default(int) && x.JoinedUsers.Where(xx => xx.Id == post.UserId).Count() > 0))//User already in the thread
-                    );
 
             if (existing != null)
             {

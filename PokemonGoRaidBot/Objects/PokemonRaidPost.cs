@@ -49,8 +49,6 @@ namespace PokemonGoRaidBot.Objects
 
         public ulong MessageId;
 
-        public string DiscordColor;
-
         public string Location;//used for display
 
         public string FullLocation;//used for google search

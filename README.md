@@ -52,14 +52,15 @@
 <hr/>
 
 ## Future Additions:
-* Add event handling and user notification for join count and arrive time changing in joined raids
-* Move google geocode off messaging thread so it doesn't slow results sometimes.
-* Continuously improve phrase matching and dicitionary
+* Move google geocode off messaging thread so it doesn't slow results.
+* Store raid data and produce aggregate statistics.
+* Continuously improve phrase matching and dicitionary.
 
 <hr/>
 
 ## Bot Commands:
 *Parenthesis indicate shorthand version of command, `*` means optional parameter. *
+* `!(r)aid [pokemon] [time left] [location]` Creates a new raid post with the specified [pokemon] name, [time left] (formatted H:MM), and [location], which must be identifiable by google maps.  Creates a new raid post whether a matching one exists or not.
 * `!(j)oin [raid*] [number*] [arrival time*]` Joins the specified number of people to the specified `raid` Id.  Adding + or - before the number will add or subtract from an existing value.  If pokemon name is used instead of Id, will join the most recently posted in channel matching the start of the pokemon name.  If no parameters, will join 1 to the most recently posted raid in that channel.
 * `!(un)join [raid*]` Removes your join information from the raid.  If `raid` is blank, unjoins all.
 * `!(i)nfo [name*]` Displays information about the selected raid, or all of the raids if `name` is blank.  Information was taken from https://pokemongo.gamepress.gg.
