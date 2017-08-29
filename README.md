@@ -26,6 +26,11 @@
 ###### *info command will give useful information about the raid with a link to boss counters*
 ![info command](http://i.imgur.com/7LN3Asy.png)
 
+## How to post effectively
+* Only post a single raid in a single message.
+* If the channel already has a raid and you want to post a second with the same pokemon, ensure you include a different location
+* Cross streets and landmark names will work best for locations.
+
 ## How to configure in discord:
 *can be done without installing, requires Manage Server role permission*
 1. Either [use my bot](https://discordapp.com/oauth2/authorize?&client_id=347493806695776256&scope=bot&permissions=0) or join your installed bot to the server ([help](https://stackoverflow.com/a/37743722/711674)).
