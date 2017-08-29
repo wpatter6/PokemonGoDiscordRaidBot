@@ -24,7 +24,7 @@ namespace PokemonGoRaidBot
         private BotConfig Config;
         private GuildConfig GuildConfig;
 
-        private string[] Command;
+        private List<string> Command;
 
         public CommandExecutor(CommandHandler handler, SocketUserMessage message, MessageParser parser)
         {
@@ -33,8 +33,8 @@ namespace PokemonGoRaidBot
             Parser = parser;
 
             Config = Handler.Config;
-            Command = Message.Content.ToLowerInvariant().Substring(Config.Prefix.Length).Split(' ');
-
+            Command = new List<string>(Message.Content.ToLowerInvariant().Replace("  ", " ").Substring(Config.Prefix.Length).Split(' '));
+            Command.Remove("");
             User = (SocketGuildUser)Message.Author;
             Guild = ((SocketGuildChannel)Message.Channel).Guild;
             GuildConfig = Config.GetGuildConfig(Guild.Id);
@@ -93,7 +93,7 @@ namespace PokemonGoRaidBot
         [RaidBotCommand("raid")]
         private async Task Raid()
         {
-            if(Command.Length < 4)
+            if(Command.Count() < 4)
             {
                 await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandInvalidNumberOfParameters"]);
                 return;
@@ -113,7 +113,9 @@ namespace PokemonGoRaidBot
                 return;
             }
 
-            post.Location = Parser.ToTitleCase(string.Join(" ", Command.Skip(4)));
+            
+
+            post.Location = Parser.ToTitleCase(string.Join(" ", Command.Skip(3)));
             post.FullLocation = Parser.GetFullLocation(post.Location, GuildConfig, Message.Channel.Id);
             post.LatLong = await Parser.GetLocationLatLong(post.FullLocation, (SocketGuildChannel)Message.Channel, Config);
 
@@ -263,7 +265,7 @@ namespace PokemonGoRaidBot
         [RaidBotCommand("info")]
         private async Task Info()
         {
-            if (Command.Length > 1 && Command[1].Length > 2)
+            if (Command.Count() > 1 && Command[1].Length > 2)
             {
                 var info = Parser.ParsePokemon(Command[1], Config, Guild.Id);
 
@@ -282,7 +284,7 @@ namespace PokemonGoRaidBot
 
                 var list = Parser.Language.Pokemon.Where(x => x.CatchRate > 0);
 
-                if (Command.Length > 1 && int.TryParse(Command[1], out tierCommand))
+                if (Command.Count() > 1 && int.TryParse(Command[1], out tierCommand))
                 {
                     list = list.Where(x => x.Tier == tierCommand);
                 }
@@ -440,7 +442,7 @@ namespace PokemonGoRaidBot
         {
             if (!await CheckAdminAccess()) return;
 
-            if (Command.Length > 1 && !string.IsNullOrEmpty(Command[1]))
+            if (Command.Count() > 1 && !string.IsNullOrEmpty(Command[1]))
             {
                 var channel = await GetChannelFromName(Command[1]);
                 if (channel == null) return;
@@ -609,7 +611,7 @@ namespace PokemonGoRaidBot
             var channel = await GetChannelFromName(Command[1]);
             if (channel == null) return;
 
-            if (Command.Length > 2 && !string.IsNullOrEmpty(Command[1]))
+            if (Command.Count() > 2 && !string.IsNullOrEmpty(Command[1]))
             {
                 var city = string.Join(" ", Command.Skip(2));
                 GuildConfig.ChannelCities[channel.Id] = city;
