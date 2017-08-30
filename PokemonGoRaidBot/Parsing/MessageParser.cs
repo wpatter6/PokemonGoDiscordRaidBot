@@ -11,6 +11,7 @@ using Newtonsoft.Json.Linq;
 using System.Threading.Tasks;
 using System.Net;
 using Discord;
+using System.Globalization;
 
 namespace PokemonGoRaidBot.Parsing
 {
@@ -33,6 +34,7 @@ namespace PokemonGoRaidBot.Parsing
             Lang = language;
             Language = new ParserLanguage(language);
             TimeOffset = timeZoneOffset;
+            CultureInfo.CurrentCulture = new CultureInfo(language);
         }
 
         #region Input
@@ -176,17 +178,17 @@ namespace PokemonGoRaidBot.Parsing
         {
             if (name.Length < 3) return null;
 
-            var cleanedName = Regex.Replace(name, @"\W", "").ToLowerInvariant();//never want any special characters in string
+            var cleanedName = Regex.Replace(name, @"\W", "").ToLower();//never want any special characters in string
 
             var guildConfig = config.GetGuildConfig(guildId);
 
-            var result = Language.Pokemon.FirstOrDefault(x => guildConfig.PokemonAliases.Where(xx => xx.Value.Contains(name.ToLowerInvariant())).Count() > 0);
+            var result = Language.Pokemon.FirstOrDefault(x => guildConfig.PokemonAliases.Where(xx => xx.Value.Contains(name.ToLower())).Count() > 0);
             if (result != null) return result;
 
             result = Language.Pokemon.FirstOrDefault(x => x.Aliases.Contains(cleanedName));
             if (result != null) return result;
 
-            result = Language.Pokemon.OrderByDescending(x => x.Id).FirstOrDefault(x => x.Name.ToLowerInvariant().StartsWith(cleanedName));
+            result = Language.Pokemon.OrderByDescending(x => x.Id).FirstOrDefault(x => x.Name.ToLower().StartsWith(cleanedName));
             if (result != null) return result;
 
             return null;
@@ -218,7 +220,7 @@ namespace PokemonGoRaidBot.Parsing
                         minute = string.IsNullOrEmpty(min) ? 0 : Convert.ToInt32(min);
 
                     string part = match.Groups[3].Value;
-                    if (string.IsNullOrEmpty(part)) part = DateTime.Now.Hour < hour ? "p" : DateTime.Now.ToString("tt").ToLowerInvariant();
+                    if (string.IsNullOrEmpty(part)) part = DateTime.Now.Hour < hour ? "p" : DateTime.Now.ToString("tt").ToLower();
 
                     if (part.First() == 'p')
                         hour += 12;
@@ -252,7 +254,7 @@ namespace PokemonGoRaidBot.Parsing
                     int hour = Convert.ToInt32(hr),
                         minute = string.IsNullOrEmpty(min) ? 0 : Convert.ToInt32(min);
 
-                    string part = DateTime.Now.Hour < hour ? "p" : DateTime.Now.ToString("tt").ToLowerInvariant();
+                    string part = DateTime.Now.Hour < hour ? "p" : DateTime.Now.ToString("tt").ToLower();
 
                     if (part.First() == 'p') hour += 12;
 
@@ -428,8 +430,8 @@ namespace PokemonGoRaidBot.Parsing
         {
             if (string.IsNullOrEmpty(loc1) || string.IsNullOrEmpty(loc2)) return false;
 
-            loc1 = loc1.ToLowerInvariant();
-            loc2 = loc2.ToLowerInvariant();
+            loc1 = loc1.ToLower();
+            loc2 = loc2.ToLower();
 
             if (loc1 == loc2 || loc1.StartsWith(loc2) || loc2.StartsWith(loc1)) return true;
 
@@ -619,7 +621,7 @@ namespace PokemonGoRaidBot.Parsing
         {
             var arr = new List<string>(new string[] { "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten" });
 
-            return arr.IndexOf(str.ToLowerInvariant());
+            return arr.IndexOf(str.ToLower());
         }
         public string ToTitleCase(string str)
         {
@@ -697,77 +699,6 @@ namespace PokemonGoRaidBot.Parsing
 
             return embed.Build();
         }
-        //public string[] GetFullHelpString(BotConfig config, bool admin)
-        //{
-        //    var result = new List<string>();
-        //    var helpheader = string.Format(string.Format("```\n{0}\n```", Language.Strings["helpTop"]), config.OutputChannel);
-
-        //    //if (!admin)
-        //    //    helpheader = string.Format("```\n{0}\n```", Language.Strings["helpRaidTop"]);
-
-        //    result.Add(helpheader);
-
-        //    var helpmessage = string.Format("       #{0}:\n", Language.Strings["helpCommands"]);
-        //    helpmessage += string.Format("  {0}(r)aid [pokemon] [time left] [location] - {1}\n", config.Prefix, );
-        //    helpmessage += string.Format("  {0}(j)oin [raid] [number] - {1}\n", config.Prefix, Language.Strings["helpJoin"]);
-        //    helpmessage += string.Format("  {0}(un)join [raid] - {1}\n", config.Prefix, Language.Strings["helpUnJoin"]);
-        //    helpmessage += string.Format("  {0}(i)nfo [name] - {1}\n", config.Prefix, Language.Strings["helpInfo"]);
-        //    helpmessage += string.Format("  {0}(d)elete [raid id] - {1}\n", config.Prefix, Language.Strings["helpDelete"]);
-        //    helpmessage += string.Format("  {0}(m)erge [raid1] [raid2] - {1}\n", config.Prefix, Language.Strings["helpMerge"]);
-        //    helpmessage += string.Format("  {0}(loc)ation [raid] [new location] - {1}\n", config.Prefix, Language.Strings["helpLocation"]);
-        //    helpmessage += string.Format("  {0}(h)elp - {1}\n", config.Prefix, Language.Strings["helpHelp"]);
-        //    helpmessage += string.Format("       (){0}\n", Language.Strings["helpParenthesis"]);
-        //    if (admin)
-        //    {
-        //        helpmessage += string.Format("       #{0}:\n", Language.Strings["helpAdminCommands"]);
-        //        helpmessage += string.Format(string.Format("  {0}channel [name] - {1}\n", config.Prefix, Language.Strings["helpChannel"]), config.OutputChannel);
-        //        helpmessage += string.Format("  {0}nochannel - {1}\n", config.Prefix, Language.Strings["helpNoChannel"]);
-        //        helpmessage += string.Format("  {0}alias [pokemon] [alias] - {1}\n", config.Prefix, Language.Strings["helpAlias"]);
-        //        helpmessage += string.Format("  {0}removealias [pokemon] [alias] - {1}\n", config.Prefix, Language.Strings["helpRemoveAlias"]);
-        //        helpmessage += string.Format("  {0}pin [channel name] - {1}\n", config.Prefix, Language.Strings["helpPin"]);
-        //        helpmessage += string.Format("  {0}unpin [channel name] - {1}\n", config.Prefix, Language.Strings["helpUnPin"]);
-        //        helpmessage += string.Format("  {0}pinall - {1}\n", config.Prefix, Language.Strings["helpPinAll"]);
-        //        helpmessage += string.Format("  {0}unpinall - {1}\n", config.Prefix, Language.Strings["helpUnPinAll"]);
-        //        helpmessage += string.Format("  {0}pinlist - {1}\n", config.Prefix, Language.Strings["helpPinList"]);
-        //        helpmessage += string.Format("  {0}mute [channel name] - {1}\n", config.Prefix, Language.Strings["helpMute"]);
-        //        helpmessage += string.Format("  {0}unmute [channel name] - {1}\n", config.Prefix, Language.Strings["helpUnMute"]);
-        //        helpmessage += string.Format("  {0}muteall - {1}\n", config.Prefix, Language.Strings["helpMuteAll"]);
-        //        helpmessage += string.Format("  {0}unmuteall - {1}\n", config.Prefix, Language.Strings["helpUnMuteAll"]);
-        //        helpmessage += string.Format("  {0}mutelist - {1}\n", config.Prefix, Language.Strings["helpMuteList"]);
-        //        helpmessage += string.Format("  {0}timezone [gmt offset] - {1}\n", config.Prefix, Language.Strings["helpTimezone"]);
-        //        helpmessage += string.Format("  {0}language [language] - {1}\n", config.Prefix, Language.Strings["helpLanguage"]);
-        //        helpmessage += string.Format("  {0}city [city] - {1}\n", config.Prefix, Language.Strings["helpCity"]);
-        //        helpmessage += string.Format("  {0}channelcity [channel name] [city] - {1}\n", config.Prefix, Language.Strings["helpChannelCity"]);
-        //    }
-        //    if (helpmessage.Length > 1990)//2000 is max, formatting strings add more
-        //    {
-        //        var length = 0;
-        //        var helpmessages = new List<string>();
-        //        var helpstring = "```css";
-        //        var helpcommands = new List<string>(Regex.Split(helpmessage, @"\n"));
-
-
-        //        foreach (var cmd in helpcommands)
-        //        {
-        //            length += cmd.Length + 2;
-        //            if (length < 1990)
-        //            {
-        //                helpstring += "\n" + cmd;
-        //            }
-        //            else
-        //            {
-        //                helpmessages.Add(helpstring + "```");
-        //                length = 0;
-        //                helpstring = "```css";
-        //            }
-        //        }
-        //        result.AddRange(helpmessages);
-        //    }
-        //    else
-        //        result.Add($"```css{helpmessage}\n```");
-
-        //    return result.ToArray();
-        //}
         /// <summary>
         /// Returns a single row of pokemon info for the !info command.
         /// </summary>
@@ -814,7 +745,7 @@ namespace PokemonGoRaidBot.Parsing
 
             foreach (var message in post.Responses.OrderBy(x => x.MessageDate).Skip(Math.Max(0, post.Responses.Count() - 24)))//max fields is 25
             {
-                builder.AddField(message.Username + ":", message.Content);
+                builder.AddField(string.Format("{0:h:mm} {1}:", message.MessageDate, message.Username), message.Content);
             }
             
             return builder.Build();
@@ -832,10 +763,10 @@ namespace PokemonGoRaidBot.Parsing
 
 
             var channel = $"<#{post.FromChannelId}>";
-            var users = mentionUserIds.Count() > 0 ? $",<@{string.Join(">,<@", mentionUserIds.Distinct())}>" : "";
+            //var users = mentionUserIds.Count() > 0 ? $",<@{string.Join(">,<@", mentionUserIds.Distinct())}>" : "";
             var roles = post.MentionedRoleIds.Count() > 0 ? $",<@&{string.Join(">,<@&", post.MentionedRoleIds.Distinct())}>" : "";
 
-            mentions = channel + users + roles;
+            mentions = channel +/* users +*/ roles;
         }
         public Embed MakeHeaderEmbed(PokemonRaidPost post, string text = null)
         {
@@ -846,9 +777,9 @@ namespace PokemonGoRaidBot.Parsing
             headerembed.WithDescription(Language.RegularExpressions["discordChannel"].Replace(text, "").Replace(" in ", " ").Replace("  ", " "));
 
             headerembed.WithThumbnailUrl(string.Format(Language.Formats["imageUrlSmallPokemon"], post.PokemonId));
+            
             return headerembed.Build();
         }
-
         public string MakePostHeader(PokemonRaidPost post)
         {
             var joinString = string.Join(", ", post.JoinedUsers.Where(x => x.PeopleCount > 0).Select(x => string.Format("@{0}(**{1}**{2})", x.Name, x.PeopleCount, x.ArriveTime.HasValue ? $" *@{x.ArriveTime.Value.ToString("h:mmt")}*" : "")));

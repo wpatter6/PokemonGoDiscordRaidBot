@@ -33,7 +33,7 @@ namespace PokemonGoRaidBot
             Parser = parser;
 
             Config = Handler.Config;
-            Command = new List<string>(Message.Content.ToLowerInvariant().Replace("  ", " ").Substring(Config.Prefix.Length).Split(' '));
+            Command = new List<string>(Message.Content.ToLower().Replace("  ", " ").Substring(Config.Prefix.Length).Split(' '));
             Command.Remove("");
             User = (SocketGuildUser)Message.Author;
             Guild = ((SocketGuildChannel)Message.Channel).Guild;
@@ -82,7 +82,7 @@ namespace PokemonGoRaidBot
         }
         private async Task<SocketGuildChannel> GetChannelFromName(string name)
         {
-            var channel = Guild.Channels.FirstOrDefault(x => x.Name.ToLowerInvariant() == name.ToLowerInvariant());
+            var channel = Guild.Channels.FirstOrDefault(x => x.Name.ToLower() == name.ToLower());
 
             if (channel == null)
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandGuildNoChannel"], Guild.Name, name));
@@ -484,11 +484,11 @@ namespace PokemonGoRaidBot
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPokemonNotFound"], Command[1]));
             
             if (GuildConfig.PokemonAliases.ContainsKey(foundInfo.Id))
-                GuildConfig.PokemonAliases[foundInfo.Id].Add(Command[2].ToLowerInvariant());
+                GuildConfig.PokemonAliases[foundInfo.Id].Add(Command[2].ToLower());
 
             Config.Save();
 
-            await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandAliasSuccess"], Command[2].ToLowerInvariant(), foundInfo.Name));
+            await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandAliasSuccess"], Command[2].ToLower(), foundInfo.Name));
         }
         
         [RaidBotCommand("removealias")]
@@ -499,7 +499,7 @@ namespace PokemonGoRaidBot
 
             var info = Parser.ParsePokemon(Command[1], Config, Guild.Id);
             
-            var existing = GuildConfig.PokemonAliases.FirstOrDefault(x => x.Value.Contains(Command[2].ToLowerInvariant()));
+            var existing = GuildConfig.PokemonAliases.FirstOrDefault(x => x.Value.Contains(Command[2].ToLower()));
             if(!existing.Equals(default(KeyValuePair<int, List<string>>)))
             {
                 existing.Value.RemoveAll(x => x.Equals(Command[2], StringComparison.OrdinalIgnoreCase));

@@ -13,7 +13,7 @@
     "timeActualStart": "\\b(at|around) ([0-9]{1,2}):?([0-9]{2})?\\b",
     "timeSpan": "(1?[0-9]):([0-9]{2})", //match where numbers indicate hours and minute
     "timeHourMin": "([0-2]{1})? ?(h|hr|hours?) ?a?n?d? ?([1-6]?[0-9]) ?(m|mi|min|mins|minutes?)\\b", //match where numbers like 1h3m or 1 hour 3 minutes
-    "timeHour": "([0-2]{1})? ?(h|hr|hours?)\\b",
+    "timeHour": "([0-2]{1})? ?\\b(h|hr|hours?)\\b",
     "timeMin": "([1-6]?[0-9]) ?(mi?n?s?|minutes?)\\b",
     "joinEnd": "[^:]?\\b([0-9]{1,2}|(\\b(one|two|three|four|five|six|seven|eight|nine|ten))) (for|here|join(ed|ing)are|going|people|on (the|our)|coming|(just)? arriv(ed|ing)|of us|confirmed|head(ed|ing)|will)\\b", //indicates the number of people will be joining, with match words coming after #
     "joinStart": "\\b(have|are|there'?s|we'?re) ([0-9]{1,2}|(\\b(one|two|three|four|five|six|seven|eight|nine|ten)))\\b", //indicates the number of people will be joining, with match words coming before #
@@ -30,7 +30,7 @@
   },
   "formats": {
     "infoLine": "\n{0}: {1}Tier:{2} BossCP:{3} MaxCP:{5} CatchRate:{6}% {7}", //shown for !info command
-    "postHeader": "`[{0}]`**{1}** {2}{3}\n{4}",
+    "postHeader": "`[{0}]`**{1}** {2}{3}\n{4} ([?](https://github.com/wpatter6/PokemonGoDiscordRaidBot/blob/master/README.md#pokemongoraidbot))",
     "postLocation": " at **{0}**",
     "postEnds": " ends **{0:h:mmt}**",
     "postJoined": "***{0} joined:*** {1}",
