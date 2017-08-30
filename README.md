@@ -13,6 +13,8 @@
 
 - Once a user has posted or joined a raid, they will be notified by direct message of any users that join or quit the raid.  This behavior can be disabled.
 
+- Users can join raids by giving an emoji reaction to the bot's raid post.  Any reaction except thumbs down (👎) will add one to the user's joined persons count.  Removing the reaction will subtract one from the joined persons count.
+
 - Identifies responses to a raid post and includes the discussion on the configured output channel's raid post thread as well.  It also parses any time strings in the user's response and outputs the actual time, with configurable GMT time zone.
 
 - Determines the end time of the raid and removes its messages from the chat after the raid has ended.
@@ -70,7 +72,7 @@
 * `!(j)oin [raid*] [number*] [arrival time*]` Joins the specified number of people to the specified `raid` Id.  Adding + or - before the number will add or subtract from an existing value.  If pokemon name is used instead of Id, will join the most recently posted in channel matching the start of the pokemon name.  If no parameters, will join 1 to the most recently posted raid in that channel.
 * `!(un)join [raid*]` Removes your join information from the raid.  If `raid` is blank, unjoins all.
 * `!(i)nfo [name*]` Displays information about the selected raid, or all of the raids if `name` is blank.  Information was taken from https://pokemongo.gamepress.gg.
-* `!(d)elete [raid]` Deletes a raid post with the corresponding Id.  Use `all` to delete all raids posted by you.
+* `!(d)elete [raid]` Deletes a raid post with the corresponding Id.  Use `all` to delete all raids posted by you.  The thumbs down emoji reaction will delete the raid as well, if done by the raid poster or server admin.
 * `!(m)erge [raid1] [raid2]` Merges `raid2` into `raid1`.  Can only be done by admin or original poster of `raid2`.
 * `!(loc)ation [raid] [new location]` Allows the poster of the raid or admin to change the location of a post.
 * `!(h)elp` Shows help message.

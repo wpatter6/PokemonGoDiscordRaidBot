@@ -394,6 +394,16 @@ namespace PokemonGoRaidBot.Parsing
             return ToTitleCase(cleanedLocation);
         }
 
+        public PokemonRaidPost ParsePostFromPostMessage(string message, GuildConfig config)
+        {
+            var uidReg = Language.RegularExpressions["postUniqueId"];
+            if (!uidReg.IsMatch(message)) return null;
+
+            var uid = uidReg.Match(message).Groups[1].Value;
+
+            return config.Posts.FirstOrDefault(x => x.UniqueId == uid);
+        }
+
         /// <summary>
         /// 
         /// </summary>
