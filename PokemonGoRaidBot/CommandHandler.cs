@@ -410,8 +410,9 @@ namespace PokemonGoRaidBot
                         .FirstOrDefault(x => parser.CompareLocationLatLong(x.LatLong.Value, post.LatLong.Value));
 
                 //Final fall through, gets latest post in channel either matching pokemon name or user was involved with
-                if (existing == null && string.IsNullOrWhiteSpace(post.Location))//if location exists and doesn't match, not a match
+                if (existing == null)//if location exists and doesn't match, not a match
                     existing = channelPosts
+                        .Where(x => string.IsNullOrWhiteSpace(post.Location) || x.UserId == post.UserId)
                         .OrderByDescending(x => x.PostDate)
                         .OrderBy(x => x.PokemonId == post.PokemonId ? 0 : 1)//pokemon name match takes priority if the user responded to multiple raids in the channel
                         .FirstOrDefault(x =>
@@ -450,9 +451,10 @@ namespace PokemonGoRaidBot
                 post1.EndDate = post2.EndDate;
             }
 
-            if (string.IsNullOrEmpty(post1.Location) && post2.LatLong.HasValue)//only merge location if first is blank and second has lat long
+            if (string.IsNullOrEmpty(post1.Location) && !string.IsNullOrEmpty(post2.Location))//only merge location if first is blank and second has lat long
             {
                 post1.Location = post2.Location;
+                post1.FullLocation = post2.FullLocation;
                 post1.LatLong = post2.LatLong;
             }
 
