@@ -401,7 +401,8 @@ namespace PokemonGoRaidBot
                 }
                 //if location matches, must be same.
                 if(existing == null)
-                    existing = channelPosts.FirstOrDefault(x => parser.CompareLocationStrings(x.Location, post.Location));
+                    existing = channelPosts.FirstOrDefault(x => x.PokemonId == (post.PokemonId > 0 ? post.PokemonId : x.PokemonId) 
+                        && parser.CompareLocationStrings(x.Location, post.Location));
 
                 //Lat long comparison, within 30 meters is treated as same
                 if(existing == null && post.LatLong.HasValue && channelPosts.Where(x => x.LatLong.HasValue).Count() > 0)
@@ -409,9 +410,8 @@ namespace PokemonGoRaidBot
                         .FirstOrDefault(x => parser.CompareLocationLatLong(x.LatLong.Value, post.LatLong.Value));
 
                 //Final fall through, gets latest post in channel either matching pokemon name or user was involved with
-                if (existing == null)
+                if (existing == null && string.IsNullOrWhiteSpace(post.Location))//if location exists and doesn't match, not a match
                     existing = channelPosts
-                        .Where(x => string.IsNullOrEmpty(x.Location) || string.IsNullOrEmpty(post.Location))//either location must be unidentified at this point
                         .OrderByDescending(x => x.PostDate)
                         .OrderBy(x => x.PokemonId == post.PokemonId ? 0 : 1)//pokemon name match takes priority if the user responded to multiple raids in the channel
                         .FirstOrDefault(x =>
