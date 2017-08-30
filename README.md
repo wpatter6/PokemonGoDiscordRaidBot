@@ -34,7 +34,7 @@
 ## How to configure in discord:
 *can be done without installing, requires Manage Server role permission*
 1. Either [use my bot](https://discordapp.com/oauth2/authorize?&client_id=347493806695776256&scope=bot&permissions=0) or join your installed bot to the server ([help](https://stackoverflow.com/a/37743722/711674)).
-1. Check the [Different Configurations](https://github.com/wpatter6/PokemonGoDiscordRaidBot/wiki/Different-Configurations) wiki to figure out which configuration will work best for your server.
+1. Check the [Different Configurations](https://github.com/wpatter6/PokemonGoDiscordRaidBot/wiki/Different-Configurations) wiki to determine which configuration will work best for your server.
 1. Bot requires role permission "Manage Messages" in order to pin.
 1. Configure which channel is the output channel using !channel command (or none with !nochannel)
 1. Configure which channels should have pin behavior !pin or !pinall commands.  On the first load in a server, all channels are added to the pin list.
