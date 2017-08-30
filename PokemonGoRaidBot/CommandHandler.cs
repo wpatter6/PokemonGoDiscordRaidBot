@@ -41,13 +41,83 @@ namespace PokemonGoRaidBot
             Config = botconfig;
             
             bot.MessageReceived += HandleCommand;
+            bot.ReactionAdded += ReactionAdded;
+            bot.ReactionRemoved += ReactionRemoved;
+            //bot.ReactionsCleared += ReactionsCleared;
             commands = map.GetService<CommandService>();
             channelCache = new Dictionary<ulong, ISocketMessageChannel>();
         }
-        
+
         public async Task ConfigureAsync()
         {
             await commands.AddModulesAsync(Assembly.GetEntryAssembly());
+        }
+
+        //private async Task ReactionsCleared(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2)
+        //{
+        //    if (!arg1.HasValue) return;
+        //    IUserMessage message = arg1.Value;
+        //}
+
+        private async Task ReactionRemoved(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2, SocketReaction arg3)
+        {
+            var message = await arg2.GetMessageAsync(arg1.Id);
+            if (message == null || string.IsNullOrEmpty(message.Content) || !(arg2 is SocketGuildChannel) || arg3.Emote.Name == "👎") return;
+            var guildConfig = Config.GetGuildConfig(((SocketGuildChannel)arg2).Guild.Id);
+            var channel = (SocketGuildChannel)arg2;
+
+            var parser = GetParser(guildConfig);
+            var post = parser.ParsePostFromPostMessage(message.Embeds.First().Description, guildConfig);
+            var user = channel.Guild.GetUser(arg3.UserId);
+
+            if (post != null && user != null)
+            {
+                var removeUser = post.JoinedUsers.FirstOrDefault(x => x.Id == user.Id);
+                if(removeUser != null)
+                {
+                    removeUser.PeopleCount--;
+
+                    if(removeUser.PeopleCount <= 0)
+                        post.JoinedUsers.Remove(removeUser);
+
+                    Config.Save();
+                    await MakePost(post, parser);
+                }
+            }
+        }
+
+        public async Task ReactionAdded(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2, SocketReaction arg3)
+        {
+            var message = await arg2.GetMessageAsync(arg1.Id);
+            if (message == null || string.IsNullOrEmpty(message.Content) || !(arg2 is SocketGuildChannel)) return;
+            var guildConfig = Config.GetGuildConfig(((SocketGuildChannel)arg2).Guild.Id);
+            //var message = arg1.Value;
+            var channel = (SocketGuildChannel)arg2;
+            var user = channel.Guild.GetUser(arg3.UserId);
+
+            var parser = GetParser(guildConfig);
+            var post = parser.ParsePostFromPostMessage(message.Embeds.First().Description, guildConfig);
+
+            if(post != null && user != null)
+            {
+                if(arg3.Emote.Name == "👎")//thumbs down will be quick way to delete a raid by poster/admin
+                {
+                    if(user.Id == post.UserId || user.GuildPermissions.Administrator || user.GuildPermissions.ManageGuild)
+                        DeletePost(post);
+                }
+                else
+                {
+                    var joinedUser = post.JoinedUsers.FirstOrDefault(x => x.Id == user.Id);
+                    if (joinedUser != null)
+                        joinedUser.PeopleCount++;
+                    else
+                    {
+                        post.JoinedUsers.Add(new PokemonRaidJoinedUser(user.Id, guildConfig.Id, post.UniqueId, user.Username, 1));
+                    }
+                    Config.Save();
+                    await MakePost(post, parser);
+                }
+            }
         }
 
         public async Task HandleCommand(SocketMessage pMsg)
@@ -116,7 +186,7 @@ namespace PokemonGoRaidBot
                     var context = new SocketCommandContext(bot, message);
 
                     //get configured guild language or default "en-us"
-                    var lang = guildConfig.Language ?? "en-us";
+                    var lang = guildConfig.Language ?? Config.DefaultLanguage ?? "en-us";
                     //timezone of the bot machine
                     //get configured timezone
 
@@ -583,6 +653,10 @@ namespace PokemonGoRaidBot
             parser = new MessageParser(lang, offset);
             ParserCache.Add(parser);
             return parser;
+        }
+        private PokemonRaidPost GetPost(string uid, ulong guildId)
+        {
+            return Config.GetGuildConfig(guildId).Posts.FirstOrDefault(x => x.UniqueId == uid);
         }
         //private GuildConfig Config.GetGuildConfig(ulong Id)
         //{

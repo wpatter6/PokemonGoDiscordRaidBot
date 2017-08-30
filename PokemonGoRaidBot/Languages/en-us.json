@@ -26,7 +26,8 @@
     "smallWords": "^(at?|the|and|of)$", //These will not be made uppercase if they're found in a location
     "discordRole": "\\<\\@\\&([0-9]+)\\>",
     "discordUser": "\\<\\@([0-9]+)\\>",
-    "discordChannel": "\\<\\#([0-9]+)\\>"
+    "discordChannel": "\\<\\#([0-9]+)\\>",
+    "postUniqueId": "^`\\[([a-zA-Z0-9]+)\\]`"
   },
   "formats": {
     "infoLine": "\n{0}: {1}Tier:{2} BossCP:{3} MaxCP:{5} CatchRate:{6}% {7}", //shown for !info command

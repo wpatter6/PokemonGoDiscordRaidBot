@@ -222,9 +222,9 @@ namespace PokemonGoRaidBot
                 joinedUser.PeopleCount -= number;
             else
                 joinedUser.PeopleCount = number;
-            
-            string str = Message.Content;
 
+            if (joinedUser.PeopleCount <= 0) post.JoinedUsers.Remove(joinedUser);
+            
             TimeSpan? ts1, ts2;
             Parser.ParseTimespanFull(ref time, out ts1, out ts2);
 
