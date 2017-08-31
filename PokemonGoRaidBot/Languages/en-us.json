@@ -391,7 +391,7 @@
       "BossCP": 42932,
       "MinCP": -1,
       "MaxCP": 1913,
-      "CatchRate": -1
+      "CatchRate": 0.03
     },
     {
       "Id": 244,
@@ -400,7 +400,7 @@
       "BossCP": 38628,
       "MinCP": -1,
       "MaxCP": 1950,
-      "CatchRate": -1
+      "CatchRate": 0.03
     },
     {
       "Id": 245,
@@ -409,7 +409,7 @@
       "BossCP": 34471,
       "MinCP": -1,
       "MaxCP": 1613,
-      "CatchRate": -1
+      "CatchRate": 0.03
     },
     {
       "Id": 249,
