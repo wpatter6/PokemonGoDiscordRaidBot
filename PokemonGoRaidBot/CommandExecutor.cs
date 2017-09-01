@@ -631,6 +631,22 @@ namespace PokemonGoRaidBot
             }
         }
 
+        [RaidBotCommand("cities")]
+        private async Task Cities()
+        {
+            if (!await CheckAdminAccess()) return;
+
+            var str = string.Format("Default: {0}", GuildConfig.City);
+
+            foreach(var city in GuildConfig.ChannelCities)
+            {
+                var channel = Guild.GetChannel(city.Key);
+                str += string.Format("\n{0}: {1}", channel.Name, city.Value);
+            }
+
+            await Handler.MakeCommandMessage(Message.Channel, str);
+        }
+
         [RaidBotCommand("mute")]
         private async Task Mute()
         {

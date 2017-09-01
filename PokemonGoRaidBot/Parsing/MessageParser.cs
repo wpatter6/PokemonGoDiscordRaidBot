@@ -490,8 +490,6 @@ namespace PokemonGoRaidBot.Parsing
             {
                 var endmatch = endreg.Match(message);
                 
-                if (message.Contains(Language.Strings["questionMark"])) return null;
-
                 if (Language.RegularExpressions["joinLess"].IsMatch(message)) isLess = true;
                 else if (Language.RegularExpressions["joinMore"].IsMatch(message)) isMore = true;
 
@@ -503,7 +501,7 @@ namespace PokemonGoRaidBot.Parsing
                 if (!int.TryParse(num, out result))
                     result = WordToInteger(num);
 
-                if (result == -1) return null;
+                if (result == -1 || (result == 1 && message.Contains(Language.Strings["questionMark"]))) return null;
                 return result;
             }
 
@@ -511,9 +509,7 @@ namespace PokemonGoRaidBot.Parsing
             if (startReg.IsMatch(message))
             {
                 var startmatch = startReg.Match(message);
-
-                if (message.Contains(Language.Strings["questionMark"])) return null;
-
+                
                 if (Language.RegularExpressions["joinLess"].IsMatch(message)) isLess = true;
                 else if (Language.RegularExpressions["joinMore"].IsMatch(message)) isMore = true;
 
@@ -524,8 +520,8 @@ namespace PokemonGoRaidBot.Parsing
 
                 if (!int.TryParse(num, out result))
                     result = WordToInteger(num);
-
-                if (result == -1) return null;
+                
+                if (result == -1 || (result == 1 && message.Contains(Language.Strings["questionMark"]))) return null;
                 return result;
             }
 
@@ -543,7 +539,6 @@ namespace PokemonGoRaidBot.Parsing
                 var morematch = moreReg.Match(message);
 
                 message = moreReg.Replace(message, matchedWordReplacement);
-                if (message.Contains(Language.Strings["questionMark"])) return null;
                 
                 var num = morematch.Groups[2].Value;
                 var result = 0;
@@ -552,6 +547,8 @@ namespace PokemonGoRaidBot.Parsing
                     result = WordToInteger(num);
 
                 isMore = true;
+
+                if (result == -1 || (result == 1 && message.Contains(Language.Strings["questionMark"]))) return null;
                 return result;
             }
 
@@ -561,16 +558,16 @@ namespace PokemonGoRaidBot.Parsing
                 var lessmatch = lessReg.Match(message);
 
                 message = lessReg.Replace(message, matchedWordReplacement);
-                if (message.Contains(Language.Strings["questionMark"])) return null;
                 
                 var num = lessmatch.Groups[1].Value;
                 var result = 0;
 
                 if (!int.TryParse(num, out result))
                     result = WordToInteger(num);
-
-
+                
                 isLess = true;
+
+                if (result == -1 || (result == 1 && message.Contains(Language.Strings["questionMark"]))) return null;
                 return result;
             }
             
