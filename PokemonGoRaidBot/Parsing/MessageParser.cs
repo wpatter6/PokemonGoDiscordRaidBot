@@ -729,6 +729,7 @@ namespace PokemonGoRaidBot.Parsing
                 embed.AddField(string.Format("*{0}language [language]", config.Prefix), Language.Strings["helpLanguage"]);
                 embed.AddField(string.Format("*{0}city [city]", config.Prefix), Language.Strings["helpCity"]);
                 embed.AddField(string.Format("*{0}channelcity [channel name] [city]", config.Prefix), Language.Strings["helpChannelCity"]);
+                embed.AddField(string.Format("*{0}cities", config.Prefix), Language.Strings["helpCities"]);
             }
 
             return embed.Build();

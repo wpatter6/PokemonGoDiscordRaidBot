@@ -97,7 +97,7 @@
 * `!language [language]` Will set the language of the server.  A language file with the matching name must exist in bot config.  Default is \"en-us\"
 * `!city [name]` - Will set the city of the current server.  This value gets appended to the location when using the Google geocoding API for better accuracy.
 * `!channelcity [channel name] [city name]` Will set the city of the selected channel to be used in Google geocoding.
-* `!cities` Displays the cities configured to the server, and each channel.
+* `!cities` Displays the city configured to the server and each channel.
 
 ## How to make a new language:
 * Copy the `Languages/en-us.json` file, and modify the values in that file to translated versions.  This will require a basic knowledge of C# format strings and regular expressions.
