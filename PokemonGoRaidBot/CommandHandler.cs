@@ -336,7 +336,7 @@ namespace PokemonGoRaidBot
                 post.OutputChannelId = outputchannel?.Id ?? 0;
                 post = AddPost(post, parser, message, true, force);
 
-                if (post.PokemonId != default(int))
+                if (post.IsValid)
                 {
                     IDisposable d = null;
 
@@ -350,6 +350,7 @@ namespace PokemonGoRaidBot
 
                     if (d != null) d.Dispose();
                 }
+                //else TODO maybe DM user to see if it's valid? Tricky because hard to hold on to post ID reference...
             }
 
             Config.Save();
@@ -499,7 +500,7 @@ namespace PokemonGoRaidBot
                 existing.IsExisting = true;
                 return existing;
             }
-            else if(add && post.PokemonId != default(int))
+            else if(add && post.IsValid)
             {
                 post.JoinedUsersChanged += JoinCount_Changed;
                 guildConfig.Posts.Add(post);

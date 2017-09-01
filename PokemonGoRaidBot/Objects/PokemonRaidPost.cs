@@ -89,6 +89,8 @@ namespace PokemonGoRaidBot.Objects
         
         [JsonIgnore]
         public bool IsExisting;
+        [JsonIgnore]
+        public bool IsValid;
 
         protected virtual void OnJoinedUsersChanged(JoinedCountChangedEventArgs e)
         {

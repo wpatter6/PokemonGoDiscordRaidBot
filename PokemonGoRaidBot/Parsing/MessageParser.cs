@@ -132,6 +132,9 @@ namespace PokemonGoRaidBot.Parsing
             //post was invalidated
             if (nopost) result.PokemonId = default(int);
 
+            //lat longs will break the timespan parser and are easy to identify, so get them first
+            var latLong = ParseLatLong(ref unmatchedString);
+            
             TimeSpan? raidTimeSpan, joinTimeSpan;
             ParseTimespanFull(ref unmatchedString, out raidTimeSpan, out joinTimeSpan);
 
@@ -153,16 +156,26 @@ namespace PokemonGoRaidBot.Parsing
             if (joinCount.HasValue)
                 result.JoinedUsers.Add(new PokemonRaidJoinedUser(message.Author.Id, guildId, result.UniqueId, message.Author.Username, joinCount.Value, isMore, isLess, joinTime));
 
-            result.Location = ParseLocation(unmatchedString);
+            if (latLong.HasValue)
+            {
+                result.Location = string.Format("{0}, {1}", latLong.Value.Key, latLong.Value.Value);
+                result.LatLong = latLong;
+            }
+            else
+            {
+                result.Location = ParseLocation(unmatchedString);
 
-            if (!string.IsNullOrEmpty(result.Location))
-                result.FullLocation = GetFullLocation(result.Location, guildConfig, message.Channel.Id);
+                if (!string.IsNullOrEmpty(result.Location))
+                    result.FullLocation = GetFullLocation(result.Location, guildConfig, message.Channel.Id);
+            }
 
             result.Responses.Add(new PokemonMessage(message.Author.Id, message.Author.Username, messageString, DateTime.Now));
 
             var mention = ((SocketGuildChannel)message.Channel).Guild.Roles.FirstOrDefault(x => x.Name == result.PokemonName && !result.MentionedRoleIds.Contains(x.Id));
             if (mention != default(SocketRole))
                 result.MentionedRoleIds.Add(mention.Id);
+
+            result.IsValid = result.PokemonId != default(int) && (!string.IsNullOrWhiteSpace(result.Location) || result.JoinedUsers.Count() > 0);
 
             return result;
         }
@@ -176,20 +189,20 @@ namespace PokemonGoRaidBot.Parsing
         /// <returns></returns>
         public PokemonInfo ParsePokemon(string name, BotConfig config, ulong guildId)
         {
-            if (name.Length < 3) return null;
-
             var cleanedName = Regex.Replace(name, @"\W", "").ToLower();//never want any special characters in string
+
+            if (cleanedName.Length < 3) return null;
 
             var guildConfig = config.GetGuildConfig(guildId);
 
             var result = Language.Pokemon.FirstOrDefault(x => guildConfig.PokemonAliases.Where(xx => xx.Value.Contains(name.ToLower())).Count() > 0);
-            if (result != null) return result;
+            if (result != null && result.CatchRate > 0) return result;
 
             result = Language.Pokemon.FirstOrDefault(x => x.Aliases.Contains(cleanedName));
-            if (result != null) return result;
+            if (result != null && result.CatchRate > 0) return result;
 
             result = Language.Pokemon.OrderByDescending(x => x.Id).FirstOrDefault(x => x.Name.ToLower().StartsWith(cleanedName));
-            if (result != null) return result;
+            if (result != null && result.CatchRate > 0) return result;
 
             return null;
         }
@@ -601,6 +614,20 @@ namespace PokemonGoRaidBot.Parsing
             {
                 return null;
             }
+        }
+        public KeyValuePair<double, double>? ParseLatLong(ref string message)
+        {
+            var reg = Language.RegularExpressions["latLong"];
+            if (reg.IsMatch(message))
+            {
+                var match = reg.Match(message);
+
+                message = message.Replace(match.Value, matchedLocationWordReplacement);
+
+                return new KeyValuePair<double, double>(Convert.ToDouble(match.Groups[1].Value + match.Groups[2].Value), Convert.ToDouble(match.Groups[5].Value + match.Groups[6].Value));
+            }
+
+            return null;
         }
         public string GetFullLocation(string location, GuildConfig guildConfig, ulong channelId)
         {

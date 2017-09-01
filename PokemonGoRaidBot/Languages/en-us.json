@@ -27,7 +27,8 @@
     "discordRole": "\\<\\@\\&([0-9]+)\\>",
     "discordUser": "\\<\\@([0-9]+)\\>",
     "discordChannel": "\\<\\#([0-9]+)\\>",
-    "postUniqueId": "^`\\[([a-zA-Z0-9]+)\\]`"
+    "postUniqueId": "^`\\[([a-zA-Z0-9]+)\\]`",
+    "latLong": "([-+]?)([1-8]?\\d(\\.\\d+)?|90(\\.0+)?) *,? *([-+]?)(180(\\.0+)?|((1[0-7]\\d)|([1-9]?\\d))(\\.\\d+)?)"
   },
   "formats": {
     "infoLine": "\n{0}: {1}Tier:{2} BossCP:{3} MaxCP:{5} CatchRate:{6}% {7}", //shown for !info command
@@ -367,7 +368,7 @@
       "CatchRate": 0.03
     },
     {
-      "Id": 151,
+      "Id": 150,
       "Tier": 5,
       "Name": "Mewtwo",
       "BossCP": 56557,
@@ -376,7 +377,7 @@
       "CatchRate": -1
     },
     {
-      "Id": 150,
+      "Id": 151,
       "Tier": 5,
       "Name": "Mew",
       "BossCP": 37733,
