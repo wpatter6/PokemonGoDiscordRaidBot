@@ -824,7 +824,9 @@ namespace PokemonGoRaidBot.Parsing
             headerembed.WithUrl(string.Format(Language.Formats["pokemonInfoLink"], post.PokemonId));
             headerembed.WithDescription(Language.RegularExpressions["discordChannel"].Replace(text, "").Replace(" in ", " ").Replace("  ", " "));
 
-            headerembed.WithThumbnailUrl(string.Format(Language.Formats["imageUrlSmallPokemon"], post.PokemonId));
+            var pokemonString = post.PokemonId.ToString().PadLeft(3, '0');
+
+            headerembed.WithThumbnailUrl(string.Format(Language.Formats["imageUrlSmallPokemon"], pokemonString));
             
             return headerembed.Build();
         }
