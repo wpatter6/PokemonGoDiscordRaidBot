@@ -486,7 +486,7 @@ namespace PokemonGoRaidBot
                         .FirstOrDefault(x => parser.CompareLocationLatLong(x.LatLong.Value, post.LatLong.Value));
 
                 //Final fall through, gets latest post in channel either matching pokemon name or user was involved with
-                if (existing == null)//if location exists and doesn't match, not a match
+                if (existing == null && string.IsNullOrEmpty(post.Location))//if location exists and doesn't match, not a match
                     existing = channelPosts
                         .Where(x => string.IsNullOrWhiteSpace(post.Location) || x.UserId == post.UserId)
                         .OrderByDescending(x => x.PostDate)

@@ -8,7 +8,7 @@
     "locationCrossStreets": "(([a-zA-Z0-9]* ?[a-zA-Z0-9]+) (\\&|a?nd?) ([a-zA-Z0-9]+ ?[a-zA-Z]*))", //Cross streets regex, like 12th and Broadway
     "locationStart": "\\bat ([a-zA-Z0-9(\\bn\\.|\\bs\\.|\\be\\.|\\bw\\.) ]*)", //indicates location using word "at", includes n. s. e. w.
     "locationEnd": "([a-zA-Z0-9' ]*\\b(park|school|lake|church|museum|mural|statue|building|station|theat(er|re)|course|sign|store|cafe|cent(er|re))( (n(orth)?|s(outh)?|e(ast)?|w(est)))?\\b)", //words coming after a landmark name
-    "locationExcludeWords": "\\b(left|at|to|any(one)?|in|on|near|around|with(out)?|has|for|just)\\b|\\?|\\.|,", //remove these from parsed locations
+    "locationExcludeWords": "\\b(left|at|to|any(one)?|in|on|near|around|with(out)?|has|for|just|off|then|have)\\b|\\?|\\.|,", //remove these from parsed locations
     "timeActualEnd": "\\b([0-9]{1,2}):?([0-9]{2})? ?(am?|pm?)\\b", //match where numbers indicate an actual time
     "timeActualStart": "\\b(at|around) ([0-9]{1,2}):?([0-9]{2})?\\b",
     "timeSpan": "(1?[0-9]):([0-9]{2})", //match where numbers indicate hours and minute

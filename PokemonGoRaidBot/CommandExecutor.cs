@@ -75,7 +75,11 @@ namespace PokemonGoRaidBot
         {
             var post = GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == name);
 
-            if (idOnly || post != null) return post;
+            if (idOnly || post != null)
+            {
+                post.IsExisting = true;
+                return post;
+            }
 
             post = Handler.AddPost(Parser.ParsePost(Message, Config), Parser, Message, false);
             return post;
