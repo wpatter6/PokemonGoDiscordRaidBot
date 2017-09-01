@@ -89,7 +89,11 @@ namespace PokemonGoRaidBot
         public async Task ReactionAdded(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2, SocketReaction arg3)
         {
             var message = await arg2.GetMessageAsync(arg1.Id);
-            if (message == null || string.IsNullOrEmpty(message.Content) || !(arg2 is SocketGuildChannel)) return;
+            if (message == null || !(arg2 is SocketGuildChannel)) return;
+
+            var embed = message.Embeds.FirstOrDefault();
+            if (embed == null || string.IsNullOrEmpty(embed.Description)) return;
+
             var guildConfig = Config.GetGuildConfig(((SocketGuildChannel)arg2).Guild.Id);
             //var message = arg1.Value;
             var channel = (SocketGuildChannel)arg2;
@@ -371,9 +375,9 @@ namespace PokemonGoRaidBot
 
                 //var messages = parser.MakePostStrings(post);
                 Embed headerEmbed, responsesEmbed;
-                string mentionString;
+                string mentionString, channelString;
 
-                parser.MakePostWithEmbed(post, out headerEmbed, out responsesEmbed, out mentionString);
+                parser.MakePostWithEmbed(post, out headerEmbed, out responsesEmbed, out channelString, out mentionString);
 
                 IUserMessage messageResult;
                 if (post.Pin && fromChannel != null)
@@ -405,15 +409,16 @@ namespace PokemonGoRaidBot
                 }
                 if(outputChannel != null)
                 {
+                    
                     if(post.OutputMessageId != default(ulong))
                     {
                         messageResult = (IUserMessage)await outputChannel.GetMessageAsync(post.OutputMessageId);
-                        await messageResult.ModifyAsync(x => { x.Embed = responsesEmbed; x.Content = mentionString; });
+                        await messageResult.ModifyAsync(x => { x.Embed = responsesEmbed; x.Content = channelString; });
                     }
                     else
                     {
 
-                        messageResult = await outputChannel.SendMessageAsync(mentionString, false, responsesEmbed);
+                        messageResult = await outputChannel.SendMessageAsync(channelString, false, responsesEmbed);
 
                         post.OutputMessageId = messageResult.Id;
                     }

@@ -46,12 +46,12 @@ namespace PokemonGoRaidBot.Parsing
         /// <returns>If return value is null, or property 'Pokemon' is null, raid post is invalid.</returns>
         public PokemonRaidPost ParsePost(SocketMessage message, BotConfig config)
         {
-            var guildId = ((SocketGuildChannel)message.Channel).Guild.Id;
-            var guildConfig = config.GetGuildConfig(guildId);
+            var guild = ((SocketGuildChannel)message.Channel).Guild;
+            var guildConfig = config.GetGuildConfig(guild.Id);
 
             var result = new PokemonRaidPost()
             {
-                GuildId = guildId,
+                GuildId = guild.Id,
                 PostDate = DateTime.Now,
                 UserId = message.Author.Id,
                 Color = GetRandomColorRGB(),
@@ -60,7 +60,7 @@ namespace PokemonGoRaidBot.Parsing
                 FromChannelId = message.Channel.Id,
                 Pin = guildConfig.PinChannels.Contains(message.Channel.Id),
                 EndDate = DateTime.Now + new TimeSpan(0, maxRaidMinutes, 0),
-                MentionedRoleIds = new List<ulong>(message.MentionedRoles.Select(x => x.Id))
+                MentionedRoleIds = new List<ulong>()
             };
             
             var messageString = message.Content.Replace(" & ", $" {Language.Strings["and"]} ").Replace(" @ ", $" {Language.Strings["at"]} ");
@@ -76,6 +76,7 @@ namespace PokemonGoRaidBot.Parsing
                 i++;
 
                 var cleanedword = word;
+                bool isMention = false;
                 
                 var roleReg = Language.RegularExpressions["discordRole"];
                 var userReg = Language.RegularExpressions["discordUser"];
@@ -87,18 +88,21 @@ namespace PokemonGoRaidBot.Parsing
                     var roleId = Convert.ToUInt64(roleReg.Match(word).Groups[1].Value);
                     cleanedword = message.MentionedRoles.FirstOrDefault(x => x.Id == roleId)?.Name ?? cleanedword;
                     messageString = messageString.Replace(word, cleanedword);//This must be done so mentions display properly in embed with android
+                    isMention = true;
                 }
                 else if (userReg.IsMatch(word))
                 {
                     var userId = Convert.ToUInt64(userReg.Match(word).Groups[1].Value);
                     cleanedword = message.MentionedUsers.FirstOrDefault(x => x.Id == userId)?.Username ?? cleanedword;
                     messageString = messageString.Replace(word, cleanedword);
+                    isMention = true;
                 }
                 else if (channelReg.IsMatch(word))
                 {
                     var channelId = Convert.ToUInt64(channelReg.Match(word).Groups[1].Value);
                     cleanedword = message.MentionedChannels.FirstOrDefault(x => x.Id == channelId)?.Name ?? cleanedword;
                     messageString = messageString.Replace(word, cleanedword);
+                    isMention = true;
                 }
 
                 var garbageRegex = Language.RegularExpressions["garbage"];
@@ -110,7 +114,7 @@ namespace PokemonGoRaidBot.Parsing
 
                 if (result.PokemonId == default(int))
                 {
-                    var pokemon = ParsePokemon(cleanedword, config, guildId);
+                    var pokemon = ParsePokemon(cleanedword, config, guild.Id);
                     if (pokemon != null)
                     {
                         result.PokemonId = pokemon.Id;
@@ -123,7 +127,9 @@ namespace PokemonGoRaidBot.Parsing
                         continue;
                     }
                 }
-                
+
+                if (isMention) cleanedword = matchedWordReplacement;
+
                 unmatchedWords.Add(cleanedword);
             }
 
@@ -154,7 +160,7 @@ namespace PokemonGoRaidBot.Parsing
             if (!joinCount.HasValue && joinTime.HasValue) joinCount = 1;
 
             if (joinCount.HasValue)
-                result.JoinedUsers.Add(new PokemonRaidJoinedUser(message.Author.Id, guildId, result.UniqueId, message.Author.Username, joinCount.Value, isMore, isLess, joinTime));
+                result.JoinedUsers.Add(new PokemonRaidJoinedUser(message.Author.Id, guild.Id, result.UniqueId, message.Author.Username, joinCount.Value, isMore, isLess, joinTime));
 
             if (latLong.HasValue)
             {
@@ -171,9 +177,16 @@ namespace PokemonGoRaidBot.Parsing
 
             result.Responses.Add(new PokemonMessage(message.Author.Id, message.Author.Username, messageString, DateTime.Now));
 
-            var mention = ((SocketGuildChannel)message.Channel).Guild.Roles.FirstOrDefault(x => x.Name == result.PokemonName && !result.MentionedRoleIds.Contains(x.Id));
-            if (mention != default(SocketRole))
+            var mention = ((SocketGuildChannel)message.Channel).Guild.Roles.FirstOrDefault(x => x.Name == result.PokemonName);
+            if (mention != default(SocketRole) && !message.MentionedRoles.Contains(mention))//avoid double notification
                 result.MentionedRoleIds.Add(mention.Id);
+
+            foreach (var role in guild.Roles.Where(x => x.IsMentionable && !message.MentionedRoles.Contains(x) && !result.MentionedRoleIds.Contains(x.Id)))
+            {//notify for roles that weren't actually mentions
+                var reg = new Regex($@"\b{role.Name}\b", RegexOptions.IgnoreCase);
+                if (reg.IsMatch(message.Content))
+                    result.MentionedRoleIds.Add(role.Id);
+            }
 
             result.IsValid = result.PokemonId != default(int) && (!string.IsNullOrWhiteSpace(result.Location) || result.JoinedUsers.Count() > 0);
 
@@ -629,7 +642,7 @@ namespace PokemonGoRaidBot.Parsing
         public string GetFullLocation(string location, GuildConfig guildConfig, ulong channelId)
         {
             var city = guildConfig.ChannelCities.ContainsKey(channelId) ? guildConfig.ChannelCities[channelId] : guildConfig.City ?? "";
-            if (!string.IsNullOrEmpty(city)) city = ", " + city;
+            if (!string.IsNullOrEmpty(city)) city = " near " + city;
             return Uri.EscapeDataString(location + city);
         }
 
@@ -785,7 +798,7 @@ namespace PokemonGoRaidBot.Parsing
             
             return builder.Build();
         }
-        public void MakePostWithEmbed(PokemonRaidPost post, out Embed header, out Embed response, out string mentions)
+        public void MakePostWithEmbed(PokemonRaidPost post, out Embed header, out Embed response, out string channel, out string mentions)
         {
             var headerstring = MakePostHeader(post);
             response = MakeResponseEmbed(post, headerstring);
@@ -797,11 +810,11 @@ namespace PokemonGoRaidBot.Parsing
             mentionUserIds.AddRange(post.JoinedUsers.Select(x => x.Id.ToString()).Distinct());
 
 
-            var channel = $"<#{post.FromChannelId}>";
+            channel = $"<#{post.FromChannelId}>";
             //var users = mentionUserIds.Count() > 0 ? $",<@{string.Join(">,<@", mentionUserIds.Distinct())}>" : "";
-            var roles = post.MentionedRoleIds.Count() > 0 ? $",<@&{string.Join(">,<@&", post.MentionedRoleIds.Distinct())}>" : "";
+            mentions = post.MentionedRoleIds.Count() > 0 ? $"<@&{string.Join("><@&", post.MentionedRoleIds.Distinct())}>" : "";
 
-            mentions = channel +/* users +*/ roles;
+            //mentions = channel +/* users +*/ roles;
         }
         public Embed MakeHeaderEmbed(PokemonRaidPost post, string text = null)
         {
