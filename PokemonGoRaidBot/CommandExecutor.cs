@@ -124,7 +124,7 @@ namespace PokemonGoRaidBot
                 post.FullLocation = Parser.GetFullLocation(post.Location, GuildConfig, Message.Channel.Id);
                 post.LatLong = await Parser.GetLocationLatLong(post.FullLocation, (SocketGuildChannel)Message.Channel, Config);
 
-                if (string.IsNullOrWhiteSpace(post.Location) || !post.LatLong.HasValue)
+                if (string.IsNullOrWhiteSpace(post.Location) || post.LatLong == null || !post.LatLong.HasValue)
                 {
                     await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandRaidLocationInvalid"], post.Location, Parser.ToTitleCase(GuildConfig.City)));
                     return;

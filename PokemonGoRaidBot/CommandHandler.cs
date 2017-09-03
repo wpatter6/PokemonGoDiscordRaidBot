@@ -347,7 +347,7 @@ namespace PokemonGoRaidBot
                     if (!post.IsExisting)//it's going to post something and google geocode can take a few secs so we can do the "typing" behavior
                         d = message.Channel.EnterTypingState();
 
-                    if (!post.LatLong.HasValue && !string.IsNullOrWhiteSpace(post.Location))
+                    if ((post.LatLong == null || !post.LatLong.HasValue) && !string.IsNullOrWhiteSpace(post.Location))
                         post.LatLong = await parser.GetLocationLatLong(post.FullLocation, (SocketGuildChannel)message.Channel, Config);
 
                     await MakePost(post, parser);
@@ -481,9 +481,9 @@ namespace PokemonGoRaidBot
                         && parser.CompareLocationStrings(x.Location, post.Location));
 
                 //Lat long comparison, within 30 meters is treated as same
-                if(existing == null && post.LatLong.HasValue && channelPosts.Where(x => x.LatLong.HasValue).Count() > 0)
-                    existing = channelPosts.Where(x => x.LatLong.HasValue && x.PokemonId == (post.PokemonId > 0 ? post.PokemonId : x.PokemonId))
-                        .FirstOrDefault(x => parser.CompareLocationLatLong(x.LatLong.Value, post.LatLong.Value));
+                if(existing == null && post.LatLong != null && post.LatLong.HasValue && channelPosts.Where(x => x.LatLong != null && x.LatLong.HasValue).Count() > 0)
+                    existing = channelPosts.Where(x => x.LatLong != null && x.LatLong.HasValue && x.PokemonId == (post.PokemonId > 0 ? post.PokemonId : x.PokemonId))
+                        .FirstOrDefault(x => parser.CompareLocationLatLong(x.LatLong, post.LatLong));
 
                 //Final fall through, gets latest post in channel either matching pokemon name or user was involved with
                 if (existing == null && string.IsNullOrEmpty(post.Location))//if location exists and doesn't match, not a match
@@ -540,7 +540,7 @@ namespace PokemonGoRaidBot
             foreach (var user in post2.JoinedUsers)
             {
                 if (post1.JoinedUsers.FirstOrDefault(x => x.Id == user.Id) == null)
-                    post1.JoinedUsers.Add(new PokemonRaidJoinedUser(user.Id, post1.GuildId, post1.UniqueId, user.Name, user.PeopleCount));
+                    post1.JoinedUsers.Add(new PokemonRaidJoinedUser(user.Id, post1.GuildId, post1.UniqueId, user.Name, user.PeopleCount, false, false, user.ArriveTime));
                 else if (post2.UserId == user.Id)
                 {
                     var postUser = post1.JoinedUsers.FirstOrDefault(x => x.Id == post2.UserId);

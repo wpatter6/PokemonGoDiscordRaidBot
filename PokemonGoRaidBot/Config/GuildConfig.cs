@@ -14,6 +14,7 @@ namespace PokemonGoRaidBot.Config
             Posts = new List<PokemonRaidPost>();
             PinChannels = new List<ulong>();
             MuteChannels = new List<ulong>();
+            Places = new Dictionary<string, GeoCoordinate>();
         }
         public ulong Id { get; set; }
         public ulong? OutputChannelId { get; set; }
@@ -26,5 +27,6 @@ namespace PokemonGoRaidBot.Config
         public List<PokemonRaidPost> Posts { get; set; }
         public List<ulong> PinChannels { get; set; }
         public List<ulong> MuteChannels { get; set; }
+        public Dictionary<string, GeoCoordinate> Places { get; set; }
     }
 }

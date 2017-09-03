@@ -164,7 +164,7 @@ namespace PokemonGoRaidBot.Parsing
 
             if (latLong.HasValue)
             {
-                result.Location = string.Format("{0}, {1}", latLong.Value.Key, latLong.Value.Value);
+                result.Location = latLong.ToString();
                 result.LatLong = latLong;
             }
             else
@@ -364,6 +364,36 @@ namespace PokemonGoRaidBot.Parsing
             }
             else
             {
+                var hrAndHalfReg = Language.RegularExpressions["timeHourHalf"];
+                if (hrAndHalfReg.IsMatch(message))
+                {
+                    message = hrAndHalfReg.Replace(message, matchedTimeWordReplacement);
+
+                    if (joinReg.IsMatch(message))
+                    {
+                        message = joinReg.Replace(message, matchedWordReplacement);
+                        joinTimeSpan = new TimeSpan(1, 30, 0);
+                    }
+                    else
+                        raidTimeSpan = new TimeSpan(1, 30, 0);
+                    return;
+                }
+
+                var halfHourReg = Language.RegularExpressions["timeHalfHour"];
+                if (halfHourReg.IsMatch(message))
+                {
+                    message = halfHourReg.Replace(message, matchedTimeWordReplacement);
+
+                    if (joinReg.IsMatch(message))
+                    {
+                        message = joinReg.Replace(message, matchedWordReplacement);
+                        joinTimeSpan = new TimeSpan(0, 30, 0);
+                    }
+                    else
+                        raidTimeSpan = new TimeSpan(0, 30, 0);
+                    return;
+                }
+
                 var hrReg = Language.RegularExpressions["timeHour"];
                 if (hrReg.IsMatch(message))
                 {
@@ -418,7 +448,7 @@ namespace PokemonGoRaidBot.Parsing
 
             var result = ParseLocationBase(cleanedMessage);
 
-            var cleanedLocation = result.Replace(",", "").Replace(".", "").Replace("  ", " ").Replace(matchedWordReplacement, "").Trim();
+            var cleanedLocation = Language.RegularExpressions["locationCleanWords"].Replace(result, "").Replace(", ", "").Replace(".", "").Replace("  ", " ").Replace(matchedWordReplacement, "").Trim();
 
             return ToTitleCase(cleanedLocation);
         }
@@ -454,7 +484,10 @@ namespace PokemonGoRaidBot.Parsing
             
             var startReg = Language.RegularExpressions["locationStart"]; //basically "at [foo] [bar].  Not great but decent
             if (startReg.IsMatch(message))
-                return startReg.Match(message).Groups[1].Value;
+            {
+                var match = startReg.Match(message);
+                return match.Groups[2].Value;
+            }
 
             return "";
         }
@@ -492,7 +525,7 @@ namespace PokemonGoRaidBot.Parsing
 
             return false;
         }
-        public bool CompareLocationLatLong(KeyValuePair<double, double> ll1, KeyValuePair<double, double> ll2)
+        public bool CompareLocationLatLong(GeoCoordinate ll1, GeoCoordinate ll2)
         {
             var distance = DistanceBetweenTwoPoints(ll1, ll2);
             return distance < latLongComparisonMaxMeters;
@@ -596,7 +629,7 @@ namespace PokemonGoRaidBot.Parsing
         /// <param name="channel"></param>
         /// <param name="config"></param>
         /// <returns></returns>
-        public async Task<KeyValuePair<double, double>?> GetLocationLatLong(string location, SocketGuildChannel channel, BotConfig config)
+        public async Task<GeoCoordinate> GetLocationLatLong(string location, SocketGuildChannel channel, BotConfig config)
         {
             if (string.IsNullOrEmpty(config.GoogleApiKey)) return null;
 
@@ -621,14 +654,14 @@ namespace PokemonGoRaidBot.Parsing
                 var lat = ((JValue)fullresult.results[0].geometry.location.lat).ToObject<double>();
                 var lng = ((JValue)fullresult.results[0].geometry.location.lng).ToObject<double>();
 
-                return new KeyValuePair<double, double>(lat, lng);
+                return new GeoCoordinate(lat, lng);
             }
             else
             {
                 return null;
             }
         }
-        public KeyValuePair<double, double>? ParseLatLong(ref string message)
+        public GeoCoordinate ParseLatLong(ref string message)
         {
             var reg = Language.RegularExpressions["latLong"];
             if (reg.IsMatch(message))
@@ -637,10 +670,10 @@ namespace PokemonGoRaidBot.Parsing
 
                 message = message.Replace(match.Value, matchedLocationWordReplacement);
 
-                return new KeyValuePair<double, double>(Convert.ToDouble(match.Groups[1].Value + match.Groups[2].Value), Convert.ToDouble(match.Groups[5].Value + match.Groups[6].Value));
+                return new GeoCoordinate(Convert.ToDouble(match.Groups[1].Value + match.Groups[2].Value), Convert.ToDouble(match.Groups[5].Value + match.Groups[6].Value));
             }
 
-            return null;
+            return new GeoCoordinate();
         }
         public string GetFullLocation(string location, GuildConfig guildConfig, ulong channelId)
         {
@@ -650,13 +683,15 @@ namespace PokemonGoRaidBot.Parsing
         }
 
         #region helpers
-        private double DistanceBetweenTwoPoints(KeyValuePair<double, double> ll1, KeyValuePair<double, double> ll2)
+        private double DistanceBetweenTwoPoints(GeoCoordinate ll1, GeoCoordinate ll2)
         {
+            if (!ll1.HasValue || !ll2.HasValue) return double.MaxValue;
+
             var R = 6371e3; // metres
-            var φ1 = ll1.Key / (180 / Math.PI);
-            var φ2 = ll2.Key / (180 / Math.PI);
-            var Δφ = (ll2.Key - ll1.Key) / (180 / Math.PI);
-            var Δλ = (ll2.Value - ll1.Value) / (180 / Math.PI);
+            var φ1 = ll1.Latitude.Value / (180 / Math.PI);
+            var φ2 = ll2.Latitude.Value / (180 / Math.PI);
+            var Δφ = (ll2.Latitude.Value - ll1.Latitude.Value) / (180 / Math.PI);
+            var Δλ = (ll2.Longitude.Value - ll1.Longitude.Value) / (180 / Math.PI);
 
             var a = Math.Sin(Δφ / 2) * Math.Sin(Δφ / 2) +
                     Math.Cos(φ1) * Math.Cos(φ2) *
@@ -842,7 +877,7 @@ namespace PokemonGoRaidBot.Parsing
 
             var location = post.Location;
 
-            if (post.LatLong.HasValue) location = string.Format("[{0}]({1})", location, string.Format(Language.Formats["googleMapLink"], post.LatLong.Value.Key, post.LatLong.Value.Value));
+            if (post.LatLong != null && post.LatLong.HasValue) location = string.Format("[{0}]({1})", location, string.Format(Language.Formats["googleMapLink"], post.LatLong.Latitude, post.LatLong.Longitude));
 
             string response = string.Format(Language.Formats["postHeader"],
                 post.UniqueId,

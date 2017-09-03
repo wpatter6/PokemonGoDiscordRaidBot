@@ -79,7 +79,7 @@ namespace PokemonGoRaidBot.Objects
 
         public string UniqueId;
 
-        public KeyValuePair<double, double>? LatLong;
+        public GeoCoordinate LatLong;
 
         public int[] Color;
         
