@@ -98,6 +98,9 @@
 * `!city [name]` - Will set the city of the current server.  This value gets appended to the location when using the Google geocoding API for better accuracy.
 * `!channelcity [channel name] [city name]` Will set the city of the selected channel to be used in Google geocoding.
 * `!cities` Displays the city configured to the server and each channel.
+* `!place [location] [lat, long*]` Allows a location to be manually added to the server's list.  This allows an admin to set up locations that are commonly used in their area but google maps does not always give a good match.
+* `!places` Displays all locations that have been added to the server's list.
+* `!deleteplace` [location] Removes specified place from the server's list.
 
 ## How to make a new language:
 * Copy the `Languages/en-us.json` file, and modify the values in that file to translated versions.  This will require a basic knowledge of C# format strings and regular expressions.

@@ -348,7 +348,16 @@ namespace PokemonGoRaidBot
                         d = message.Channel.EnterTypingState();
 
                     if ((post.LatLong == null || !post.LatLong.HasValue) && !string.IsNullOrWhiteSpace(post.Location))
-                        post.LatLong = await parser.GetLocationLatLong(post.FullLocation, (SocketGuildChannel)message.Channel, Config);
+                    {
+                        var guildChannel = (SocketGuildChannel)message.Channel;
+
+                        var guildConfig = Config.GetGuildConfig(guildChannel.Guild.Id);
+
+                        if (guildConfig.Places.ContainsKey(post.Location))
+                            post.LatLong = guildConfig.Places[post.Location];
+                        else
+                            post.LatLong = await parser.GetLocationLatLong(post.FullLocation, guildChannel, Config);
+                    }
 
                     await MakePost(post, parser);
 

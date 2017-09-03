@@ -169,7 +169,7 @@ namespace PokemonGoRaidBot.Parsing
             }
             else
             {
-                result.Location = ParseLocation(unmatchedString);
+                result.Location = ParseLocation(unmatchedString, guildConfig);
 
                 if (!string.IsNullOrEmpty(result.Location))
                     result.FullLocation = GetFullLocation(result.Location, guildConfig, message.Channel.Id);
@@ -442,9 +442,16 @@ namespace PokemonGoRaidBot.Parsing
         /// </summary>
         /// <param name="message"></param>
         /// <returns>The string representation of the location</returns>
-        public string ParseLocation(string message)
+        public string ParseLocation(string message, GuildConfig guildConfig)
         {
-            var cleanedMessage = Language.RegularExpressions["locationExcludeWords"].Replace(message, matchedWordReplacement);
+            var cleanedMessage = Language.RegularExpressions["locationExcludeWords"].Replace(message, matchedWordReplacement).ToLower();
+
+            foreach(var place in guildConfig.Places)
+            {
+                var reg = new Regex($@"\b{place.Key}\b");
+                if (reg.IsMatch(cleanedMessage))
+                    return place.Key;
+            }
 
             var result = ParseLocationBase(cleanedMessage);
 
@@ -661,14 +668,14 @@ namespace PokemonGoRaidBot.Parsing
                 return null;
             }
         }
-        public GeoCoordinate ParseLatLong(ref string message)
+        public GeoCoordinate ParseLatLong(ref string message, string replacement = matchedLocationWordReplacement)
         {
             var reg = Language.RegularExpressions["latLong"];
             if (reg.IsMatch(message))
             {
                 var match = reg.Match(message);
 
-                message = message.Replace(match.Value, matchedLocationWordReplacement);
+                message = message.Replace(match.Value, replacement);
 
                 return new GeoCoordinate(Convert.ToDouble(match.Groups[1].Value + match.Groups[2].Value), Convert.ToDouble(match.Groups[5].Value + match.Groups[6].Value));
             }
@@ -781,6 +788,9 @@ namespace PokemonGoRaidBot.Parsing
                 embed.AddField(string.Format("*{0}city [city]", config.Prefix), Language.Strings["helpCity"]);
                 embed.AddField(string.Format("*{0}channelcity [channel name] [city]", config.Prefix), Language.Strings["helpChannelCity"]);
                 embed.AddField(string.Format("*{0}cities", config.Prefix), Language.Strings["helpCities"]);
+                embed.AddField(string.Format("*{0}place", config.Prefix), Language.Strings["helpPlace"]);
+                embed.AddField(string.Format("*{0}deleteplace", config.Prefix), Language.Strings["helpDeletePlace"]);
+                embed.AddField(string.Format("*{0}places", config.Prefix), Language.Strings["helpPlaces"]);
             }
 
             return embed.Build();

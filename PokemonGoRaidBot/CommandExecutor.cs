@@ -50,7 +50,7 @@ namespace PokemonGoRaidBot
 
                 var method = methodInfos.FirstOrDefault(x => x.GetCustomAttributes<RaidBotCommandAttribute>().Where(xx => xx != null && xx.Command == Command[0]).Count() > 0);
 
-                if(method != default(MethodInfo))
+                if (method != default(MethodInfo))
                     await (Task)method.Invoke(this, new object[] { });
                 else
                     await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandUnknown"], Command[0], Config.Prefix));//$"Unknown Command \"{Command[0]}\".  Type {Config.Prefix}help to see valid Commands for this bot.");
@@ -98,9 +98,9 @@ namespace PokemonGoRaidBot
         [RaidBotCommand("raid")]
         private async Task Raid()
         {
-            using(var d = Message.Channel.EnterTypingState())
+            using (var d = Message.Channel.EnterTypingState())
             {
-                if(Command.Count() < 4)
+                if (Command.Count() < 4)
                 {
                     await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandInvalidNumberOfParameters"]);
                     return;
@@ -108,7 +108,7 @@ namespace PokemonGoRaidBot
 
                 var post = Parser.ParsePost(Message, Config);
 
-                if(post.PokemonId == default(int))
+                if (post.PokemonId == default(int))
                 {
                     await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandRaidPokemonInvalid"], Command[1]));
                     return;
@@ -122,11 +122,15 @@ namespace PokemonGoRaidBot
 
                 post.Location = Parser.ToTitleCase(string.Join(" ", Command.Skip(3)));
                 post.FullLocation = Parser.GetFullLocation(post.Location, GuildConfig, Message.Channel.Id);
-                post.LatLong = await Parser.GetLocationLatLong(post.FullLocation, (SocketGuildChannel)Message.Channel, Config);
 
-                if (string.IsNullOrWhiteSpace(post.Location) || post.LatLong == null || !post.LatLong.HasValue)
+                if (GuildConfig.Places.ContainsKey(post.Location))
+                    post.LatLong = GuildConfig.Places[post.Location];
+                else
+                    post.LatLong = await Parser.GetLocationLatLong(post.FullLocation, (SocketGuildChannel)Message.Channel, Config);
+
+                if (string.IsNullOrWhiteSpace(post.Location))
                 {
-                    await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandRaidLocationInvalid"], post.Location, Parser.ToTitleCase(GuildConfig.City)));
+                    await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandRaidLocationInvalid"]);
                     return;
                 }
 
@@ -163,7 +167,7 @@ namespace PokemonGoRaidBot
             }
             else if (Command.Count() >= 3)
             {
-                if(!int.TryParse(Command[2], out number))
+                if (!int.TryParse(Command[2], out number))
                 {
                     if (!int.TryParse(Command[1], out number))
                     {
@@ -177,7 +181,7 @@ namespace PokemonGoRaidBot
                     }
                 }
                 else
-                { 
+                {
                     poke = Command[1];
                     num = Command[2];
                 }
@@ -200,8 +204,8 @@ namespace PokemonGoRaidBot
                 isLess = true;
                 number = Math.Abs(number);
             }
-            
-            if(number == 0 && Command.Count() > 2)
+
+            if (number == 0 && Command.Count() > 2)
             {
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandInvalidNumber"], Command[2]));
                 return;
@@ -228,7 +232,7 @@ namespace PokemonGoRaidBot
                 joinedUser.PeopleCount = number;
 
             if (joinedUser.PeopleCount <= 0) post.JoinedUsers.Remove(joinedUser);
-            
+
             TimeSpan? ts1, ts2;
             Parser.ParseTimespanFull(ref time, out ts1, out ts2);
 
@@ -236,17 +240,17 @@ namespace PokemonGoRaidBot
             Config.Save();
             await Handler.MakePost(post, Parser);
         }
-        
+
         [RaidBotCommand("uj")]
         [RaidBotCommand("un")]
         [RaidBotCommand("unjoin")]
         private async Task UnJoin()
         {
-            if(Command.Count() == 1)
+            if (Command.Count() == 1)
             {
                 var joinedPosts = GuildConfig.Posts.Where(x => x.JoinedUsers.Where(xx => xx.Id == Message.Author.Id).Count() > 0);
                 var tasks = new List<Task>();
-                foreach(var post in joinedPosts)
+                foreach (var post in joinedPosts)
                 {
                     post.JoinedUsers.Remove(post.JoinedUsers.First(x => x.Id == Message.Author.Id));
                     tasks.Add(Handler.MakePost(post, Parser));
@@ -296,7 +300,7 @@ namespace PokemonGoRaidBot
                 }
 
                 var orderedList = list.OrderByDescending(x => x.Id).OrderByDescending(x => x.BossCP);
-                
+
                 var maxBossLength = orderedList.Select(x => x.BossNameFormatted.Length).Max();
                 strings.Add("");
                 foreach (var info in orderedList)
@@ -360,7 +364,7 @@ namespace PokemonGoRaidBot
         [RaidBotCommand("delete")]
         private async Task Delete()
         {
-            if(!string.IsNullOrEmpty(Command[1]) && "all".Equals(Command[1]))
+            if (!string.IsNullOrEmpty(Command[1]) && "all".Equals(Command[1]))
             {
                 foreach (var allpost in GuildConfig.Posts.Where(x => x.UserId == Message.Author.Id))
                 {
@@ -399,7 +403,12 @@ namespace PokemonGoRaidBot
                 return;
             }
             post.Location = Parser.ToTitleCase(string.Join(" ", Command.Skip(2)));
-            post.LatLong = await Parser.GetLocationLatLong(post.Location, (SocketGuildChannel)Message.Channel, Config);
+
+            if (GuildConfig.Places.ContainsKey(post.Location))
+                post.LatLong = GuildConfig.Places[post.Location];
+            else
+                post.LatLong = await Parser.GetLocationLatLong(post.Location, (SocketGuildChannel)Message.Channel, Config);
+
             await Handler.MakePost(post, Parser);
         }
 
@@ -434,7 +443,7 @@ namespace PokemonGoRaidBot
             int timezoneOut = int.MinValue;
             var isvalid = int.TryParse(Command[1], out timezoneOut);
 
-            if(!isvalid || timezoneOut > 12 || timezoneOut < -11)
+            if (!isvalid || timezoneOut > 12 || timezoneOut < -11)
             {
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandInvalidNumber"], Command[1]));
                 return;
@@ -486,7 +495,7 @@ namespace PokemonGoRaidBot
 
             if (foundInfo == null)
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPokemonNotFound"], Command[1]));
-            
+
             if (GuildConfig.PokemonAliases.ContainsKey(foundInfo.Id))
                 GuildConfig.PokemonAliases[foundInfo.Id].Add(Command[2].ToLower());
 
@@ -494,7 +503,7 @@ namespace PokemonGoRaidBot
 
             await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandAliasSuccess"], Command[2].ToLower(), foundInfo.Name));
         }
-        
+
         [RaidBotCommand("removealias")]
         private async Task RemoveAlias()
         {
@@ -502,9 +511,9 @@ namespace PokemonGoRaidBot
             var aresp = "";
 
             var info = Parser.ParsePokemon(Command[1], Config, Guild.Id);
-            
+
             var existing = GuildConfig.PokemonAliases.FirstOrDefault(x => x.Value.Contains(Command[2].ToLower()));
-            if(!existing.Equals(default(KeyValuePair<int, List<string>>)))
+            if (!existing.Equals(default(KeyValuePair<int, List<string>>)))
             {
                 existing.Value.RemoveAll(x => x.Equals(Command[2], StringComparison.OrdinalIgnoreCase));
 
@@ -520,10 +529,10 @@ namespace PokemonGoRaidBot
                     string.Format(Parser.Language.Formats["commandRemoveAliasNotFoundAvaliable"], string.Join(", ", aliases.Select(x => x.Value)))
                     : string.Format(Parser.Language.Formats["commandRemoveAliasNotFoundNone"], info.Name);
             }
-                    
+
             await Handler.MakeCommandMessage(Message.Channel, aresp);
         }
-        
+
         [RaidBotCommand("pinall")]
         private async Task PinAll()
         {
@@ -642,7 +651,7 @@ namespace PokemonGoRaidBot
 
             var str = string.Format("Default: {0}", GuildConfig.City);
 
-            foreach(var city in GuildConfig.ChannelCities)
+            foreach (var city in GuildConfig.ChannelCities)
             {
                 var channel = Guild.GetChannel(city.Key);
                 str += string.Format("\n{0}: {1}", channel.Name, city.Value);
@@ -659,7 +668,7 @@ namespace PokemonGoRaidBot
             if (channel == null) return;
 
             if (!GuildConfig.MuteChannels.Contains(channel.Id))
-            { 
+            {
                 GuildConfig.MuteChannels.Add(channel.Id);
                 Config.Save();
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandMuteSuccess"], channel.Name));//success
@@ -676,7 +685,7 @@ namespace PokemonGoRaidBot
             if (channel == null) return;
 
             if (GuildConfig.MuteChannels.Contains(channel.Id))
-            { 
+            {
                 GuildConfig.MuteChannels.Remove(channel.Id);
                 Config.Save();
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandUnMuteSuccess"], channel.Name));//success
@@ -728,6 +737,80 @@ namespace PokemonGoRaidBot
             else mutestring = string.Format(Parser.Language.Formats["commandMuteListHeader"], mutestring);// "     #[Muted Channels]:" + mutestring;
 
             await Handler.MakeCommandMessage(Message.Channel, mutestring);
+        }
+
+        [RaidBotCommand("place")]
+        private async Task Place()
+        {
+            if (!await CheckAdminAccess()) return;
+
+            if(Command.Count() < 2)
+            {
+                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandInvalidNumberOfParameters"]);
+                return;
+            }
+
+            var cmdstr = string.Join(" ", Command.Skip(1));
+
+            var latlng = Parser.ParseLatLong(ref cmdstr, "");
+
+            var location = cmdstr.Trim();
+
+            if (!string.IsNullOrEmpty(location))
+            {
+                if(latlng == null || !latlng.HasValue)
+                    latlng = await Parser.GetLocationLatLong(location, (SocketGuildChannel)Message.Channel, Config);
+
+                GuildConfig.Places[location] = latlng;
+                Config.Save();
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPlaceSuccess"], location,
+                    latlng != null && latlng.HasValue ? " at " + latlng.ToString() : ""));
+            }
+            else
+            {
+                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandInvalidNumberOfParameters"]);
+                return;
+            }
+        }
+
+
+        [RaidBotCommand("deleteplace")]
+        private async Task DeletePlace()
+        {
+            if (!await CheckAdminAccess()) return;
+
+            if (Command.Count() < 2)
+            {
+                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandInvalidNumberOfParameters"]);
+                return;
+            }
+
+            var cmdstr = string.Join(" ", Command.Skip(1));
+
+            if (!GuildConfig.Places.ContainsKey(cmdstr))
+            {
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandDeletePlaceNotFound"], cmdstr));
+            }
+            else
+            {
+                GuildConfig.Places.Remove(cmdstr);
+                Config.Save();
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandDeletePlaceSuccess"], cmdstr));
+            }
+
+        }
+
+        [RaidBotCommand("places")]
+        private async Task Places()
+        {
+            if (!await CheckAdminAccess()) return;
+            var placestring = "";
+            foreach (var place in GuildConfig.Places)
+            {
+                placestring += string.Format("\n{0}{1}", place.Key, place.Value != null && place.Value.HasValue ? $" ({place.Value})" : "");
+            }
+
+            await Handler.MakeCommandMessage(Message.Channel, placestring);
         }
 
         [RaidBotCommand("raidhelp")]
