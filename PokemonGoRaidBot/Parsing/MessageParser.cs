@@ -883,7 +883,7 @@ namespace PokemonGoRaidBot.Parsing
                 post.UniqueId,
                 string.Format("[{0}]({1})", post.PokemonName, string.Format(Language.Formats["pokemonInfoLink"], post.PokemonId)),
                 !string.IsNullOrEmpty(location) ? string.Format(Language.Formats["postLocation"], location) : "",
-                string.Format(Language.Formats["postEnds"], post.EndDate.AddHours(TimeOffset)),
+                string.Format(!post.HasEndDate ? Language.Formats["postEndsUnsure"] : Language.Formats["postEnds"], post.EndDate.AddHours(TimeOffset)),
                 joinCount > 0 ? string.Format(Language.Formats["postJoined"], joinCount, joinString) : Language.Strings["postNoneJoined"]
                 );
             return response;

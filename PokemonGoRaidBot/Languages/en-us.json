@@ -38,6 +38,7 @@
     "postHeader": "`[{0}]`**{1}** {2}{3}\n{4} ([?](https://github.com/wpatter6/PokemonGoDiscordRaidBot/wiki/How-to-Post-Effectively))",
     "postLocation": " at **{0}**",
     "postEnds": " ends **{0:h:mmt}**",
+    "postEndsUnsure": " *ends before **{0:h:mmt}***",
     "postJoined": "***{0} joined:*** {1}",
     "postRolesTagged": "; Roles: {0}",
     "directMessage": "**{0} {1} {2}**{3} ({4}).",
