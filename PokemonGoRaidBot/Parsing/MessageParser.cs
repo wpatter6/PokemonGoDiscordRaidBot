@@ -414,8 +414,11 @@ namespace PokemonGoRaidBot.Parsing
         /// <returns>The string representation of the location</returns>
         public string ParseLocation(string message)
         {
-            var result = ParseLocationBase(message);
-            var cleanedLocation = Language.RegularExpressions["locationExcludeWords"].Replace(result, "").Replace(",", "").Replace(".", "").Replace("  ", " ").Replace(matchedWordReplacement, "").Trim();
+            var cleanedMessage = Language.RegularExpressions["locationExcludeWords"].Replace(message, matchedWordReplacement);
+
+            var result = ParseLocationBase(cleanedMessage);
+
+            var cleanedLocation = result.Replace(",", "").Replace(".", "").Replace("  ", " ").Replace(matchedWordReplacement, "").Trim();
 
             return ToTitleCase(cleanedLocation);
         }
