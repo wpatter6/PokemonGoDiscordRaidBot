@@ -45,7 +45,7 @@ namespace PokemonGoRaidBot.Objects
 
         public ulong UserId;
 
-        public Dictionary<ulong, PokemonRaidPostOrigin> ChannelMessages = new Dictionary<ulong, PokemonRaidPostOrigin>();
+        public Dictionary<ulong, PokemonRaidPostOwner> ChannelMessages = new Dictionary<ulong, PokemonRaidPostOwner>();
 
         public string Location;//used for display
 

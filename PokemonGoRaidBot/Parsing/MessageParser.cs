@@ -56,12 +56,12 @@ namespace PokemonGoRaidBot.Parsing
                 UserId = message.Author.Id,
                 Color = GetRandomColorRGB(),
                 LastMessageDate = DateTime.Now,
-                ChannelMessages = new Dictionary<ulong, PokemonRaidPostOrigin>(),
+                ChannelMessages = new Dictionary<ulong, PokemonRaidPostOwner>(),
                 EndDate = DateTime.Now + new TimeSpan(0, maxRaidMinutes, 0),
                 MentionedRoleIds = new List<ulong>()
             };
 
-            result.ChannelMessages[message.Channel.Id] = new PokemonRaidPostOrigin(default(ulong), message.Author.Id);
+            result.ChannelMessages[message.Channel.Id] = new PokemonRaidPostOwner(default(ulong), message.Author.Id);
 
             var messageString = message.Content.Replace(" & ", $" {Language.Strings["and"]} ").Replace(" @ ", $" {Language.Strings["at"]} ");
             var words = messageString.Split(' ');
