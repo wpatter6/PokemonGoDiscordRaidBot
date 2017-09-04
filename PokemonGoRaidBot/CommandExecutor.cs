@@ -348,16 +348,15 @@ namespace PokemonGoRaidBot
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[1]));// $"Raid post with Id \"{Command[1]}\" does not exist.");
                 return;
             }
-
-            if (post2.UserId != Message.Author.Id && !IsAdmin)
-            {//post 2 creator or admins can delete -- #2 merges into #1.  Don't want #1 creator to be able to do this or they could (maliciously?) screw up someone else's raid
-                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoPostAccess"]);
-                return;
-            }
+            
 
             Handler.MergePosts(post1, post2);
 
-            Handler.DeletePost(post2);
+            if(!await Handler.DeletePost(post2, Message.Author.Id, !IsAdmin))
+            {
+                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoPostAccess"]);
+                return;
+            }
 
             await Handler.MakePost(post1, Parser);
             Config.Save();
@@ -369,11 +368,10 @@ namespace PokemonGoRaidBot
         {
             if (!string.IsNullOrEmpty(Command[1]) && "all".Equals(Command[1]))
             {
-                foreach (var allpost in GuildConfig.Posts.Where(x => x.UserId == Message.Author.Id))
+                foreach (var allpost in GuildConfig.Posts)
                 {
-                    allpost.EndDate = DateTime.MinValue;
+                    await Handler.DeletePost(allpost, Message.Author.Id, false);
                 }
-                Handler.PurgePosts();
                 return;
             }
             var post = GetPost(Command[1]);//GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[1]);
@@ -382,12 +380,14 @@ namespace PokemonGoRaidBot
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[1]));//"Post with Unique Id \"{Command[1]}\" not found.");
                 return;
             }
-            if (post.UserId != Message.Author.Id && !IsAdmin)//post creators or admins can delete
+            var b = await Handler.DeletePost(post, Message.Author.Id, IsAdmin);
+
+            if (!b)//post creators or admins can delete
             {
                 await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoPostAccess"]);
                 return;
             }
-            Handler.DeletePost(post);
+
         }
 
         [RaidBotCommand("loc")]

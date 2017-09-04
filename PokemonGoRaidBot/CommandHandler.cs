@@ -111,8 +111,7 @@ namespace PokemonGoRaidBot
             {
                 if(arg3.Emote.Name == "👎")//thumbs down will be quick way to delete a raid by poster/admin
                 {
-                    if(user.Id == post.UserId || user.GuildPermissions.Administrator || user.GuildPermissions.ManageGuild)
-                        DeletePost(post);
+                    await DeletePost(post, user.Id, user.GuildPermissions.Administrator || user.GuildPermissions.ManageGuild);
                 }
                 else
                 {
@@ -291,9 +290,9 @@ namespace PokemonGoRaidBot
                             var fromChannel = GetChannel(channelMessage.Key);
 
 
-                            if (channelMessage.Value != default(ulong))
+                            if (channelMessage.Value.MessageId != default(ulong))
                             {
-                                var m1 = new IMessage[] { await fromChannel.GetMessageAsync(channelMessage.Value) };
+                                var m1 = new IMessage[] { await fromChannel.GetMessageAsync(channelMessage.Value.MessageId) };
 
                                 if (m1.Count() > 0 && m1[0] != null)
                                 {
@@ -418,9 +417,9 @@ namespace PokemonGoRaidBot
 
                         var fromChannelMessage = headerEmbed.Description;
                         
-                        if (channelMessage.Value != default(ulong))
+                        if (channelMessage.Value.MessageId != default(ulong))
                         {
-                            var messageResult1 = (IUserMessage)await fromChannel.GetMessageAsync(channelMessage.Value);
+                            var messageResult1 = (IUserMessage)await fromChannel.GetMessageAsync(channelMessage.Value.MessageId);
                             if(messageResult1 != null)
                             {
                                 results.Add(messageResult1);
@@ -451,7 +450,7 @@ namespace PokemonGoRaidBot
 
                 foreach (var newMessage in newMessages)
                 {
-                    post.ChannelMessages[newMessage.Key] = newMessage.Value;
+                    post.ChannelMessages[newMessage.Key].MessageId = newMessage.Value;
                 }
 
                 if (outputChannel != null)
@@ -635,10 +634,54 @@ namespace PokemonGoRaidBot
         /// Delete a post from both chat and the list.
         /// </summary>
         /// <param name="post"></param>
-        public void DeletePost(PokemonRaidPost post)
+        public async Task<bool> DeletePost(PokemonRaidPost post, ulong userId, bool isAdmin)
         {
-            post.EndDate = DateTime.MinValue;
-            PurgePosts();
+            if (isAdmin)
+            {
+                post.EndDate = DateTime.MinValue;
+                PurgePosts();
+                return true;
+            }
+
+            var delChannels = new List<ulong>();
+            var delMessages = new List<IMessage>();
+
+            foreach(var channelMessage in post.ChannelMessages)
+            {
+                if(channelMessage.Value.UserId != userId)
+                    continue;
+
+                var channel = bot.GetChannel(channelMessage.Key);
+
+                if(channel != null && channel is ISocketMessageChannel)
+                {
+                    var message = await ((ISocketMessageChannel)channel).GetMessageAsync(channelMessage.Value.MessageId);
+                    
+                    delChannels.Add(channelMessage.Key);
+                    delMessages.Add(message);
+                }
+            }
+
+            if(delChannels.Count() == post.ChannelMessages.Count())//poster was the only one posting, get rid of all
+            {
+                post.EndDate = DateTime.MinValue;
+                PurgePosts();
+                return true;
+            }
+
+            foreach(var channel in delChannels)
+            {
+                post.ChannelMessages.Remove(channel);
+            }
+
+            var tasks = new List<Task>();
+            foreach(var message in delMessages)
+            {
+                tasks.Add(message.DeleteAsync());
+            }
+            Task.WaitAll(tasks.ToArray());
+            
+            return delChannels.Count() > 0;
         }
         /// <summary>
         /// Posts a message from a command into chat.

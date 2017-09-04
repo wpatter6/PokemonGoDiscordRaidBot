@@ -48,11 +48,12 @@ namespace PokemonGoRaidBot.Parsing
         {
             var regList = (JObject)Language.regularExpressions;
             var results = new List<string>();
-            foreach (var reg in regList)
+
+            foreach(var key in keys)
             {
-                if(keys.Contains(reg.Key))
+                if(regList[key] != null)
                 {
-                    results.Add((string)reg.Value);
+                    results.Add((string)regList[key]);
                 }
             }
             

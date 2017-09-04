@@ -55,14 +55,13 @@ namespace PokemonGoRaidBot.Parsing
                 PostDate = DateTime.Now,
                 UserId = message.Author.Id,
                 Color = GetRandomColorRGB(),
-                User = message.Author.Username,
                 LastMessageDate = DateTime.Now,
-                ChannelMessages = new Dictionary<ulong, ulong>(),
+                ChannelMessages = new Dictionary<ulong, PokemonRaidPostOrigin>(),
                 EndDate = DateTime.Now + new TimeSpan(0, maxRaidMinutes, 0),
                 MentionedRoleIds = new List<ulong>()
             };
 
-            result.ChannelMessages[message.Channel.Id] = default(ulong);
+            result.ChannelMessages[message.Channel.Id] = new PokemonRaidPostOrigin(default(ulong), message.Author.Id);
 
             var messageString = message.Content.Replace(" & ", $" {Language.Strings["and"]} ").Replace(" @ ", $" {Language.Strings["at"]} ");
             var words = messageString.Split(' ');
@@ -495,7 +494,7 @@ namespace PokemonGoRaidBot.Parsing
             if (startReg.IsMatch(message))
             {
                 var match = startReg.Match(message);
-                return match.Groups[2].Value;
+                return Language.RegularExpressions["locationStartPre"].Replace(match.Groups[2].Value, "", 1);
             }
 
             return "";
@@ -722,14 +721,17 @@ namespace PokemonGoRaidBot.Parsing
         {
             var result = new List<string>();
             var strs = str.Split(' ');
+            var i = 0;
             foreach (var word in strs)
             {
-                if (Language.RegularExpressions["smallWords"].IsMatch(word))
+                if (i > 0 && Language.RegularExpressions["smallWords"].IsMatch(word))
                     result.Add(word);
                 else if (word.Length > 1)
                     result.Add(char.ToUpper(word[0]) + word.Substring(1));
                 else
                     result.Add(word.ToUpperInvariant());
+
+                i++;
             }
 
             return string.Join(" ", result);

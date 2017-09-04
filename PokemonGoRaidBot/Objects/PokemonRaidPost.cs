@@ -41,11 +41,11 @@ namespace PokemonGoRaidBot.Objects
 
         public bool HasEndDate;
         
-        public string User;
+        //public string User;
 
         public ulong UserId;
 
-        public Dictionary<ulong, ulong> ChannelMessages = new Dictionary<ulong, ulong>();
+        public Dictionary<ulong, PokemonRaidPostOrigin> ChannelMessages = new Dictionary<ulong, PokemonRaidPostOrigin>();
 
         public string Location;//used for display
 
