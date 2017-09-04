@@ -40,14 +40,12 @@ namespace PokemonGoRaidBot.Objects
         }
 
         public bool HasEndDate;
-
-        public bool Pin;
         
         public string User;
 
         public ulong UserId;
 
-        public ulong MessageId;
+        public Dictionary<ulong, ulong> ChannelMessages = new Dictionary<ulong, ulong>();
 
         public string Location;//used for display
 
@@ -72,8 +70,6 @@ namespace PokemonGoRaidBot.Objects
         public ObservableCollection<PokemonRaidJoinedUser> JoinedUsers = new ObservableCollection<PokemonRaidJoinedUser>();
 
         public ulong GuildId;
-
-        public ulong FromChannelId;
 
         public ulong OutputChannelId;
 

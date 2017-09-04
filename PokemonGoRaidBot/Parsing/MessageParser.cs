@@ -57,12 +57,13 @@ namespace PokemonGoRaidBot.Parsing
                 Color = GetRandomColorRGB(),
                 User = message.Author.Username,
                 LastMessageDate = DateTime.Now,
-                FromChannelId = message.Channel.Id,
-                Pin = guildConfig.PinChannels.Contains(message.Channel.Id),
+                ChannelMessages = new Dictionary<ulong, ulong>(),
                 EndDate = DateTime.Now + new TimeSpan(0, maxRaidMinutes, 0),
                 MentionedRoleIds = new List<ulong>()
             };
-            
+
+            result.ChannelMessages[message.Channel.Id] = default(ulong);
+
             var messageString = message.Content.Replace(" & ", $" {Language.Strings["and"]} ").Replace(" @ ", $" {Language.Strings["at"]} ");
             var words = messageString.Split(' ');
             
@@ -87,21 +88,21 @@ namespace PokemonGoRaidBot.Parsing
                 {
                     var roleId = Convert.ToUInt64(roleReg.Match(word).Groups[1].Value);
                     cleanedword = message.MentionedRoles.FirstOrDefault(x => x.Id == roleId)?.Name ?? cleanedword;
-                    messageString = messageString.Replace(word, cleanedword);//This must be done so mentions display properly in embed with android
+                    messageString = messageString.Replace(word, "@" + cleanedword);//This must be done so mentions display properly in embed with android
                     isMention = true;
                 }
                 else if (userReg.IsMatch(word))
                 {
                     var userId = Convert.ToUInt64(userReg.Match(word).Groups[1].Value);
                     cleanedword = message.MentionedUsers.FirstOrDefault(x => x.Id == userId)?.Username ?? cleanedword;
-                    messageString = messageString.Replace(word, cleanedword);
+                    messageString = messageString.Replace(word, "@" + cleanedword);
                     isMention = true;
                 }
                 else if (channelReg.IsMatch(word))
                 {
                     var channelId = Convert.ToUInt64(channelReg.Match(word).Groups[1].Value);
                     cleanedword = message.MentionedChannels.FirstOrDefault(x => x.Id == channelId)?.Name ?? cleanedword;
-                    messageString = messageString.Replace(word, cleanedword);
+                    messageString = messageString.Replace(word, "#" + cleanedword);
                     isMention = true;
                 }
 
@@ -175,7 +176,7 @@ namespace PokemonGoRaidBot.Parsing
                     result.FullLocation = GetFullLocation(result.Location, guildConfig, message.Channel.Id);
             }
 
-            result.Responses.Add(new PokemonMessage(message.Author.Id, message.Author.Username, messageString, DateTime.Now));
+            result.Responses.Add(new PokemonMessage(message.Author.Id, message.Author.Username, messageString, DateTime.Now, message.Channel.Name));
 
             var mention = ((SocketGuildChannel)message.Channel).Guild.Roles.FirstOrDefault(x => x.Name == result.PokemonName);
             if (mention != default(SocketRole) && !message.MentionedRoles.Contains(mention))//avoid double notification
@@ -202,9 +203,10 @@ namespace PokemonGoRaidBot.Parsing
         /// <returns></returns>
         public PokemonInfo ParsePokemon(string name, BotConfig config, ulong guildId)
         {
+
             var cleanedName = Regex.Replace(name, @"\W", "").ToLower();//never want any special characters in string
 
-            if (cleanedName.Length < 3) return null;
+            if (cleanedName.Length < 3 || Language.RegularExpressions["pokemonTooShort"].IsMatch(name)) return null;
 
             var guildConfig = config.GetGuildConfig(guildId);
 
@@ -268,7 +270,7 @@ namespace PokemonGoRaidBot.Parsing
                     return;
             }
 
-            var actualRegStart = Language.RegularExpressions["timeActualStart"];
+            var actualRegStart = Language.CombineRegex(" ", "timeActualStartPre", "timeActualStart");
             if (actualRegStart.IsMatch(message))
             {
                 var matches = actualRegStart.Matches(message).Cast<Match>();
@@ -488,8 +490,8 @@ namespace PokemonGoRaidBot.Parsing
 
                 return groups[1].Value.Replace($" {groups[3].Value} ", $" {Language.Strings["and"]} ");
             }
-            
-            var startReg = Language.RegularExpressions["locationStart"]; //basically "at [foo] [bar].  Not great but decent
+
+            var startReg = Language.CombineRegex(" ", "locationStartPre", "locationStart");//basically "at [foo] [bar].
             if (startReg.IsMatch(message))
             {
                 var match = startReg.Match(message);
@@ -532,11 +534,12 @@ namespace PokemonGoRaidBot.Parsing
 
             return false;
         }
-        public bool CompareLocationLatLong(GeoCoordinate ll1, GeoCoordinate ll2)
-        {
-            var distance = DistanceBetweenTwoPoints(ll1, ll2);
-            return distance < latLongComparisonMaxMeters;
-        }
+        //Not being used right now -- needs to happen *after* google lat/long
+        //public bool CompareLocationLatLong(GeoCoordinate ll1, GeoCoordinate ll2)
+        //{
+        //    var distance = DistanceBetweenTwoPoints(ll1, ll2);
+        //    return distance < latLongComparisonMaxMeters;
+        //}
         public int? ParseJoinedUsersCount(ref string message, out bool isMore, out bool isLess)
         {
             isLess = isMore = false;
@@ -692,7 +695,7 @@ namespace PokemonGoRaidBot.Parsing
         #region helpers
         private double DistanceBetweenTwoPoints(GeoCoordinate ll1, GeoCoordinate ll2)
         {
-            if (!ll1.HasValue || !ll2.HasValue) return double.MaxValue;
+            if (ll1 == null || !ll1.HasValue || ll2 == null || !ll2.HasValue) return double.MaxValue;
 
             var R = 6371e3; // metres
             var φ1 = ll1.Latitude.Value / (180 / Math.PI);
@@ -828,7 +831,7 @@ namespace PokemonGoRaidBot.Parsing
         /// </summary>
         /// <param name="post"></param>
         /// <returns></returns>
-        public Embed MakeResponseEmbed(PokemonRaidPost post, string header)
+        public Embed MakeResponseEmbed(PokemonRaidPost post, GuildConfig guildConfig, string header)
         {
             var builder = new EmbedBuilder();
 
@@ -837,19 +840,27 @@ namespace PokemonGoRaidBot.Parsing
             builder.WithDescription(header);
             builder.WithUrl(string.Format(Language.Formats["pokemonInfoLink"], post.PokemonId));
             
-            builder.WithThumbnailUrl(string.Format(Language.Formats["imageUrlLargePokemon"], post.PokemonId));
+            builder.WithThumbnailUrl(string.Format(Language.Formats["imageUrlLargePokemon"], post.PokemonId.ToString().PadLeft(3, '0')));
 
-            foreach (var message in post.Responses.OrderBy(x => x.MessageDate).Skip(Math.Max(0, post.Responses.Count() - 24)))//max fields is 25
+            foreach (var message in post.Responses.OrderBy(x => x.MessageDate).Skip(Math.Max(0, post.Responses.Count() - 10)))//max fields is 25
             {
-                builder.AddField(string.Format("{0:h:mm} {1}:", message.MessageDate, message.Username), message.Content);
+                builder.AddField(string.Format(Language.Formats["responseInfo"], message.MessageDate.AddHours(TimeOffset), message.ChannelName, message.Username), message.Content);
             }
             
             return builder.Build();
         }
-        public void MakePostWithEmbed(PokemonRaidPost post, out Embed header, out Embed response, out string channel, out string mentions)
+        /// <summary>
+        /// Creates the post itself for all possible channel outputs
+        /// </summary>
+        /// <param name="post"></param>
+        /// <param name="header"></param>
+        /// <param name="response"></param>
+        /// <param name="channel"></param>
+        /// <param name="mentions"></param>
+        public void MakePostWithEmbed(PokemonRaidPost post, GuildConfig guildConfig, out Embed header, out Embed response, out string channel, out string mentions)
         {
             var headerstring = MakePostHeader(post);
-            response = MakeResponseEmbed(post, headerstring);
+            response = MakeResponseEmbed(post, guildConfig, headerstring);
             header = MakeHeaderEmbed(post, headerstring);
 
             var joinedUserIds = post.JoinedUsers.Select(x => x.Id);
@@ -858,12 +869,18 @@ namespace PokemonGoRaidBot.Parsing
             mentionUserIds.AddRange(post.JoinedUsers.Select(x => x.Id.ToString()).Distinct());
 
 
-            channel = $"<#{post.FromChannelId}>";
+            channel = $"<#{string.Join(">, <#", post.ChannelMessages.Keys)}>";
             //var users = mentionUserIds.Count() > 0 ? $",<@{string.Join(">,<@", mentionUserIds.Distinct())}>" : "";
-            mentions = post.MentionedRoleIds.Count() > 0 ? $"<@&{string.Join("><@&", post.MentionedRoleIds.Distinct())}>" : "";
+            mentions = post.MentionedRoleIds.Count() > 0 ? $"<@&{string.Join(">, <@&", post.MentionedRoleIds.Distinct())}>" : "";
 
             //mentions = channel +/* users +*/ roles;
         }
+        /// <summary>
+        /// Makes the header embed
+        /// </summary>
+        /// <param name="post"></param>
+        /// <param name="text"></param>
+        /// <returns></returns>
         public Embed MakeHeaderEmbed(PokemonRaidPost post, string text = null)
         {
             if (string.IsNullOrEmpty(text)) text = MakePostHeader(post);
@@ -871,10 +888,8 @@ namespace PokemonGoRaidBot.Parsing
             headerembed.WithColor(post.Color[0], post.Color[1], post.Color[2]);
             headerembed.WithUrl(string.Format(Language.Formats["pokemonInfoLink"], post.PokemonId));
             headerembed.WithDescription(Language.RegularExpressions["discordChannel"].Replace(text, "").Replace(" in ", " ").Replace("  ", " "));
-
-            var pokemonString = post.PokemonId.ToString().PadLeft(3, '0');
-
-            headerembed.WithThumbnailUrl(string.Format(Language.Formats["imageUrlSmallPokemon"], pokemonString));
+            
+            headerembed.WithThumbnailUrl(string.Format(Language.Formats["imageUrlSmallPokemon"], post.PokemonId.ToString().PadLeft(3, '0')));
             
             return headerembed.Build();
         }

@@ -237,8 +237,9 @@ namespace PokemonGoRaidBot
             Parser.ParseTimespanFull(ref time, out ts1, out ts2);
 
             joinedUser.ArriveTime = (DateTime.Now + (ts1 ?? ts2)) ?? joinedUser.ArriveTime;
-            Config.Save();
+
             await Handler.MakePost(post, Parser);
+            Config.Save();
         }
 
         [RaidBotCommand("uj")]
@@ -355,9 +356,11 @@ namespace PokemonGoRaidBot
             }
 
             Handler.MergePosts(post1, post2);
+
             Handler.DeletePost(post2);
 
             await Handler.MakePost(post1, Parser);
+            Config.Save();
         }
 
         [RaidBotCommand("d")]
@@ -410,6 +413,7 @@ namespace PokemonGoRaidBot
                 post.LatLong = await Parser.GetLocationLatLong(post.Location, (SocketGuildChannel)Message.Channel, Config);
 
             await Handler.MakePost(post, Parser);
+            Config.Save();
         }
 
         [RaidBotCommand("h")]

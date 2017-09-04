@@ -52,15 +52,11 @@ namespace PokemonGoRaidBot
         {
             await commands.AddModulesAsync(Assembly.GetEntryAssembly());
         }
-
-        //private async Task ReactionsCleared(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2)
-        //{
-        //    if (!arg1.HasValue) return;
-        //    IUserMessage message = arg1.Value;
-        //}
-
+        
         private async Task ReactionRemoved(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2, SocketReaction arg3)
         {
+            if (arg3.UserId == bot.CurrentUser.Id) return;
+
             var message = await arg2.GetMessageAsync(arg1.Id);
             if (message == null || string.IsNullOrEmpty(message.Content) || !(arg2 is SocketGuildChannel) || arg3.Emote.Name == "👎") return;
             var guildConfig = Config.GetGuildConfig(((SocketGuildChannel)arg2).Guild.Id);
@@ -79,15 +75,24 @@ namespace PokemonGoRaidBot
 
                     if(removeUser.PeopleCount <= 0)
                         post.JoinedUsers.Remove(removeUser);
+                    
+                    var messages = await MakePost(post, parser);
+                    var tasks = new List<Task>();
+                    foreach (var resultmessage in messages.Where(x => x.Channel.Id != message.Channel.Id))
+                    {
+                        tasks.Add(resultmessage.RemoveReactionAsync(arg3.Emote, bot.CurrentUser));
+                    }
 
+                    Task.WaitAll(tasks.ToArray());
                     Config.Save();
-                    await MakePost(post, parser);
                 }
             }
         }
 
         public async Task ReactionAdded(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2, SocketReaction arg3)
         {
+            if (arg3.UserId == bot.CurrentUser.Id) return;
+
             var message = await arg2.GetMessageAsync(arg1.Id);
             if (message == null || !(arg2 is SocketGuildChannel)) return;
 
@@ -118,8 +123,16 @@ namespace PokemonGoRaidBot
                     {
                         post.JoinedUsers.Add(new PokemonRaidJoinedUser(user.Id, guildConfig.Id, post.UniqueId, user.Username, 1));
                     }
+
+                    var messages = await MakePost(post, parser);
+                    var tasks = new List<Task>();
+                    foreach(var resultmessage in messages.Where(x=>x.Channel.Id != message.Channel.Id))
+                    {
+                        tasks.Add(resultmessage.AddReactionAsync(arg3.Emote));
+                    }
+
+                    Task.WaitAll(tasks.ToArray());
                     Config.Save();
-                    await MakePost(post, parser);
                 }
             }
         }
@@ -247,16 +260,13 @@ namespace PokemonGoRaidBot
 
                     foreach (var post in deletedPosts)
                     {
-                        var outputChannel = GetChannel(post.OutputChannelId);
-                        var fromChannel = GetChannel(post.FromChannelId);
-
                         var messages = new List<IMessage>();
-
+                        
                         if (post.OutputMessageId != default(ulong))
                         {
+                            var outputChannel = GetChannel(post.OutputChannelId);
                             try
                             {
-
                                 var m = new IMessage[] { await outputChannel.GetMessageAsync(post.OutputMessageId) };
                                 messages.AddRange(m.Where(x => x != null));
                             }
@@ -264,33 +274,40 @@ namespace PokemonGoRaidBot
                             {
                                 DoError(e);
                             }
-                        }
-                        try
-                        {
-                            if (messages.Count() > 0) await outputChannel.DeleteMessagesAsync(messages);
-                            posts.Remove(post);
-                        }
-                        catch (Exception e)
-                        {
-                            DoError(e);
-                        }
 
-                        if (post.MessageId > 0)
-                        {
-                            var m1 = new IMessage[] { await fromChannel.GetMessageAsync(post.MessageId) };
-
-                            if (m1.Count() > 0 && m1[0] != null)
+                            try
                             {
-                                try
-                                {
-                                    if (m1[0] is SocketUserMessage && ((SocketUserMessage)m1[0]).IsPinned)
-                                        await ((SocketUserMessage)m1[0]).UnpinAsync();
+                                if (messages.Count() > 0) await outputChannel.DeleteMessagesAsync(messages);
+                                posts.Remove(post);
+                            }
+                            catch (Exception e)
+                            {
+                                DoError(e);
+                            }
+                        }
 
-                                    await m1[0].DeleteAsync();
-                                }
-                                catch (Exception e)
+                        foreach (var channelMessage in post.ChannelMessages)
+                        {
+                            var fromChannel = GetChannel(channelMessage.Key);
+
+
+                            if (channelMessage.Value != default(ulong))
+                            {
+                                var m1 = new IMessage[] { await fromChannel.GetMessageAsync(channelMessage.Value) };
+
+                                if (m1.Count() > 0 && m1[0] != null)
                                 {
-                                    DoError(e);
+                                    try
+                                    {
+                                        if (m1[0] is SocketUserMessage && ((SocketUserMessage)m1[0]).IsPinned)
+                                            await ((SocketUserMessage)m1[0]).UnpinAsync();
+
+                                        await m1[0].DeleteAsync();
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        DoError(e);
+                                    }
                                 }
                             }
                         }
@@ -360,6 +377,7 @@ namespace PokemonGoRaidBot
                     }
 
                     await MakePost(post, parser);
+                    Config.Save();
 
                     if (d != null) d.Dispose();
                 }
@@ -375,61 +393,86 @@ namespace PokemonGoRaidBot
         /// </summary>
         /// <param name="post"></param>
         /// <param name="outputchannel"></param>
-        public async Task MakePost(PokemonRaidPost post, MessageParser parser)
+        public async Task<List<IUserMessage>> MakePost(PokemonRaidPost post, MessageParser parser)
         {
+            var results = new List<IUserMessage>();
             try
             {
-                var fromChannel = GetChannel(post.FromChannelId);
+                var newMessages = new Dictionary<ulong, ulong>();
+                var channelNum = 0;
                 var outputChannel = GetChannel(post.OutputChannelId);
-
-                //var messages = parser.MakePostStrings(post);
+                //IUserMessage messageResult;
                 Embed headerEmbed, responsesEmbed;
                 string mentionString, channelString;
+                var guildConfig = Config.GetGuildConfig(post.GuildId);
 
-                parser.MakePostWithEmbed(post, out headerEmbed, out responsesEmbed, out channelString, out mentionString);
-
-                IUserMessage messageResult;
-                if (post.Pin && fromChannel != null)
+                parser.MakePostWithEmbed(post, guildConfig, out headerEmbed, out responsesEmbed, out channelString, out mentionString);
+                
+                foreach (var channelMessage in post.ChannelMessages)
                 {
-                    var fromChannelMessage = headerEmbed.Description;
-                    if (post.MessageId != default(ulong))
-                    {
-                        messageResult = (IUserMessage)await fromChannel.GetMessageAsync(post.MessageId);
-                        
-                        //only modify post if something changed
-                        if (!messageResult?.Embeds.FirstOrDefault()?.Description.Equals(fromChannelMessage, StringComparison.OrdinalIgnoreCase) ?? true)
-                            await messageResult.ModifyAsync(x => { x.Content = mentionString; x.Embed = headerEmbed; });
-                    }
-                    else
-                    {
-                        messageResult = await fromChannel.SendMessageAsync(mentionString, false, headerEmbed);
-                        try
-                        {
-                            await messageResult.PinAsync();
-                        }
-                        catch (Exception e)
-                        {
-                            DoError(e);
-                        }
-                        post.MessageId = messageResult.Id;
-
-                    }
-
-                }
-                if(outputChannel != null)
-                {
+                    var fromChannel = GetChannel(channelMessage.Key);
                     
-                    if(post.OutputMessageId != default(ulong))
+                    if (fromChannel != null && fromChannel is SocketGuildChannel)
                     {
-                        messageResult = (IUserMessage)await outputChannel.GetMessageAsync(post.OutputMessageId);
-                        await messageResult.ModifyAsync(x => { x.Embed = responsesEmbed; x.Content = channelString; });
+                        if (!guildConfig.PinChannels.Contains(fromChannel.Id)) continue;
+
+                        var fromChannelMessage = headerEmbed.Description;
+                        
+                        if (channelMessage.Value != default(ulong))
+                        {
+                            var messageResult1 = (IUserMessage)await fromChannel.GetMessageAsync(channelMessage.Value);
+                            if(messageResult1 != null)
+                            {
+                                results.Add(messageResult1);
+
+                                //only modify post if something changed
+                                if (!messageResult1.Embeds.FirstOrDefault()?.Description.Equals(fromChannelMessage, StringComparison.OrdinalIgnoreCase) ?? true)
+                                    await messageResult1.ModifyAsync(x => { x.Content = channelNum == 0 ? mentionString : " "; x.Embed = headerEmbed; });
+                            }
+                        }
+                        else
+                        {
+                            var messageResult2 = await fromChannel.SendMessageAsync(channelNum == 0 ? mentionString : " ", false, headerEmbed);
+                            results.Add(messageResult2);
+                            try
+                            {
+                                var options = new RequestOptions();
+                                await messageResult2.PinAsync();
+                            }
+                            catch (Exception e)
+                            {
+                                DoError(e);
+                            }
+                            newMessages[channelMessage.Key] = messageResult2.Id;
+                        }
+                    }
+                    channelNum++;
+                }
+
+                foreach (var newMessage in newMessages)
+                {
+                    post.ChannelMessages[newMessage.Key] = newMessage.Value;
+                }
+
+                if (outputChannel != null)
+                {
+
+                    if (post.OutputMessageId != default(ulong))
+                    {
+                        var messageResult3 = (IUserMessage)await outputChannel.GetMessageAsync(post.OutputMessageId);
+                        if(messageResult3 != null)
+                        {
+                            results.Add(messageResult3);
+                            await messageResult3.ModifyAsync(x => { x.Embed = responsesEmbed; x.Content = channelString; });
+                        }
                     }
                     else
                     {
 
-                        messageResult = await outputChannel.SendMessageAsync(channelString, false, responsesEmbed);
+                        var messageResult4 = await outputChannel.SendMessageAsync(channelString, false, responsesEmbed);
+                        results.Add(messageResult4);
 
-                        post.OutputMessageId = messageResult.Id;
+                        post.OutputMessageId = messageResult4.Id;
                     }
                 }
             }
@@ -437,6 +480,7 @@ namespace PokemonGoRaidBot
             {
                 DoError(e);
             }
+            return results;
         }
         /// <summary>
         /// Use this to notify users when join count changes
@@ -469,7 +513,7 @@ namespace PokemonGoRaidBot
         public PokemonRaidPost AddPost(PokemonRaidPost post, MessageParser parser, SocketUserMessage message, bool add = true, bool force = false)
         {
             var guildConfig = Config.GetGuildConfig(post.GuildId);
-            var channelPosts = guildConfig.Posts.Where(x => x.FromChannelId == post.FromChannelId);
+            var channelPosts = guildConfig.Posts.Where(x => x.ChannelMessages.Keys.Where(xx => post.ChannelMessages.Keys.Contains(xx)).Count() > 0);
             PokemonRaidPost existing = null;
             if (!force)
             {
@@ -477,7 +521,7 @@ namespace PokemonGoRaidBot
                 foreach (var mentionedUser in message.MentionedUsers)
                 {
                     existing = guildConfig.Posts.OrderByDescending(x => x.Responses.Max(xx => xx.MessageDate))
-                        .FirstOrDefault(x => x.FromChannelId == message.Channel.Id
+                        .FirstOrDefault(x => x.ChannelMessages.Keys.Contains(message.Channel.Id)
                             && (x.Responses.Where(xx => xx.UserId == mentionedUser.Id).Count() > 0 || x.JoinedUsers.Where(xx => xx.Id == mentionedUser.Id).Count() > 0)
                             && x.PokemonId == (post.PokemonId == 0 ? x.PokemonId : post.PokemonId));
 
@@ -490,9 +534,14 @@ namespace PokemonGoRaidBot
                         && parser.CompareLocationStrings(x.Location, post.Location));
 
                 //Lat long comparison, within 30 meters is treated as same
-                if(existing == null && post.LatLong != null && post.LatLong.HasValue && channelPosts.Where(x => x.LatLong != null && x.LatLong.HasValue).Count() > 0)
-                    existing = channelPosts.Where(x => x.LatLong != null && x.LatLong.HasValue && x.PokemonId == (post.PokemonId > 0 ? post.PokemonId : x.PokemonId))
-                        .FirstOrDefault(x => parser.CompareLocationLatLong(x.LatLong, post.LatLong));
+                //if(existing == null && post.LatLong != null && post.LatLong.HasValue && channelPosts.Where(x => x.LatLong != null && x.LatLong.HasValue).Count() > 0)
+                //    existing = channelPosts.Where(x => x.LatLong != null && x.LatLong.HasValue && x.PokemonId == (post.PokemonId > 0 ? post.PokemonId : x.PokemonId))
+                //        .FirstOrDefault(x => parser.CompareLocationLatLong(x.LatLong, post.LatLong));
+
+                //Seeing if location and pokemon matches another channel's
+                if (existing == null && !string.IsNullOrEmpty(post.Location))
+                    existing = guildConfig.Posts.FirstOrDefault(x => x.PokemonId == post.PokemonId 
+                        && (parser.CompareLocationStrings(x.Location, post.Location)/* || parser.CompareLocationLatLong(x.LatLong, post.LatLong)*/));
 
                 //Final fall through, gets latest post in channel either matching pokemon name or user was involved with
                 if (existing == null && string.IsNullOrEmpty(post.Location))//if location exists and doesn't match, not a match
@@ -501,7 +550,7 @@ namespace PokemonGoRaidBot
                         .OrderByDescending(x => x.PostDate)
                         .OrderBy(x => x.PokemonId == post.PokemonId ? 0 : 1)//pokemon name match takes priority if the user responded to multiple raids in the channel
                         .FirstOrDefault(x =>
-                            x.FromChannelId == post.FromChannelId//Posted in the same channel
+                            x.ChannelMessages.Keys.Intersect(post.ChannelMessages.Keys).Count() > 0//Posted in the same channel
                             && ((post.PokemonId != default(int) && x.PokemonId == post.PokemonId)//Either pokemon matches OR
                                 || (post.PokemonId == default(int) && (x.Responses.Where(xx => xx.UserId == post.UserId).Count() > 0) 
                                     || post.PokemonId == default(int) && x.JoinedUsers.Where(xx => xx.Id == post.UserId).Count() > 0))//User already in the thread
@@ -568,6 +617,13 @@ namespace PokemonGoRaidBot
                         if (user.ArriveTime.HasValue) postUser.ArriveTime = user.ArriveTime;//always update arrive time if present
                     }
                 }
+            }
+            
+            post1.ChannelMessages = post1.ChannelMessages.Concat(post2.ChannelMessages.Where(x => !post1.ChannelMessages.ContainsKey(x.Key))).ToDictionary(x => x.Key, y => y.Value);
+
+            foreach(var key in post1.ChannelMessages.Keys.Where(x=> post2.ChannelMessages.Keys.Contains(x)))
+            {
+                post2.ChannelMessages.Remove(key);
             }
 
             post1.Responses.AddRange(post2.Responses);
@@ -673,18 +729,5 @@ namespace PokemonGoRaidBot
         {
             return Config.GetGuildConfig(guildId).Posts.FirstOrDefault(x => x.UniqueId == uid);
         }
-        //private GuildConfig Config.GetGuildConfig(ulong Id)
-        //{
-        //    var config = GuildConfigCache.FirstOrDefault(x => x.Id == Id);
-        //    if(config == null)
-        //    {
-        //        config = Config.GetGuildConfig(Id);
-        //        if(config != null)
-        //        {
-        //            GuildConfigCache.Add(config);
-        //        }
-        //    }
-        //    return config;
-        //}
     }
 }
