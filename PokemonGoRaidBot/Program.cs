@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using PokemonGoRaidBot.Config;
 using System.IO;
 using System.Collections.Generic;
+using PokemonGoRaidBot.Data;
 
 namespace PokemonGoRaidBot
 {
@@ -22,6 +23,7 @@ namespace PokemonGoRaidBot
         public async Task Start()
         {
             EnsureBotConfigExists(); // Ensure that the bot configuration json file has been created.
+            await EnsureDatabaseExists();
 
             client = new DiscordSocketClient(new DiscordSocketConfig()
             {
@@ -49,9 +51,16 @@ namespace PokemonGoRaidBot
                 await Task.Delay(60000);
             }
         }
-        
 
-        public static void EnsureBotConfigExists()
+        private async Task EnsureDatabaseExists()
+        {
+            using(var context = new PokemonRaidBotDbContext())
+            {
+                await context.Database.EnsureCreatedAsync();
+            }
+        }
+
+        private static void EnsureBotConfigExists()
         {
             if (!Directory.Exists(Path.Combine(AppContext.BaseDirectory, "configuration")))
                 Directory.CreateDirectory(Path.Combine(AppContext.BaseDirectory, "configuration"));
@@ -85,10 +94,7 @@ namespace PokemonGoRaidBot
                 config.Save();//Save the new configuration object to file.
             }
         }
-
-
-
-
+        
         public IServiceProvider ConfigureServices()
         {
 
@@ -96,10 +102,7 @@ namespace PokemonGoRaidBot
                 .AddSingleton(client)
                  .AddSingleton(new CommandService(new CommandServiceConfig { CaseSensitiveCommands = false }));
             var provider = new DefaultServiceProviderFactory().CreateServiceProvider(services);
-
-
-
-
+            
             return provider;
         }
 
