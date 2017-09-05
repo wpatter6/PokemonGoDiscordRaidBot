@@ -362,23 +362,32 @@ namespace PokemonGoRaidBot
 
                     if (!post.IsExisting)//it's going to post something and google geocode can take a few secs so we can do the "typing" behavior
                         d = message.Channel.EnterTypingState();
-
-                    if ((post.LatLong == null || !post.LatLong.HasValue) && !string.IsNullOrWhiteSpace(post.Location))
+                    try
                     {
-                        var guildChannel = (SocketGuildChannel)message.Channel;
+                        if ((post.LatLong == null || !post.LatLong.HasValue) && !string.IsNullOrWhiteSpace(post.Location))
+                        {
+                            var guildChannel = (SocketGuildChannel)message.Channel;
 
-                        var guildConfig = Config.GetGuildConfig(guildChannel.Guild.Id);
+                            var guildConfig = Config.GetGuildConfig(guildChannel.Guild.Id);
 
-                        if (guildConfig.Places.ContainsKey(post.Location))
-                            post.LatLong = guildConfig.Places[post.Location];
-                        else
-                            post.LatLong = await parser.GetLocationLatLong(post.FullLocation, guildChannel, Config);
+                            if (guildConfig.Places.ContainsKey(post.Location))
+                                post.LatLong = guildConfig.Places[post.Location];
+                            else
+                                post.LatLong = await parser.GetLocationLatLong(post.FullLocation, guildChannel, Config);
+                        }
+
+                        await MakePost(post, parser);
+                        Config.Save();
+                    }
+                    catch (Exception e)
+                    {
+                        DoError(e);
+                    }
+                    finally
+                    {
+                        if (d != null) d.Dispose();
                     }
 
-                    await MakePost(post, parser);
-                    Config.Save();
-
-                    if (d != null) d.Dispose();
                 }
                 //else TODO maybe DM user to see if it's valid? Tricky because hard to hold on to post ID reference...
             }
