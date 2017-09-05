@@ -98,27 +98,29 @@ namespace PokemonGoRaidBot
         [RaidBotCommand("raid")]
         private async Task Raid()
         {
-            using (var d = Message.Channel.EnterTypingState())
+            if (Command.Count() < 4)
             {
-                if (Command.Count() < 4)
-                {
-                    await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandInvalidNumberOfParameters"]);
-                    return;
-                }
+                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandInvalidNumberOfParameters"]);
+                return;
+            }
 
-                var post = Parser.ParsePost(Message, Config);
+            var post = Parser.ParsePost(Message, Config);
 
-                if (post.PokemonId == default(int))
-                {
-                    await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandRaidPokemonInvalid"], Command[1]));
-                    return;
-                }
+            if (post.PokemonId == default(int))
+            {
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandRaidPokemonInvalid"], Command[1]));
+                return;
+            }
 
-                if (post.HasEndDate == false)
-                {
-                    await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandRaidTimespanInvalid"], Command[2]));
-                    return;
-                }
+            if (post.HasEndDate == false)
+            {
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandRaidTimespanInvalid"], Command[2]));
+                return;
+            }
+
+            var d = Message.Channel.EnterTypingState();
+            try
+            {
 
                 post.Location = Parser.ToTitleCase(string.Join(" ", Command.Skip(3)));
                 post.FullLocation = Parser.GetFullLocation(post.Location, GuildConfig, Message.Channel.Id);
@@ -133,10 +135,19 @@ namespace PokemonGoRaidBot
                     await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandRaidLocationInvalid"]);
                     return;
                 }
+                post.IsValid = true;
 
                 var outputchannel = !GuildConfig.OutputChannelId.HasValue || GuildConfig.OutputChannelId == 0 ? null : (ISocketMessageChannel)Guild.GetChannel(GuildConfig.OutputChannelId.Value);
 
                 await Handler.DoPost(post, Message, Parser, outputchannel, true);
+            }
+            catch (Exception e)
+            {
+                Handler.DoError(e, "Executor");
+            }
+            finally
+            {
+                d.Dispose();
             }
         }
 
