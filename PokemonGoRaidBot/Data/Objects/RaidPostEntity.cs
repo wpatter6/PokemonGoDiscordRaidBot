@@ -6,16 +6,24 @@ namespace PokemonGoRaidBot.Data.Objects
 {
     public class RaidPostEntity
     {
-        public PokemonEntity Pokemon { get; set; }
-        public ChannelEntity Channel { get; set; }
-        public DiscordUserEntity PostedByUser { get; set; }
-        public DateTime PostedDate { get; set; }
-        public DateTime EndDate { get; set; }
-        public string Location { get; set; }
-        public double Latitude { get; set; }
-        public double Longitude { get; set; }
-        public string UniqueId { get; set; }
-        public int ResponseCount { get; set; }
+        public ulong Id { get; set; }
+        public ulong LocationId { get; set; }
+        public int PokemonId { get; set; }
+
         public int JoinCount { get; set; }
+        public int ResponseCount { get; set; }
+
+        public string UniqueId { get; set; }
+
+        public bool Deleted { get; set; }
+        public bool HasEndDate { get; set; }
+
+        public DateTime PostedDate { get; set; }
+        public DateTime? EndDate { get; set; }
+
+        public PokemonEntity Pokemon { get; set; }
+        public RaidPostLocationEntity Location { get; set; }
+
+        public virtual ICollection<RaidPostChannelEntity> ChannelPosts { get; set; }
     }
 }

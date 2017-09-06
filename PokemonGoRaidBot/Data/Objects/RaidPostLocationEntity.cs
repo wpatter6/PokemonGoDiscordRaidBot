@@ -4,10 +4,12 @@ using System.Text;
 
 namespace PokemonGoRaidBot.Data.Objects
 {
-    public class PokemonEntity
+    public class RaidPostLocationEntity
     {
-        public int Id { get; set; }
+        public ulong Id { get; set; }
         public string Name { get; set; }
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
 
         public List<RaidPostEntity> Posts { get; set; }
     }

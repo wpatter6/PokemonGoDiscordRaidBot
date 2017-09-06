@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
 using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
@@ -45,6 +44,10 @@ namespace PokemonGoRaidBot.Objects
 
         public ulong UserId;
 
+        public ulong DbId;
+
+        public ulong DbLocationId;
+        
         public Dictionary<ulong, PokemonRaidPostOwner> ChannelMessages = new Dictionary<ulong, PokemonRaidPostOwner>();
 
         public string Location;//used for display

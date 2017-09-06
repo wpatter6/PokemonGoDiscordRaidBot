@@ -9,6 +9,9 @@ using PokemonGoRaidBot.Config;
 using System.IO;
 using System.Collections.Generic;
 using PokemonGoRaidBot.Data;
+using PokemonGoRaidBot.Services;
+using Microsoft.EntityFrameworkCore;
+using PokemonGoRaidBot.Interfaces;
 
 namespace PokemonGoRaidBot
 {
@@ -18,46 +21,52 @@ namespace PokemonGoRaidBot
             new Program().Start().GetAwaiter().GetResult();
 
         private DiscordSocketClient client;
-        private CommandHandler handler;
+        private BotConfig config;
+        private RaidLogger logger;
 
         public async Task Start()
         {
             EnsureBotConfigExists(); // Ensure that the bot configuration json file has been created.
-            await EnsureDatabaseExists();
 
             client = new DiscordSocketClient(new DiscordSocketConfig()
             {
                 LogLevel = LogSeverity.Verbose,
             });
 
-            var logger = new RaidLogger();
+            logger = new RaidLogger();
 
             client.Log += logger.Log;
-            var config = BotConfig.Load();
+            config = BotConfig.Load();
 
-            await logger.Log("Startup", $"PokemonDiscordRaidBot: Configuration has been loaded.  version {config.Version}.  Copyright 2017 wpatter6.");
+            await logger.Log("Startup", $"PokemonDiscordRaidBot: Configuration has been loaded.  Version {config.Version}.");
+            
             await client.LoginAsync(TokenType.Bot, config.Token);
             await client.StartAsync();
 
             var serviceProvider = ConfigureServices();
-            handler = new CommandHandler(serviceProvider, config, logger);
-            await handler.ConfigureAsync();
 
-            await Task.Delay(5000);
+            await EnsureDatabaseExists(serviceProvider);
+
+            await logger.Log("Startup", $"PokemonDiscordRaidBot: Stat database exists.");
+
+            var handler = serviceProvider.GetService<CommandHandler>();
+
+            //handler = new CommandHandler(serviceProvider, config, logger);
+            await handler.ConfigureAsync();
+            
+            await Task.Delay(5000);//let everything get started up before 
+
             //Block this program until it is closed
             while (1 == 1)
             {
-                handler.PurgePosts();
+                await handler.PurgePosts();
                 await Task.Delay(60000);
             }
         }
 
-        private async Task EnsureDatabaseExists()
+        private async Task EnsureDatabaseExists(IServiceProvider provider)
         {
-            using(var context = new PokemonRaidBotDbContext())
-            {
-                await context.Database.EnsureCreatedAsync();
-            }
+            await provider.GetService<PokemonRaidBotDbContext>().Database.EnsureCreatedAsync();
         }
 
         private static void EnsureBotConfigExists()
@@ -67,9 +76,9 @@ namespace PokemonGoRaidBot
 
             string loc = Path.Combine(AppContext.BaseDirectory, "configuration/config.json");
 
-            if (!File.Exists(loc))                              // Check if the configuration file exists.
+            if (!File.Exists(loc))// Check if the configuration file exists.
             {
-                var config = new BotConfig();               // Create a new configuration object.
+                var config = new BotConfig();// Create a new configuration object.
 
                 Console.WriteLine("Please enter the following information to save into your configuration/config.json file");
 
@@ -91,6 +100,12 @@ namespace PokemonGoRaidBot
                 config.DefaultLanguage = Console.ReadLine();//Read output channel name from console
                 if (string.IsNullOrWhiteSpace(config.DefaultLanguage)) config.DefaultLanguage = "en-us";
 
+                Console.Write("Bot statistics sqlite DB connection string (blank for default): ");
+                config.StatDBConnectionString = Console.ReadLine();//Read sqlite connection string from console
+
+                if (string.IsNullOrWhiteSpace(config.DefaultLanguage))//not gonna bother with being too overly secure... shouldn't be storing anything sensitive
+                    config.StatDBConnectionString = string.Format("Data Source=raidstats.db;Password=", Guid.NewGuid()); 
+
                 config.Save();//Save the new configuration object to file.
             }
         }
@@ -99,8 +114,15 @@ namespace PokemonGoRaidBot
         {
 
             var services = new ServiceCollection()
+                .AddDbContext<PokemonRaidBotDbContext>()
                 .AddSingleton(client)
-                 .AddSingleton(new CommandService(new CommandServiceConfig { CaseSensitiveCommands = false }));
+                .AddSingleton(config)
+                .AddSingleton(logger)
+                .AddSingleton<IConnectionString>(config)
+                .AddSingleton<IStatMapper>(new StatMapper())
+                .AddSingleton(new CommandService(new CommandServiceConfig { CaseSensitiveCommands = false }))
+                .AddSingleton<CommandHandler>();
+            
             var provider = new DefaultServiceProviderFactory().CreateServiceProvider(services);
             
             return provider;

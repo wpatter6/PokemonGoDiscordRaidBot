@@ -5,16 +5,18 @@ using System.IO;
 using System.Linq;
 using PokemonGoRaidBot.Objects;
 using System.Reflection;
+using PokemonGoRaidBot.Interfaces;
 
 namespace PokemonGoRaidBot.Config
 {
-    public class BotConfig
+    public class BotConfig : IConnectionString
     {
         public string Version { get; set; }
         public string Prefix { get; set; }
         public string Token { get; set; }
         public string OutputChannel { get; set; }
         public string DefaultLanguage { get; set; }
+        public string StatDBConnectionString { get; set; }
 
         public List<GuildConfig> GuildConfigs { get; set; }
         public List<ulong> NoDMUsers { get; set; }
@@ -72,6 +74,7 @@ namespace PokemonGoRaidBot.Config
 
             if (string.IsNullOrEmpty(result.OutputChannel)) result.OutputChannel = "raid-bot";
             if (string.IsNullOrEmpty(result.DefaultLanguage)) result.DefaultLanguage = "en-us";
+            if (string.IsNullOrEmpty(result.StatDBConnectionString)) result.StatDBConnectionString = string.Format("Data Source=raidstats.db;Password={0}", Guid.NewGuid());
 
             if (result.GuildConfigs == null) result.GuildConfigs = new List<GuildConfig>();
             if (result.NoDMUsers == null) result.NoDMUsers = new List<ulong>();
@@ -88,6 +91,11 @@ namespace PokemonGoRaidBot.Config
             var result = JsonConvert.DeserializeObject<List<PokemonInfo>>(File.ReadAllText("RaidInfo.json"));
 
             return result;
+        }
+
+        public string GetConnectionString()
+        {
+            return StatDBConnectionString;
         }
     }
 }

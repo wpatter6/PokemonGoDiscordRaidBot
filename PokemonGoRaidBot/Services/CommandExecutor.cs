@@ -3,15 +3,12 @@ using PokemonGoRaidBot.Config;
 using PokemonGoRaidBot.Objects;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Linq;
-using Discord.Rest;
 using System.Threading.Tasks;
 using System.Reflection;
 using PokemonGoRaidBot.Parsing;
-using Discord;
 
-namespace PokemonGoRaidBot
+namespace PokemonGoRaidBot.Services
 {
     public class CommandExecutor
     {
@@ -71,7 +68,7 @@ namespace PokemonGoRaidBot
             }
             return true;
         }
-        private PokemonRaidPost GetPost(string name, bool idOnly = false)
+        private async Task<PokemonRaidPost> GetPost(string name, bool idOnly = false)
         {
             var post = GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == name);
 
@@ -81,7 +78,7 @@ namespace PokemonGoRaidBot
                 return post;
             }
 
-            post = Handler.AddPost(Parser.ParsePost(Message, Config), Parser, Message, false);
+            post = await Handler.AddPost(Parser.ParsePost(Message, Config), Parser, Message, false);
             return post;
         }
         private async Task<SocketGuildChannel> GetChannelFromName(string name)
@@ -222,7 +219,7 @@ namespace PokemonGoRaidBot
                 return;
             }
 
-            var post = GetPost(poke);
+            var post = await GetPost(poke);
             if (!post.IsExisting)
             {
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], poke));// $"Raid post with Id \"{Command[1]}\" does not exist.");
@@ -271,7 +268,7 @@ namespace PokemonGoRaidBot
             }
             else
             {
-                var post = GetPost(Command[1]);
+                var post = await GetPost(Command[1]);
                 if (!post.IsExisting)
                 {
                     await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[1]));// $"Raid post with Id \"{Command[1]}\" does not exist.");
@@ -346,14 +343,14 @@ namespace PokemonGoRaidBot
         [RaidBotCommand("merge")]
         private async Task Merge()
         {
-            var post1 = GetPost(Command[1], true);// GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[1]);
+            var post1 = await GetPost(Command[1], true);// GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[1]);
             if (!post1.IsExisting)
             {
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[1]));// $"Raid post with Id \"{Command[1]}\" does not exist.");
                 return;
             }
 
-            var post2 = GetPost(Command[2], true);//GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[2]);
+            var post2 = await GetPost(Command[2], true);//GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[2]);
             if (!post2.IsExisting)
             {
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[1]));// $"Raid post with Id \"{Command[1]}\" does not exist.");
@@ -385,7 +382,7 @@ namespace PokemonGoRaidBot
                 }
                 return;
             }
-            var post = GetPost(Command[1]);//GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[1]);
+            var post = await GetPost(Command[1]);//GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[1]);
             if (!post.IsExisting)
             {
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[1]));//"Post with Unique Id \"{Command[1]}\" not found.");
@@ -405,7 +402,7 @@ namespace PokemonGoRaidBot
         [RaidBotCommand("location")]
         private async Task Location()
         {
-            var post = GetPost(Command[1]);//GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[1]);
+            var post = await GetPost(Command[1]);//GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[1]);
             if (!post.IsExisting)
             {
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[1]));// $"Raid post with Id \"{Command[1]}\" does not exist.");
