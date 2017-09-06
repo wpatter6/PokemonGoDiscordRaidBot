@@ -14,10 +14,10 @@ namespace PokemonGoRaidBot.Data
             optionsBuilder.UseSqlite(@"DataSource=pogoraids.db;");
         }
 
-        public DbSet<ChannelDTO> Channels { get; set; }
-        public DbSet<PokemonDTO> Pokemon { get; set; }
-        public DbSet<RaidPostDTO> RaidPosts { get; set; }
-        public DbSet<DiscordServerDTO> Servers { get; set; }
-        public DbSet<DiscordUserDTO> Users { get; set; }
+        public DbSet<ChannelEntity> Channels { get; set; }
+        public DbSet<PokemonEntity> Pokemon { get; set; }
+        public DbSet<RaidPostEntity> RaidPosts { get; set; }
+        public DbSet<DiscordServerEntity> Servers { get; set; }
+        public DbSet<DiscordUserEntity> Users { get; set; }
     }
 }

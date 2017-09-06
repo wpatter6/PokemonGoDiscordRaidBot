@@ -4,14 +4,14 @@ using System.Text;
 
 namespace PokemonGoRaidBot.Data.Objects
 {
-    public class PokemonDTO
+    public class DiscordUserEntity
     {
-        public PokemonDTO(int id, string name)
+        public DiscordUserEntity(ulong id, string name)
         {
             Id = id;
             Name = name;
         }
-        public int Id;
-        public string Name;
+        public ulong Id { get; set; }
+        public string Name { get; set; }
     }
 }

@@ -11,7 +11,7 @@ namespace PokemonGoRaidBot.Data
     {
         public AutoMapperProfile()
         {
-            CreateMap<PokemonRaidPost, RaidPostDTO>();
+            CreateMap<PokemonRaidPost, RaidPostEntity>();
                 //.ForMember(dest => dest.)//TODO!!
         }
     }

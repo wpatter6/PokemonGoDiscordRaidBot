@@ -4,11 +4,11 @@ using System.Text;
 
 namespace PokemonGoRaidBot.Data.Objects
 {
-    public class RaidPostDTO
+    public class RaidPostEntity
     {
-        public PokemonDTO Pokemon { get; set; }
-        public ChannelDTO Channel { get; set; }
-        public DiscordUserDTO PostedByUser { get; set; }
+        public PokemonEntity Pokemon { get; set; }
+        public ChannelEntity Channel { get; set; }
+        public DiscordUserEntity PostedByUser { get; set; }
         public DateTime PostedDate { get; set; }
         public DateTime EndDate { get; set; }
         public string Location { get; set; }

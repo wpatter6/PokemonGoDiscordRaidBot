@@ -4,18 +4,16 @@ using System.Text;
 
 namespace PokemonGoRaidBot.Data.Objects
 {
-    public class DiscordServerDTO
+    public class ChannelEntity
     {
-        public DiscordServerDTO(ulong id, string name)
+        public ChannelEntity(ulong id, string name, DiscordServerEntity server)
         {
             Id = id;
             Name = name;
+            Server = server;
         }
         public ulong Id { get; set; }
         public string Name { get; set; }
-        public IEnumerable<ChannelDTO> Channels { get; set; }
-
-        public DateTime FirstSeenDate { get; set; }
-        public DateTime LastSeenDate { get; set; }
+        public DiscordServerEntity Server { get; set; }
     }
 }
