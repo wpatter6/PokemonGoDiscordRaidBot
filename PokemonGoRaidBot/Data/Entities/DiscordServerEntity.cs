@@ -2,18 +2,16 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace PokemonGoRaidBot.Data.Objects
+namespace PokemonGoRaidBot.Data.Entities
 {
-    public class DiscordChannelEntity
+    public class DiscordServerEntity
     {
         public ulong Id { get; set; }
         public string Name { get; set; }
-        public ulong ServerId { get; set; }
-        public DiscordServerEntity Server { get; set; }
+
+        public List<DiscordChannelEntity> Channels { get; set; }
 
         public DateTime FirstSeenDate { get; set; }
         public DateTime LastSeenDate { get; set; }
-
-        public virtual ICollection<RaidPostChannelEntity> PostChannels { get; set; }
     }
 }

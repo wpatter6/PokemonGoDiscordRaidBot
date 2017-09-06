@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace PokemonGoRaidBot.Data.Objects
+namespace PokemonGoRaidBot.Data.Entities
 {
-    public class DiscordUserEntity
+    public class PokemonEntity
     {
-        public ulong Id { get; set; }
+        public int Id { get; set; }
         public string Name { get; set; }
 
         public List<RaidPostEntity> Posts { get; set; }

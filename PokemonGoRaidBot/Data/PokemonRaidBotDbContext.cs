@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
-using PokemonGoRaidBot.Data.Objects;
+using PokemonGoRaidBot.Data.Entities;
 using PokemonGoRaidBot.Objects;
 using PokemonGoRaidBot.Configuration;
 using PokemonGoRaidBot.Objects.Interfaces;
@@ -66,21 +66,28 @@ namespace PokemonGoRaidBot.Data
 
         public async Task<PokemonRaidPost> AddOrUpdatePost(PokemonRaidPost post)
         {
-            var locationEntity = await RaidPostLocations.SingleOrDefaultAsync(x => x.Name == post.Location);
+            var locationEntity = await Locations.SingleOrDefaultAsync(x => x.Name == post.Location);
             if (locationEntity == null)
             {
                 var newLoc = _mapper.Map<RaidPostLocationEntity>(post);
-                locationEntity = RaidPostLocations.Add(newLoc).Entity;
+                locationEntity = Locations.Add(newLoc).Entity;
                 await SaveChangesAsync();
             }
-            RaidPostEntity postEntity = new RaidPostEntity();
 
-            if (post.DbId != default(ulong))
+            var bossEntity = await Pokemon.SingleOrDefaultAsync(x => x.Id == post.PokemonId);
+            if(bossEntity == null)
             {
-                postEntity = await RaidPosts.FirstOrDefaultAsync(x => x.Id == post.DbId);
+                var newBoss = _mapper.Map<PokemonEntity>(post);
+                bossEntity = Pokemon.Add(newBoss).Entity;
             }
 
+            var postEntity = new RaidPostEntity();
+            if (post.DbId != default(ulong))
+                postEntity = await Posts.FirstOrDefaultAsync(x => x.Id == post.DbId);
+
             postEntity = _mapper.Map(post, postEntity);
+            postEntity.Pokemon = bossEntity;
+            postEntity.PokemonId = bossEntity.Id;
             postEntity.Location = locationEntity;
             postEntity.LocationId = locationEntity.Id;
 
@@ -88,16 +95,17 @@ namespace PokemonGoRaidBot.Data
             {
                 Add(postEntity);
                 await SaveChangesAsync();
+                post.DbId = postEntity.Id;
             }
 
             foreach(var channelId in post.ChannelMessages.Keys)
             {
-                var channelPost = new RaidPostChannelEntity() { ChannelId = channelId, RaidPostId = postEntity.Id };
+                var channelPost = new RaidPostChannelEntity() { ChannelId = channelId, RaidPostId = post.DbId };
                 Add(channelPost);
             }
+
             await SaveChangesAsync();
 
-            post.DbId = postEntity.Id;
             post.DbLocationId = locationEntity.Id;
             return post;
         }
@@ -106,7 +114,7 @@ namespace PokemonGoRaidBot.Data
         {
             if(post.DbId != default(ulong))
             {
-                var postEntity = await RaidPosts.FirstOrDefaultAsync(x => x.Id == post.DbId);
+                var postEntity = await Posts.FirstOrDefaultAsync(x => x.Id == post.DbId);
 
                 if(postEntity != null)
                 {
@@ -121,8 +129,10 @@ namespace PokemonGoRaidBot.Data
         public DbSet<DiscordChannelEntity> Channels { get; set; }
 
         public DbSet<PokemonEntity> Pokemon { get; set; }
-        public DbSet<RaidPostEntity> RaidPosts { get; set; }
-        public DbSet<RaidPostLocationEntity> RaidPostLocations { get; set; }
+        public DbSet<RaidPostEntity> Posts { get; set; }
+        public DbSet<RaidPostLocationEntity> Locations { get; set; }
+
+        public DbSet<RaidPostChannelEntity> ChannelPosts { get; set; }
         //public DbSet<DiscordUserEntity> Users { get; set; }
     }
 }

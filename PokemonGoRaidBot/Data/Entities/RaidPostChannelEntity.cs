@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace PokemonGoRaidBot.Data.Objects
+namespace PokemonGoRaidBot.Data.Entities
 {
     public class RaidPostChannelEntity
     {
