@@ -5,18 +5,18 @@ using Discord.WebSocket;
 using Discord;
 using System;
 using Microsoft.Extensions.DependencyInjection;
-using PokemonGoRaidBot.Config;
+using PokemonGoRaidBot.Configuration;
 using System.Collections.Generic;
 using PokemonGoRaidBot.Objects;
 using System.Linq;
-using PokemonGoRaidBot.Parsing;
+using PokemonGoRaidBot.Services.Parsing;
 using PokemonGoRaidBot.Data;
 using PokemonGoRaidBot.Data.Objects;
-using PokemonGoRaidBot.Interfaces;
+using PokemonGoRaidBot.Objects.Interfaces;
 
-namespace PokemonGoRaidBot.Services
+namespace PokemonGoRaidBot.Services.Discord
 {
-    public class CommandHandler
+    public class MessageHandler
     {
         private CommandService commands;
         private DiscordSocketClient bot;
@@ -24,7 +24,7 @@ namespace PokemonGoRaidBot.Services
         private IStatMapper Mapper;
 
         public RaidLogger Logger;
-        public readonly BotConfig Config;
+        public readonly BotConfiguration Config;
 
         private PokemonRaidBotDbContext dbContext
         {
@@ -35,18 +35,18 @@ namespace PokemonGoRaidBot.Services
         }
 
         private List<MessageParser> ParserCache = new List<MessageParser>();
-        private List<GuildConfig> GuildConfigCache = new List<GuildConfig>();
+        private List<GuildConfiguration> GuildConfigCache = new List<GuildConfiguration>();
 
         Dictionary<ulong, ISocketMessageChannel> channelCache;
 
-        public CommandHandler(IServiceProvider provider)
+        public MessageHandler(IServiceProvider provider)
         {
             map = provider;
 
             bot = map.GetService<DiscordSocketClient>();
             Mapper = map.GetService<IStatMapper>();
             Logger = map.GetService<RaidLogger>();
-            Config = map.GetService<BotConfig>();
+            Config = map.GetService<BotConfiguration>();
             commands = map.GetService<CommandService>();
 
             bot.MessageReceived += HandleCommand;
@@ -359,7 +359,7 @@ namespace PokemonGoRaidBot.Services
         /// <returns></returns>
         private async Task DoCommand(SocketUserMessage message, MessageParser parser)
         {
-            var executor = new CommandExecutor(this, message, parser);
+            var executor = new BotCommandHandler(this, message, parser);
             await executor.Execute();
         }
         /// <summary>
@@ -377,7 +377,7 @@ namespace PokemonGoRaidBot.Services
             if (post != null)
             {
                 post.OutputChannelId = outputchannel?.Id ?? 0;
-                post = await AddPost(post, parser, message, true, force);
+                post = AddPost(post, parser, message, true, force);
 
                 if (post.IsValid)
                 {
@@ -427,6 +427,15 @@ namespace PokemonGoRaidBot.Services
         public async Task<List<IUserMessage>> MakePost(PokemonRaidPost post, MessageParser parser)
         {
             var results = new List<IUserMessage>();
+            try
+            {
+                post = await dbContext.AddOrUpdatePost(post);
+            }
+            catch (Exception e)
+            {
+                DoError(e);
+            }
+
             try
             {
                 var newMessages = new Dictionary<ulong, ulong>();
@@ -541,7 +550,7 @@ namespace PokemonGoRaidBot.Services
         /// </summary>
         /// <param name="post"></param>
         /// <returns>Returns either the new post or the one it matched with.</returns>
-        public async Task<PokemonRaidPost> AddPost(PokemonRaidPost post, MessageParser parser, SocketUserMessage message, bool add = true, bool force = false)
+        public PokemonRaidPost AddPost(PokemonRaidPost post, MessageParser parser, SocketUserMessage message, bool add = true, bool force = false)
         {
             var guildConfig = Config.GetGuildConfig(post.GuildId);
             var channelPosts = guildConfig.Posts.Where(x => x.ChannelMessages.Keys.Where(xx => post.ChannelMessages.Keys.Contains(xx)).Count() > 0);
@@ -595,9 +604,7 @@ namespace PokemonGoRaidBot.Services
                 return existing;
             }
             else if(add && post.IsValid)
-            {
-                await dbContext.AddPost(post);
-                
+            {                
                 post.JoinedUsersChanged += JoinCount_Changed;
                 guildConfig.Posts.Add(post);
             }
@@ -668,19 +675,15 @@ namespace PokemonGoRaidBot.Services
         /// Delete a post from both chat and the list.
         /// </summary>
         /// <param name="post"></param>
-        public async Task<bool> DeletePost(PokemonRaidPost post, ulong userId, bool isAdmin)
+        public async Task<bool> DeletePost(PokemonRaidPost post, ulong userId, bool isAdmin, bool purge = true)
         {
             if (isAdmin)
             {
                 post.EndDate = DateTime.MinValue;
 
-                var postEntity = dbContext.Find<RaidPostEntity>(post.DbId);
-                postEntity.Deleted = true;
-                postEntity.EndDate = post.EndDate;
+                await dbContext.MarkPostDeleted(post);
 
-                await dbContext.SaveChangesAsync();
-
-                await PurgePosts();
+                if (purge) await PurgePosts();
                 return true;
             }
 
@@ -706,13 +709,10 @@ namespace PokemonGoRaidBot.Services
             if(delChannels.Count() == post.ChannelMessages.Count())//poster was the only one posting, get rid of all
             {
                 post.EndDate = DateTime.MinValue;
+                
+                await dbContext.MarkPostDeleted(post);
 
-                var postEntity = dbContext.Find<RaidPostEntity>(post.DbId);
-                postEntity.EndDate = post.EndDate;
-                postEntity.Deleted = true;
-                await dbContext.SaveChangesAsync();
-
-                await PurgePosts();
+                if(purge) await PurgePosts();
                 return true;
             }
 
@@ -744,7 +744,7 @@ namespace PokemonGoRaidBot.Services
         public void JoinCount_Changed(object sender, JoinedCountChangedEventArgs e)
         {
             PokemonRaidPost post = null;
-            GuildConfig guildConfig = null;
+            GuildConfiguration guildConfig = null;
             PokemonRaidJoinedUser joinedUser = null;
 
             if (sender is PokemonRaidPost)
@@ -798,7 +798,7 @@ namespace PokemonGoRaidBot.Services
             
             return channelCache[id] = (ISocketMessageChannel)bot.GetChannel(id);
         }
-        private MessageParser GetParser(GuildConfig guildConfig)
+        private MessageParser GetParser(GuildConfiguration guildConfig)
         {
             var botTimezone = TimeZoneInfo.Local.GetUtcOffset(DateTime.Now).Hours - (TimeZoneInfo.Local.IsDaylightSavingTime(DateTime.Now) ? 1 : 0);
             var serverTimezone = guildConfig.Timezone ?? botTimezone;

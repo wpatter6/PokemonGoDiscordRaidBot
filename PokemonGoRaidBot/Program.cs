@@ -5,13 +5,14 @@ using Discord;
 using Discord.WebSocket;
 using Discord.Commands;
 using Microsoft.Extensions.DependencyInjection;
-using PokemonGoRaidBot.Config;
+using PokemonGoRaidBot.Configuration;
 using System.IO;
 using System.Collections.Generic;
 using PokemonGoRaidBot.Data;
 using PokemonGoRaidBot.Services;
 using Microsoft.EntityFrameworkCore;
-using PokemonGoRaidBot.Interfaces;
+using PokemonGoRaidBot.Objects.Interfaces;
+using PokemonGoRaidBot.Services.Discord;
 
 namespace PokemonGoRaidBot
 {
@@ -21,7 +22,7 @@ namespace PokemonGoRaidBot
             new Program().Start().GetAwaiter().GetResult();
 
         private DiscordSocketClient client;
-        private BotConfig config;
+        private BotConfiguration config;
         private RaidLogger logger;
 
         public async Task Start()
@@ -36,7 +37,7 @@ namespace PokemonGoRaidBot
             logger = new RaidLogger();
 
             client.Log += logger.Log;
-            config = BotConfig.Load();
+            config = BotConfiguration.Load();
 
             await logger.Log("Startup", $"PokemonDiscordRaidBot: Configuration has been loaded.  Version {config.Version}.");
             
@@ -49,7 +50,7 @@ namespace PokemonGoRaidBot
 
             await logger.Log("Startup", $"PokemonDiscordRaidBot: Stat database exists.");
 
-            var handler = serviceProvider.GetService<CommandHandler>();
+            var handler = serviceProvider.GetService<MessageHandler>();
 
             //handler = new CommandHandler(serviceProvider, config, logger);
             await handler.ConfigureAsync();
@@ -71,16 +72,16 @@ namespace PokemonGoRaidBot
 
         private static void EnsureBotConfigExists()
         {
-            if (!Directory.Exists(Path.Combine(AppContext.BaseDirectory, "configuration")))
-                Directory.CreateDirectory(Path.Combine(AppContext.BaseDirectory, "configuration"));
+            if (!Directory.Exists(Path.Combine(AppContext.BaseDirectory, "Configuration")))
+                Directory.CreateDirectory(Path.Combine(AppContext.BaseDirectory, "Configuration"));
 
-            string loc = Path.Combine(AppContext.BaseDirectory, "configuration/config.json");
+            string loc = Path.Combine(AppContext.BaseDirectory, "Configuration/config.json");
 
             if (!File.Exists(loc))// Check if the configuration file exists.
             {
-                var config = new BotConfig();// Create a new configuration object.
+                var config = new BotConfiguration();// Create a new configuration object.
 
-                Console.WriteLine("Please enter the following information to save into your configuration/config.json file");
+                Console.WriteLine("Please enter the following information to save into your Configuration/config.json file");
 
                 Console.Write("Bot Token: ");
                 config.Token = Console.ReadLine();//Read the bot token from console.
@@ -104,7 +105,7 @@ namespace PokemonGoRaidBot
                 config.StatDBConnectionString = Console.ReadLine();//Read sqlite connection string from console
 
                 if (string.IsNullOrWhiteSpace(config.DefaultLanguage))//not gonna bother with being too overly secure... shouldn't be storing anything sensitive
-                    config.StatDBConnectionString = string.Format("Data Source=raidstats.db;Password=", Guid.NewGuid()); 
+                    config.StatDBConnectionString = "Data Source=raidstats.db;"; 
 
                 config.Save();//Save the new configuration object to file.
             }
@@ -121,7 +122,7 @@ namespace PokemonGoRaidBot
                 .AddSingleton<IConnectionString>(config)
                 .AddSingleton<IStatMapper>(new StatMapper())
                 .AddSingleton(new CommandService(new CommandServiceConfig { CaseSensitiveCommands = false }))
-                .AddSingleton<CommandHandler>();
+                .AddSingleton<MessageHandler>();
             
             var provider = new DefaultServiceProviderFactory().CreateServiceProvider(services);
             

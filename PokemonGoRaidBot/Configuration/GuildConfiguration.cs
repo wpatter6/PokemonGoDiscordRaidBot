@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Text;
 using PokemonGoRaidBot.Objects;
 
-namespace PokemonGoRaidBot.Config
+namespace PokemonGoRaidBot.Configuration
 {
-    public class GuildConfig
+    public class GuildConfiguration
     {
-        public GuildConfig()
+        public GuildConfiguration()
         {
             ChannelCities = new Dictionary<ulong, string>();
             PokemonAliases = new Dictionary<int, List<string>>();

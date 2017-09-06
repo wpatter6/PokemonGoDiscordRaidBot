@@ -1,29 +1,29 @@
 ﻿using Discord.WebSocket;
-using PokemonGoRaidBot.Config;
+using PokemonGoRaidBot.Configuration;
 using PokemonGoRaidBot.Objects;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Reflection;
-using PokemonGoRaidBot.Parsing;
+using PokemonGoRaidBot.Services.Parsing;
 
-namespace PokemonGoRaidBot.Services
+namespace PokemonGoRaidBot.Services.Discord
 {
-    public class CommandExecutor
+    public class BotCommandHandler
     {
-        private CommandHandler Handler;
+        private MessageHandler Handler;
         private SocketUserMessage Message;
         private SocketGuildUser User;
         private SocketGuild Guild;
         private MessageParser Parser;
         private bool IsAdmin;
-        private BotConfig Config;
-        private GuildConfig GuildConfig;
+        private BotConfiguration Config;
+        private GuildConfiguration GuildConfig;
 
         private List<string> Command;
 
-        public CommandExecutor(CommandHandler handler, SocketUserMessage message, MessageParser parser)
+        public BotCommandHandler(MessageHandler handler, SocketUserMessage message, MessageParser parser)
         {
             Handler = handler;
             Message = message;
@@ -68,7 +68,7 @@ namespace PokemonGoRaidBot.Services
             }
             return true;
         }
-        private async Task<PokemonRaidPost> GetPost(string name, bool idOnly = false)
+        private PokemonRaidPost GetPost(string name, bool idOnly = false)
         {
             var post = GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == name);
 
@@ -78,7 +78,7 @@ namespace PokemonGoRaidBot.Services
                 return post;
             }
 
-            post = await Handler.AddPost(Parser.ParsePost(Message, Config), Parser, Message, false);
+            post = Handler.AddPost(Parser.ParsePost(Message, Config), Parser, Message, false);
             return post;
         }
         private async Task<SocketGuildChannel> GetChannelFromName(string name)
@@ -219,7 +219,7 @@ namespace PokemonGoRaidBot.Services
                 return;
             }
 
-            var post = await GetPost(poke);
+            var post = GetPost(poke);
             if (!post.IsExisting)
             {
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], poke));// $"Raid post with Id \"{Command[1]}\" does not exist.");
@@ -268,7 +268,7 @@ namespace PokemonGoRaidBot.Services
             }
             else
             {
-                var post = await GetPost(Command[1]);
+                var post = GetPost(Command[1]);
                 if (!post.IsExisting)
                 {
                     await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[1]));// $"Raid post with Id \"{Command[1]}\" does not exist.");
@@ -343,14 +343,14 @@ namespace PokemonGoRaidBot.Services
         [RaidBotCommand("merge")]
         private async Task Merge()
         {
-            var post1 = await GetPost(Command[1], true);// GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[1]);
+            var post1 = GetPost(Command[1], true);// GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[1]);
             if (!post1.IsExisting)
             {
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[1]));// $"Raid post with Id \"{Command[1]}\" does not exist.");
                 return;
             }
 
-            var post2 = await GetPost(Command[2], true);//GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[2]);
+            var post2 = GetPost(Command[2], true);//GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[2]);
             if (!post2.IsExisting)
             {
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[1]));// $"Raid post with Id \"{Command[1]}\" does not exist.");
@@ -378,11 +378,12 @@ namespace PokemonGoRaidBot.Services
             {
                 foreach (var allpost in GuildConfig.Posts)
                 {
-                    await Handler.DeletePost(allpost, Message.Author.Id, false);
+                    await Handler.DeletePost(allpost, Message.Author.Id, false, false);
                 }
+                await Handler.PurgePosts();
                 return;
             }
-            var post = await GetPost(Command[1]);//GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[1]);
+            var post = GetPost(Command[1]);//GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[1]);
             if (!post.IsExisting)
             {
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[1]));//"Post with Unique Id \"{Command[1]}\" not found.");
@@ -402,7 +403,7 @@ namespace PokemonGoRaidBot.Services
         [RaidBotCommand("location")]
         private async Task Location()
         {
-            var post = await GetPost(Command[1]);//GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[1]);
+            var post = GetPost(Command[1]);//GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[1]);
             if (!post.IsExisting)
             {
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[1]));// $"Raid post with Id \"{Command[1]}\" does not exist.");

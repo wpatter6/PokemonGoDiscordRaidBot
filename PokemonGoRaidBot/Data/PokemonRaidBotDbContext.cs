@@ -4,8 +4,8 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using PokemonGoRaidBot.Data.Objects;
 using PokemonGoRaidBot.Objects;
-using PokemonGoRaidBot.Config;
-using PokemonGoRaidBot.Interfaces;
+using PokemonGoRaidBot.Configuration;
+using PokemonGoRaidBot.Objects.Interfaces;
 using System.Threading.Tasks;
 
 namespace PokemonGoRaidBot.Data
@@ -64,26 +64,31 @@ namespace PokemonGoRaidBot.Data
                 .HasForeignKey(c => c.RaidPostId);
         }
 
-        public async Task<PokemonRaidPost> AddPost(PokemonRaidPost post)
+        public async Task<PokemonRaidPost> AddOrUpdatePost(PokemonRaidPost post)
         {
             var locationEntity = await RaidPostLocations.SingleOrDefaultAsync(x => x.Name == post.Location);
             if (locationEntity == null)
             {
-                var newLoc = new RaidPostLocationEntity()
-                {
-                    Name = post.Location,
-                    Latitude = post.LatLong?.Latitude,
-                    Longitude = post.LatLong?.Longitude
-                };
+                var newLoc = _mapper.Map<RaidPostLocationEntity>(post);
                 locationEntity = RaidPostLocations.Add(newLoc).Entity;
                 await SaveChangesAsync();
             }
-            
-            var postEntity = _mapper.Map<PokemonRaidPost, RaidPostEntity>(post);
+            RaidPostEntity postEntity = new RaidPostEntity();
+
+            if (post.DbId != default(ulong))
+            {
+                postEntity = await RaidPosts.FirstOrDefaultAsync(x => x.Id == post.DbId);
+            }
+
+            postEntity = _mapper.Map(post, postEntity);
+            postEntity.Location = locationEntity;
             postEntity.LocationId = locationEntity.Id;
 
-            Add(postEntity);
-            await SaveChangesAsync();
+            if(post.DbId == default(ulong))
+            {
+                Add(postEntity);
+                await SaveChangesAsync();
+            }
 
             foreach(var channelId in post.ChannelMessages.Keys)
             {
@@ -96,6 +101,22 @@ namespace PokemonGoRaidBot.Data
             post.DbLocationId = locationEntity.Id;
             return post;
         }
+
+        public async Task MarkPostDeleted(PokemonRaidPost post)
+        {
+            if(post.DbId != default(ulong))
+            {
+                var postEntity = await RaidPosts.FirstOrDefaultAsync(x => x.Id == post.DbId);
+
+                if(postEntity != null)
+                {
+                    postEntity.Deleted = true;
+                    postEntity.EndDate = DateTime.Now;
+                    await SaveChangesAsync();
+                }
+            }
+        }
+
         public DbSet<DiscordServerEntity> Servers { get; set; }
         public DbSet<DiscordChannelEntity> Channels { get; set; }
 

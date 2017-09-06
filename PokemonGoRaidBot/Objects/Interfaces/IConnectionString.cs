@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace PokemonGoRaidBot.Interfaces
+namespace PokemonGoRaidBot.Objects.Interfaces
 {
     public interface IConnectionString
     {

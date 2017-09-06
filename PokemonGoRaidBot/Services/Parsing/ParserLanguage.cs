@@ -10,16 +10,16 @@ using System.Text;
 using System.Text.RegularExpressions;
 using PokemonGoRaidBot.Objects;
 
-namespace PokemonGoRaidBot.Parsing
+namespace PokemonGoRaidBot.Services.Parsing
 {
     public class ParserLanguage
     {
         private dynamic Language;
         public ParserLanguage(string language = "en-us")
         {
-            string file = Path.Combine(AppContext.BaseDirectory, string.Format("Languages/{0}.json", language));
+            string file = Path.Combine(AppContext.BaseDirectory, string.Format("Configuration/Languages/{0}.json", language));
             if (!File.Exists(file))
-                file = Path.Combine(AppContext.BaseDirectory, "Languages/en-us.json");
+                file = Path.Combine(AppContext.BaseDirectory, "Configuration/Languages/en-us.json");
 
            Language = JsonConvert.DeserializeObject<dynamic>(File.ReadAllText(file));
         }

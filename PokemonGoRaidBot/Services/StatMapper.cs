@@ -1,7 +1,7 @@
 ﻿using System;
-using PokemonGoRaidBot.Config;
+using PokemonGoRaidBot.Configuration;
 using AutoMapper;
-using PokemonGoRaidBot.Interfaces;
+using PokemonGoRaidBot.Objects.Interfaces;
 
 namespace PokemonGoRaidBot.Services
 {
@@ -13,6 +13,7 @@ namespace PokemonGoRaidBot.Services
             _mapper = new MapperConfiguration(cfg =>
             {
                 cfg.AddProfile<MapperProfile>();
+                cfg.CreateMissingTypeMaps = true;
             }).CreateMapper();
         }
 

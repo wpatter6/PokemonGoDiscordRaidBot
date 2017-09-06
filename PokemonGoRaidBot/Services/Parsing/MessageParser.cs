@@ -1,5 +1,5 @@
 ﻿using Discord.WebSocket;
-using PokemonGoRaidBot.Config;
+using PokemonGoRaidBot.Configuration;
 using PokemonGoRaidBot.Objects;
 using System;
 using System.Collections.Generic;
@@ -13,7 +13,7 @@ using System.Net;
 using Discord;
 using System.Globalization;
 
-namespace PokemonGoRaidBot.Parsing
+namespace PokemonGoRaidBot.Services.Parsing
 {
     public class MessageParser
     {
@@ -44,7 +44,7 @@ namespace PokemonGoRaidBot.Parsing
         /// <param name="message"></param>
         /// <param name="config"></param>
         /// <returns>If return value is null, or property 'Pokemon' is null, raid post is invalid.</returns>
-        public PokemonRaidPost ParsePost(SocketMessage message, BotConfig config)
+        public PokemonRaidPost ParsePost(SocketMessage message, BotConfiguration config)
         {
             var guild = ((SocketGuildChannel)message.Channel).Guild;
             var guildConfig = config.GetGuildConfig(guild.Id);
@@ -200,7 +200,7 @@ namespace PokemonGoRaidBot.Parsing
         /// <param name="name"></param>
         /// <param name="config"></param>
         /// <returns></returns>
-        public PokemonInfo ParsePokemon(string name, BotConfig config, ulong guildId)
+        public PokemonInfo ParsePokemon(string name, BotConfiguration config, ulong guildId)
         {
 
             var cleanedName = Regex.Replace(name, @"\W", "").ToLower();//never want any special characters in string
@@ -443,7 +443,7 @@ namespace PokemonGoRaidBot.Parsing
         /// </summary>
         /// <param name="message"></param>
         /// <returns>The string representation of the location</returns>
-        public string ParseLocation(string message, GuildConfig guildConfig)
+        public string ParseLocation(string message, GuildConfiguration guildConfig)
         {
             var cleanedMessage = Language.RegularExpressions["locationExcludeWords"].Replace(message, matchedWordReplacement).ToLower();
 
@@ -463,8 +463,7 @@ namespace PokemonGoRaidBot.Parsing
 
             return ToTitleCase(cleanedLocation);
         }
-
-        public PokemonRaidPost ParsePostFromPostMessage(string message, GuildConfig config)
+        public PokemonRaidPost ParsePostFromPostMessage(string message, GuildConfiguration config)
         {
             var uidReg = Language.RegularExpressions["postUniqueId"];
             if (!uidReg.IsMatch(message)) return null;
@@ -473,7 +472,6 @@ namespace PokemonGoRaidBot.Parsing
 
             return config.Posts.FirstOrDefault(x => x.UniqueId == uid);
         }
-
         /// <summary>
         /// 
         /// </summary>
@@ -641,7 +639,7 @@ namespace PokemonGoRaidBot.Parsing
         /// <param name="channel"></param>
         /// <param name="config"></param>
         /// <returns></returns>
-        public async Task<GeoCoordinate> GetLocationLatLong(string location, SocketGuildChannel channel, BotConfig config)
+        public async Task<GeoCoordinate> GetLocationLatLong(string location, SocketGuildChannel channel, BotConfiguration config)
         {
             if (string.IsNullOrEmpty(config.GoogleApiKey)) return null;
 
@@ -687,7 +685,7 @@ namespace PokemonGoRaidBot.Parsing
 
             return new GeoCoordinate();
         }
-        public string GetFullLocation(string location, GuildConfig guildConfig, ulong channelId)
+        public string GetFullLocation(string location, GuildConfiguration guildConfig, ulong channelId)
         {
             var city = guildConfig.ChannelCities.ContainsKey(channelId) ? guildConfig.ChannelCities[channelId] : guildConfig.City ?? "";
             if (!string.IsNullOrEmpty(city)) city = " near " + city;
@@ -757,7 +755,7 @@ namespace PokemonGoRaidBot.Parsing
         //{
         //    return GetFullHelpString(config, false);
         //}
-        public Embed GetHelpEmbed(BotConfig config, bool admin)
+        public Embed GetHelpEmbed(BotConfiguration config, bool admin)
         {
             var embed = new EmbedBuilder();
 
@@ -808,7 +806,7 @@ namespace PokemonGoRaidBot.Parsing
         /// </summary>
         /// <param name="info"></param>
         /// <returns></returns>
-        public string MakeInfoLine(PokemonInfo info, BotConfig config, ulong guildId, int paddingSize = 0)
+        public string MakeInfoLine(PokemonInfo info, BotConfiguration config, ulong guildId, int paddingSize = 0)
         {
             var lineFormat = Language.Formats["infoLine"];// "\n{0}: {7}Tier={1} BossCP={2:#,##0} MinCP={3:#,##0} MaxCP={4:#,##0} CatchRate={5}%{6}";
             var padding = 0;
@@ -836,7 +834,7 @@ namespace PokemonGoRaidBot.Parsing
         /// </summary>
         /// <param name="post"></param>
         /// <returns></returns>
-        public Embed MakeResponseEmbed(PokemonRaidPost post, GuildConfig guildConfig, string header)
+        public Embed MakeResponseEmbed(PokemonRaidPost post, GuildConfiguration guildConfig, string header)
         {
             var builder = new EmbedBuilder();
 
@@ -862,7 +860,7 @@ namespace PokemonGoRaidBot.Parsing
         /// <param name="response"></param>
         /// <param name="channel"></param>
         /// <param name="mentions"></param>
-        public void MakePostWithEmbed(PokemonRaidPost post, GuildConfig guildConfig, out Embed header, out Embed response, out string channel, out string mentions)
+        public void MakePostWithEmbed(PokemonRaidPost post, GuildConfiguration guildConfig, out Embed header, out Embed response, out string channel, out string mentions)
         {
             var headerstring = MakePostHeader(post);
             response = MakeResponseEmbed(post, guildConfig, headerstring);
