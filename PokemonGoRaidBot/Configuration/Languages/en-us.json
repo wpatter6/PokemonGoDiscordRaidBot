@@ -5,7 +5,7 @@
     "aAliases": "^(an?)$", //words like "a" or "an"
     "atAliases": "^(at)$", //words like "at"
     "garbage": "\\b(seen|around|raids?|much|not?|i'?ve|ends?|until|if|or|who|what|when|where|why|how|gen)\\b", //meaningless words that clutter things up and are unlikely to be part of location strings
-    "locationCrossStreets": "(([a-zA-Z0-9]* ?[a-zA-Z0-9]+) (\\&|a?nd?) ([a-zA-Z0-9]+ ?[a-zA-Z]*))", //Cross streets regex, like 12th and Broadway
+    "locationCrossStreets": "(([a-zA-Z0-9\\-]* ?[a-zA-Z0-9\\-]+) (\\&|a?nd?) ([a-zA-Z0-9\\-]+ ?[a-zA-Z\\-]*))", //Cross streets regex, like 12th and Broadway
     "locationStart": "\\b([a-zA-Z0-9'(\\bn\\.|\\bs\\.|\\be\\.|\\bw\\.) ]*)", //indicates location using word "at", includes n. s. e. w.
     "locationStartPre": "\\b(at|near|around|by)\\b",
     "locationEnd": "([a-zA-Z0-9' ]*\\b(park|school|lake|church|museum( of [a-zA-Z]+ ?[a-zA-Z]*\\b)?|mural|statue|building|station|theat(er|re)|course|sign|store|cafe|cent(er|re))( (n(orth)?|s(outh)?|e(ast)?|w(est)))?\\b)", //words coming after a landmark name
