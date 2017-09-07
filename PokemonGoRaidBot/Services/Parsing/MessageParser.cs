@@ -252,17 +252,20 @@ namespace PokemonGoRaidBot.Services.Parsing
                     if (part.First() == 'p')
                         hour += 12;
 
-                    var postedDate = DateTime.Today.Add(TimeSpan.Parse(string.Format("{0}:{1}", hour, minute))).AddHours(TimeOffset * -1);//subtract offset to convert to bot timezone
+                    var tsout = ParseTimeSpanBase(string.Format("{0}:{1}", hour, minute), TimeOffset * -1);
 
-                    message = message.Replace(match.Groups[0].Value, matchedTimeWordReplacement);
-
-                    if (joinReg.IsMatch(message))
+                    if (tsout.HasValue)
                     {
-                        message = joinReg.Replace(message, matchedWordReplacement);
-                        joinTimeSpan = new TimeSpan(postedDate.Ticks - DateTime.Now.Ticks);
+                        message = message.Replace(match.Groups[0].Value, matchedTimeWordReplacement);
+
+                        if (joinReg.IsMatch(message))
+                        {
+                            message = joinReg.Replace(message, matchedWordReplacement);
+                            joinTimeSpan = tsout.Value;
+                        }
+                        else
+                            raidTimeSpan = tsout.Value;
                     }
-                    else
-                        raidTimeSpan = new TimeSpan(postedDate.Ticks - DateTime.Now.Ticks);
                 }
 
                 if (joinTimeSpan.HasValue && raidTimeSpan.HasValue)
@@ -285,17 +288,20 @@ namespace PokemonGoRaidBot.Services.Parsing
 
                     if (part.First() == 'p') hour += 12;
 
-                    var postedDate = DateTime.Today.Add(TimeSpan.Parse(string.Format("{0}:{1}", hour, minute))).AddHours(TimeOffset * -1);//subtract offset to convert to bot timezone
-
-                    message = message.Replace(match.Groups[0].Value, matchedTimeWordReplacement);
-
-                    if (joinReg.IsMatch(message))
+                    var tsout = ParseTimeSpanBase(string.Format("{0}:{1}", hour, minute), TimeOffset * -1);
+                    
+                    if (tsout.HasValue)
                     {
-                        message = joinReg.Replace(message, matchedWordReplacement);
-                        joinTimeSpan = new TimeSpan(postedDate.Ticks - DateTime.Now.Ticks);
+                        message = message.Replace(match.Groups[0].Value, matchedTimeWordReplacement);
+
+                        if (joinReg.IsMatch(message))
+                        {
+                            message = joinReg.Replace(message, matchedWordReplacement);
+                            joinTimeSpan = tsout.Value;
+                        }
+                        else
+                            raidTimeSpan = tsout.Value;
                     }
-                    else
-                        raidTimeSpan = new TimeSpan(postedDate.Ticks - DateTime.Now.Ticks);
                 }
 
                 if (joinTimeSpan.HasValue && raidTimeSpan.HasValue)
@@ -316,9 +322,11 @@ namespace PokemonGoRaidBot.Services.Parsing
                         ts = new TimeSpan(hour, minute, 0);
                     else
                     {
-                        if (DateTime.Now.Hour > 9 && hour < 9) hour += 12;//PM is inferred
-                        var postedDate = DateTime.Today.Add(TimeSpan.Parse(string.Format("{0}:{1}", hour, minute + 1)));
-                        ts = new TimeSpan(postedDate.Ticks - DateTime.Now.Ticks);
+                        if (hour < DateTime.Now.Hour) hour += 12;//PM is inferred -- this may be where the long running raids are coming from... Also should handle timezone better...
+
+                        var tsout = ParseTimeSpanBase(string.Format("{0}:{1}", hour, minute + 1), TimeOffset * -1);
+                        if (tsout.HasValue)
+                            ts = tsout.Value;
                     }
 
                     message = message.Replace(match.Groups[0].Value, matchedTimeWordReplacement);
@@ -437,6 +445,17 @@ namespace PokemonGoRaidBot.Services.Parsing
                 }
             }
 
+        }
+
+        public TimeSpan? ParseTimeSpanBase(string str, int offset)
+        {
+            TimeSpan tsout = new TimeSpan(), ts = new TimeSpan();
+            if (TimeSpan.TryParse(str, out tsout))
+            {
+                var postedDate = DateTime.Today.Add(tsout).AddHours(offset);
+                return new TimeSpan(postedDate.Ticks - DateTime.Now.Ticks);
+            }
+            return null;
         }
         /// <summary>
         /// Attempts to get a location out of a full message string.
