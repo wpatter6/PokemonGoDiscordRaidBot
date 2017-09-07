@@ -129,7 +129,7 @@ namespace PokemonGoRaidBot.Data
                 post.DbId = postEntity.Id;
             }
 
-            foreach(var channelId in post.ChannelMessages.Keys)
+            foreach (var channelId in post.ChannelMessages.Keys.Where(x => ChannelPosts.Where(y => y.ChannelId == x && y.RaidPostId == post.DbId).Count() == 0))
             {
                 var channelPost = new RaidPostChannelEntity() { ChannelId = channelId, RaidPostId = post.DbId };
                 Add(channelPost);
