@@ -205,7 +205,9 @@ namespace PokemonGoRaidBot.Services.Discord
                 {
                     var channel = (SocketGuildChannel)message.Channel;
                     var guild = channel.Guild;
-                    
+
+                    await dbContext.AddOrUpdateGuild(guild);
+
                     var guildConfig = Config.GetGuildConfig(guild.Id);
                     
                     ISocketMessageChannel outputchannel = null;
