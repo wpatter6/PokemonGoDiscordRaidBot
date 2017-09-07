@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
 using PokemonGoRaidBot.Data.Entities;
 using PokemonGoRaidBot.Objects;
-using PokemonGoRaidBot.Configuration;
 using PokemonGoRaidBot.Objects.Interfaces;
+using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace PokemonGoRaidBot.Data
@@ -63,10 +62,42 @@ namespace PokemonGoRaidBot.Data
                 .WithOne(c => c.Post)
                 .HasForeignKey(c => c.RaidPostId);
         }
+        
+        public async Task AddOrUpdateGuild(SocketGuild guild)
+        {
+            var serverEntity = Servers.FirstOrDefault(x => x.Id == guild.Id);
+
+            if (serverEntity == null)
+            {
+                serverEntity = _mapper.Map<DiscordServerEntity>(guild);
+                serverEntity.LastSeenDate = serverEntity.FirstSeenDate = DateTime.Now;
+                Servers.Add(serverEntity);
+            }
+            else
+                serverEntity.LastSeenDate = DateTime.Now;
+
+            await SaveChangesAsync();
+        }
+
+        public async Task AddOrUpdateChannel(SocketGuildChannel channel)
+        {
+            var channelEntity = Channels.FirstOrDefault(x => x.Id == channel.Id);
+
+            if (channelEntity == null)
+            {
+                channelEntity = _mapper.Map<DiscordChannelEntity>(channel);
+                channelEntity.LastSeenDate = channelEntity.FirstSeenDate = DateTime.Now;
+                Channels.Add(channelEntity);
+            }
+            else
+                channelEntity.LastSeenDate = DateTime.Now;
+
+            await SaveChangesAsync();
+        }
 
         public async Task<PokemonRaidPost> AddOrUpdatePost(PokemonRaidPost post)
         {
-            var locationEntity = await Locations.SingleOrDefaultAsync(x => x.Name == post.Location);
+            var locationEntity = await Locations.SingleOrDefaultAsync(x => x.ServerId == post.GuildId && x.Name == post.Location);
             if (locationEntity == null)
             {
                 var newLoc = _mapper.Map<RaidPostLocationEntity>(post);

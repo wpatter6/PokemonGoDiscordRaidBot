@@ -7,6 +7,7 @@ namespace PokemonGoRaidBot.Data.Entities
     public class RaidPostLocationEntity
     {
         public ulong Id { get; set; }
+        public ulong ServerId { get; set; }
         public string Name { get; set; }
         public double? Latitude { get; set; }
         public double? Longitude { get; set; }

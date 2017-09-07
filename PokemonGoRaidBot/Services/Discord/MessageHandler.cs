@@ -53,13 +53,34 @@ namespace PokemonGoRaidBot.Services.Discord
             bot.MessageReceived += HandleCommand;
             bot.ReactionAdded += ReactionAdded;
             bot.ReactionRemoved += ReactionRemoved;
+            
+
+            bot.JoinedGuild += JoinedGuild;
+            bot.ChannelCreated += ChannelCreated;
 
             channelCache = new Dictionary<ulong, ISocketMessageChannel>();
+        }
+
+        private async Task ChannelCreated(SocketChannel channel)
+        {
+            if (!(channel is SocketGuildChannel)) return;
+
+            await dbContext.AddOrUpdateChannel((SocketGuildChannel)channel);
+        }
+
+        private async Task JoinedGuild(SocketGuild guild)
+        {
+            await dbContext.AddOrUpdateGuild(guild);
         }
 
         public async Task ConfigureAsync()
         {
             await commands.AddModulesAsync(Assembly.GetEntryAssembly());
+
+            foreach (var g in bot.Guilds)
+            {
+                await dbContext.AddOrUpdateGuild(g);
+            }
         }
 
         public async Task ReactionRemoved(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2, SocketReaction arg3)
@@ -184,33 +205,9 @@ namespace PokemonGoRaidBot.Services.Discord
                 {
                     var channel = (SocketGuildChannel)message.Channel;
                     var guild = channel.Guild;
-
-                    //var firstLoad = !Config.HasGuildConfig(guild.Id);
-
+                    
                     var guildConfig = Config.GetGuildConfig(guild.Id);
-
-                    //if (firstLoad)//pin all on first load
-                    //{
-                    //    foreach (var channel in ((SocketGuildChannel)message.Channel).Guild.Channels)
-                    //    {
-                    //        guildConfig.PinChannels.Add(channel.Id);
-                    //    }
-                    //}
-
-                    var serverEntity = dbContext.Servers.FirstOrDefault(x => x.Id == guild.Id);
-
-                    if (serverEntity == null)
-                    {
-                        serverEntity = Mapper.Map<DiscordServerEntity>(guild);
-                        serverEntity.LastSeenDate = serverEntity.FirstSeenDate = DateTime.Now;
-                        dbContext.Servers.Add(serverEntity);
-                    }
-                    else
-                        serverEntity.LastSeenDate = DateTime.Now;
-
-                    await dbContext.SaveChangesAsync();
-
-
+                    
                     ISocketMessageChannel outputchannel = null;
 
                     //get output channel
