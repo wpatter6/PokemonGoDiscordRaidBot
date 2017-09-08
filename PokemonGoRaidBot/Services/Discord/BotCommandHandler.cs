@@ -122,8 +122,10 @@ namespace PokemonGoRaidBot.Services.Discord
                 post.Location = Parser.ToTitleCase(string.Join(" ", Command.Skip(3)));
                 post.FullLocation = Parser.GetFullLocation(post.Location, GuildConfig, Message.Channel.Id);
 
-                if (GuildConfig.Places.ContainsKey(post.Location))
+                if (GuildConfig.Places.ContainsKey(post.Location.ToLower()))
+                {
                     post.LatLong = GuildConfig.Places[post.Location];
+                }
                 else
                     post.LatLong = await Parser.GetLocationLatLong(post.FullLocation, (SocketGuildChannel)Message.Channel, Config);
 
@@ -447,8 +449,8 @@ namespace PokemonGoRaidBot.Services.Discord
             }
             post.Location = Parser.ToTitleCase(string.Join(" ", Command.Skip(2)));
 
-            if (GuildConfig.Places.ContainsKey(post.Location))
-                post.LatLong = GuildConfig.Places[post.Location];
+            if (GuildConfig.Places.ContainsKey(post.Location.ToLower()))
+                post.LatLong = GuildConfig.Places[post.Location.ToLower()];
             else
                 post.LatLong = await Parser.GetLocationLatLong(post.Location, (SocketGuildChannel)Message.Channel, Config);
 
@@ -829,7 +831,7 @@ namespace PokemonGoRaidBot.Services.Discord
                 return;
             }
 
-            var cmdstr = string.Join(" ", Command.Skip(1));
+            var cmdstr = string.Join(" ", Command.Skip(1)).ToLower();
 
             if (!GuildConfig.Places.ContainsKey(cmdstr))
             {

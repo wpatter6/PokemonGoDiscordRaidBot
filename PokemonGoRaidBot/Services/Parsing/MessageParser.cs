@@ -468,9 +468,9 @@ namespace PokemonGoRaidBot.Services.Parsing
 
             foreach(var place in guildConfig.Places)
             {
-                var reg = new Regex($@"\b{place.Key}\b");
+                var reg = new Regex($@"\b{place.Key}\b", RegexOptions.IgnoreCase);
                 if (reg.IsMatch(cleanedMessage))
-                    return place.Key;
+                    return ToTitleCase(place.Key);
             }
 
             var result = ParseLocationBase(cleanedMessage);
@@ -739,22 +739,8 @@ namespace PokemonGoRaidBot.Services.Parsing
         }
         public string ToTitleCase(string str)
         {
-            var result = new List<string>();
-            var strs = str.Split(' ');
-            var i = 0;
-            foreach (var word in strs)
-            {
-                if (i > 0 && Language.RegularExpressions["smallWords"].IsMatch(word))
-                    result.Add(word);
-                else if (word.Length > 1)
-                    result.Add(char.ToUpper(word[0]) + word.Substring(1));
-                else
-                    result.Add(word.ToUpperInvariant());
-
-                i++;
-            }
-
-            return string.Join(" ", result);
+            var result = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(str);
+            return Language.RegularExpressions["smallWords"].Replace(result, m => m.ToString().ToLower());
         }
         private int[] GetRandomColorRGB()
         {

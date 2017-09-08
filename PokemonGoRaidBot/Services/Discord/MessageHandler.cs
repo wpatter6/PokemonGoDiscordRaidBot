@@ -396,8 +396,8 @@ namespace PokemonGoRaidBot.Services.Discord
 
                             var guildConfig = Config.GetGuildConfig(guildChannel.Guild.Id);
 
-                            if (guildConfig.Places.ContainsKey(post.Location))
-                                post.LatLong = guildConfig.Places[post.Location];
+                            if (guildConfig.Places.ContainsKey(post.Location.ToLower()))
+                                post.LatLong = guildConfig.Places[post.Location.ToLower()];
                             else
                                 post.LatLong = await parser.GetLocationLatLong(post.FullLocation, guildChannel, Config);
                         }
