@@ -82,7 +82,7 @@ namespace PokemonGoRaidBot.Data
             }
 
             serverEntity.LastSeenDate = DateTime.Now;
-            //serverEntity.City = city ?? serverEntity.City;
+            serverEntity.City = city ?? serverEntity.City;
 
             await SaveChangesAsync();
         }
@@ -99,7 +99,7 @@ namespace PokemonGoRaidBot.Data
             }
 
             channelEntity.LastSeenDate = DateTime.Now;
-            //channelEntity.City = city ?? channelEntity.City;
+            channelEntity.City = city ?? channelEntity.City;
 
             await SaveChangesAsync();
         }
