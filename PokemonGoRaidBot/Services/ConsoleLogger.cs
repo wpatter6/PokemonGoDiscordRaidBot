@@ -1,12 +1,10 @@
 ﻿using Discord;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
-namespace PokemonGoRaidBot
+namespace PokemonGoRaidBot.Services
 {
-    public class RaidLogger
+    public class ConsoleLogger
     {
         public Task Log(string src, string msg)
         {

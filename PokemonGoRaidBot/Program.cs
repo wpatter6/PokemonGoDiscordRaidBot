@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
@@ -7,10 +6,9 @@ using Discord.Commands;
 using Microsoft.Extensions.DependencyInjection;
 using PokemonGoRaidBot.Configuration;
 using System.IO;
-using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
 using PokemonGoRaidBot.Data;
 using PokemonGoRaidBot.Services;
-using Microsoft.EntityFrameworkCore;
 using PokemonGoRaidBot.Objects.Interfaces;
 using PokemonGoRaidBot.Services.Discord;
 
@@ -18,12 +16,16 @@ namespace PokemonGoRaidBot
 {
     public class Program
     {
-        public static void Main(string[] args) =>
+        //public static void Main(string[] args) =>
+        //    new Program().Start().GetAwaiter().GetResult();
+        public static void Main(string[] args)
+        {
             new Program().Start().GetAwaiter().GetResult();
+        }
 
         private DiscordSocketClient client;
         private BotConfiguration config;
-        private RaidLogger logger;
+        private ConsoleLogger logger;
 
         public async Task Start()
         {
@@ -34,7 +36,7 @@ namespace PokemonGoRaidBot
                 LogLevel = LogSeverity.Verbose,
             });
 
-            logger = new RaidLogger();
+            logger = new ConsoleLogger();
 
             client.Log += logger.Log;
             config = BotConfiguration.Load();
@@ -67,7 +69,8 @@ namespace PokemonGoRaidBot
 
         private async Task EnsureDatabaseExists(IServiceProvider provider)
         {
-            await provider.GetService<PokemonRaidBotDbContext>().Database.EnsureCreatedAsync();
+            var dbContext = provider.GetService<PokemonRaidBotDbContext>();
+            await dbContext.Database.MigrateAsync();
         }
 
         private static void EnsureBotConfigExists()

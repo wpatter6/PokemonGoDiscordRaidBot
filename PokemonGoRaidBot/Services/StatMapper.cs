@@ -1,5 +1,4 @@
-﻿using System;
-using PokemonGoRaidBot.Configuration;
+﻿using PokemonGoRaidBot.Configuration;
 using AutoMapper;
 using PokemonGoRaidBot.Objects.Interfaces;
 

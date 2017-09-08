@@ -43,6 +43,7 @@ namespace PokemonGoRaidBot.Configuration
                 .ForMember(dest => dest.PostedDate, opt => opt.MapFrom(src => src.PostDate))
                 .ForMember(dest => dest.ResponseCount, opt => opt.MapFrom(src => src.Responses.Count))
                 .ForMember(dest => dest.JoinCount, opt => opt.MapFrom(src => src.JoinedUsers.Count))
+                .ForMember(dest => dest.ServerId, opt => opt.MapFrom(src => src.GuildId))
                 .ForMember(dest => dest.CreationMessage, opt => opt.MapFrom(src => src.Responses.Count > 0 ? src.Responses[0].Content : null))
                 .ForMember(dest => dest.Location, opt => opt.Ignore());
         }

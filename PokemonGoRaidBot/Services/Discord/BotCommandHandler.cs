@@ -45,7 +45,7 @@ namespace PokemonGoRaidBot.Services.Discord
             {
                 MethodInfo[] methodInfos = GetType().GetMethods(BindingFlags.NonPublic | BindingFlags.Instance);
 
-                var method = methodInfos.FirstOrDefault(x => x.GetCustomAttributes<RaidBotCommandAttribute>().Where(xx => xx != null && xx.Command == Command[0]).Count() > 0);
+                var method = methodInfos.FirstOrDefault(x => x.GetCustomAttributes<BotCommandAttribute>().Where(xx => xx != null && xx.Command == Command[0]).Count() > 0);
 
                 if (method != default(MethodInfo))
                     await (Task)method.Invoke(this, new object[] { });
@@ -91,8 +91,8 @@ namespace PokemonGoRaidBot.Services.Discord
             return channel;
         }
 
-        [RaidBotCommand("r")]
-        [RaidBotCommand("raid")]
+        [BotCommand("r")]
+        [BotCommand("raid")]
         private async Task Raid()
         {
             if (Command.Count() < 4)
@@ -148,8 +148,8 @@ namespace PokemonGoRaidBot.Services.Discord
             }
         }
 
-        [RaidBotCommand("j")]
-        [RaidBotCommand("join")]
+        [BotCommand("j")]
+        [BotCommand("join")]
         private async Task Join()
         {
             string num = null;
@@ -250,9 +250,9 @@ namespace PokemonGoRaidBot.Services.Discord
             Config.Save();
         }
 
-        [RaidBotCommand("uj")]
-        [RaidBotCommand("un")]
-        [RaidBotCommand("unjoin")]
+        [BotCommand("uj")]
+        [BotCommand("un")]
+        [BotCommand("unjoin")]
         private async Task UnJoin()
         {
             if (Command.Count() == 1)
@@ -280,8 +280,8 @@ namespace PokemonGoRaidBot.Services.Discord
             Config.Save();
         }
 
-        [RaidBotCommand("i")]
-        [RaidBotCommand("info")]
+        [BotCommand("i")]
+        [BotCommand("info")]
         private async Task Info()
         {
             if (Command.Count() > 1 && Command[1].Length > 2)
@@ -331,7 +331,7 @@ namespace PokemonGoRaidBot.Services.Discord
             }
         }
 
-        [RaidBotCommand("stats")]
+        [BotCommand("stats")]
         private async Task Stats()
         {
             int count = 5, days = 7;
@@ -370,8 +370,8 @@ namespace PokemonGoRaidBot.Services.Discord
         //    await Handler.DirectMessageUser(user, "TEST!!");
         //}
 
-        [RaidBotCommand("m")]
-        [RaidBotCommand("merge")]
+        [BotCommand("m")]
+        [BotCommand("merge")]
         private async Task Merge()
         {
             var post1 = GetPost(Command[1], true);// GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[1]);
@@ -401,8 +401,8 @@ namespace PokemonGoRaidBot.Services.Discord
             Config.Save();
         }
 
-        [RaidBotCommand("d")]
-        [RaidBotCommand("delete")]
+        [BotCommand("d")]
+        [BotCommand("delete")]
         private async Task Delete()
         {
             if (!string.IsNullOrEmpty(Command[1]) && "all".Equals(Command[1]))
@@ -430,8 +430,8 @@ namespace PokemonGoRaidBot.Services.Discord
 
         }
 
-        [RaidBotCommand("loc")]
-        [RaidBotCommand("location")]
+        [BotCommand("loc")]
+        [BotCommand("location")]
         private async Task Location()
         {
             var post = GetPost(Command[1]);//GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[1]);
@@ -456,8 +456,8 @@ namespace PokemonGoRaidBot.Services.Discord
             Config.Save();
         }
 
-        [RaidBotCommand("h")]
-        [RaidBotCommand("help")]
+        [BotCommand("h")]
+        [BotCommand("help")]
         private async Task Help()
         {
             //var helpMessage = Parser.GetFullHelpString(Config, IsAdmin);
@@ -469,7 +469,7 @@ namespace PokemonGoRaidBot.Services.Discord
             //}
         }
 
-        [RaidBotCommand("language")]
+        [BotCommand("language")]
         private async Task Language()
         {
             if (!await CheckAdminAccess()) return;
@@ -479,7 +479,7 @@ namespace PokemonGoRaidBot.Services.Discord
             await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandLanguageSuccess"], Guild.Name, Command[1]));
         }
 
-        [RaidBotCommand("timezone")]
+        [BotCommand("timezone")]
         private async Task Timezone()
         {
             if (!await CheckAdminAccess()) return;
@@ -497,7 +497,7 @@ namespace PokemonGoRaidBot.Services.Discord
             await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandTimezoneSuccess"], Guild.Name, timezoneOut > -1 ? "+" + timezoneOut.ToString() : timezoneOut.ToString()));
         }
 
-        [RaidBotCommand("channel")]
+        [BotCommand("channel")]
         private async Task Channel()
         {
             if (!await CheckAdminAccess()) return;
@@ -520,7 +520,7 @@ namespace PokemonGoRaidBot.Services.Discord
             }
         }
 
-        [RaidBotCommand("nochannel")]
+        [BotCommand("nochannel")]
         private async Task NoChannel()
         {
             if (!await CheckAdminAccess()) return;
@@ -530,7 +530,7 @@ namespace PokemonGoRaidBot.Services.Discord
             await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoChannelSuccess"]);
         }
 
-        [RaidBotCommand("alias")]
+        [BotCommand("alias")]
         private async Task Alias()
         {
             if (!await CheckAdminAccess()) return;
@@ -548,7 +548,7 @@ namespace PokemonGoRaidBot.Services.Discord
             await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandAliasSuccess"], Command[2].ToLower(), foundInfo.Name));
         }
 
-        [RaidBotCommand("removealias")]
+        [BotCommand("removealias")]
         private async Task RemoveAlias()
         {
             if (!await CheckAdminAccess()) return;
@@ -577,7 +577,7 @@ namespace PokemonGoRaidBot.Services.Discord
             await Handler.MakeCommandMessage(Message.Channel, aresp);
         }
 
-        [RaidBotCommand("pinall")]
+        [BotCommand("pinall")]
         private async Task PinAll()
         {
             if (!await CheckAdminAccess()) return;
@@ -592,7 +592,7 @@ namespace PokemonGoRaidBot.Services.Discord
             await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandPinAllSuccess"]);
         }
 
-        [RaidBotCommand("pin")]
+        [BotCommand("pin")]
         private async Task Pin()
         {
             if (!await CheckAdminAccess()) return;
@@ -611,7 +611,7 @@ namespace PokemonGoRaidBot.Services.Discord
             }
         }
 
-        [RaidBotCommand("unpinall")]
+        [BotCommand("unpinall")]
         private async Task UnPinAll()
         {
             if (!await CheckAdminAccess()) return;
@@ -620,7 +620,7 @@ namespace PokemonGoRaidBot.Services.Discord
             await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandUnPinAllSuccess"]);
         }
 
-        [RaidBotCommand("unpin")]
+        [BotCommand("unpin")]
         private async Task UnPin()
         {
             if (!await CheckAdminAccess()) return;
@@ -637,7 +637,7 @@ namespace PokemonGoRaidBot.Services.Discord
             await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandUnPinSuccess"], channel.Name));//$"{unpinchannel.Name} removed from Pin Channels.");
         }
 
-        [RaidBotCommand("pinlist")]
+        [BotCommand("pinlist")]
         private async Task PinList()
         {
             var pinstring = "";
@@ -653,7 +653,7 @@ namespace PokemonGoRaidBot.Services.Discord
             await Handler.MakeCommandMessage(Message.Channel, pinstring);
         }
 
-        [RaidBotCommand("city")]
+        [BotCommand("city")]
         private async Task City()
         {
             if (!await CheckAdminAccess()) return;
@@ -664,7 +664,7 @@ namespace PokemonGoRaidBot.Services.Discord
             await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandCitySuccess"], Guild.Name, cityString));//$"{unpinchannel.Name} removed from Pin Channels.");
         }
 
-        [RaidBotCommand("channelcity")]
+        [BotCommand("channelcity")]
         private async Task ChannelCity()
         {
             if (!await CheckAdminAccess()) return;
@@ -688,7 +688,7 @@ namespace PokemonGoRaidBot.Services.Discord
             }
         }
 
-        [RaidBotCommand("cities")]
+        [BotCommand("cities")]
         private async Task Cities()
         {
             if (!await CheckAdminAccess()) return;
@@ -704,7 +704,7 @@ namespace PokemonGoRaidBot.Services.Discord
             await Handler.MakeCommandMessage(Message.Channel, str);
         }
 
-        [RaidBotCommand("mute")]
+        [BotCommand("mute")]
         private async Task Mute()
         {
             if (!await CheckAdminAccess()) return;
@@ -721,7 +721,7 @@ namespace PokemonGoRaidBot.Services.Discord
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandMuteAlreadyDone"], channel.Name));//already muted
         }
 
-        [RaidBotCommand("unmute")]
+        [BotCommand("unmute")]
         private async Task UnMute()
         {
             if (!await CheckAdminAccess()) return;
@@ -739,7 +739,7 @@ namespace PokemonGoRaidBot.Services.Discord
 
         }
 
-        [RaidBotCommand("muteall")]
+        [BotCommand("muteall")]
         private async Task MuteAll()
         {
             if (!await CheckAdminAccess()) return;
@@ -756,7 +756,7 @@ namespace PokemonGoRaidBot.Services.Discord
 
         }
 
-        [RaidBotCommand("unmuteall")]
+        [BotCommand("unmuteall")]
         private async Task UnMuteAll()
         {
             if (!await CheckAdminAccess()) return;
@@ -766,7 +766,7 @@ namespace PokemonGoRaidBot.Services.Discord
 
         }
 
-        [RaidBotCommand("mutelist")]
+        [BotCommand("mutelist")]
         private async Task MuteList()
         {
             if (!await CheckAdminAccess()) return;
@@ -783,7 +783,7 @@ namespace PokemonGoRaidBot.Services.Discord
             await Handler.MakeCommandMessage(Message.Channel, mutestring);
         }
 
-        [RaidBotCommand("place")]
+        [BotCommand("place")]
         private async Task Place()
         {
             if (!await CheckAdminAccess()) return;
@@ -818,7 +818,7 @@ namespace PokemonGoRaidBot.Services.Discord
         }
 
 
-        [RaidBotCommand("deleteplace")]
+        [BotCommand("deleteplace")]
         private async Task DeletePlace()
         {
             if (!await CheckAdminAccess()) return;
@@ -844,7 +844,7 @@ namespace PokemonGoRaidBot.Services.Discord
 
         }
 
-        [RaidBotCommand("places")]
+        [BotCommand("places")]
         private async Task Places()
         {
             if (!await CheckAdminAccess()) return;
@@ -857,14 +857,14 @@ namespace PokemonGoRaidBot.Services.Discord
             await Handler.MakeCommandMessage(Message.Channel, placestring);
         }
 
-        [RaidBotCommand("raidhelp")]
+        [BotCommand("raidhelp")]
         private async Task RaidHelp()
         {
             var embed = Parser.GetHelpEmbed(Config, false);
             await Message.Channel.SendMessageAsync(string.Format(Parser.Language.Strings["helpTop"], Config.OutputChannel), false, embed);
         }
 
-        [RaidBotCommand("version")]
+        [BotCommand("version")]
         private async Task Version()
         {
             var version = Config.Version;// Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;

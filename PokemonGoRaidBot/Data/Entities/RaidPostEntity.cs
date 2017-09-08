@@ -8,8 +8,9 @@ namespace PokemonGoRaidBot.Data.Entities
     {
         public ulong Id { get; set; }
         public ulong LocationId { get; set; }
-        public int PokemonId { get; set; }
+        public ulong ServerId { get; set; }
 
+        public int PokemonId { get; set; }
         public int JoinCount { get; set; }
         public int ResponseCount { get; set; }
 
@@ -21,6 +22,8 @@ namespace PokemonGoRaidBot.Data.Entities
 
         public DateTime PostedDate { get; set; }
         public DateTime EndDate { get; set; }
+
+        public DiscordServerEntity Server { get; set; }
 
         public PokemonEntity Pokemon { get; set; }
         public RaidPostLocationEntity Location { get; set; }

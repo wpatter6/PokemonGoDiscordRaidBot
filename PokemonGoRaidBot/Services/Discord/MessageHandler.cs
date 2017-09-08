@@ -24,7 +24,7 @@ namespace PokemonGoRaidBot.Services.Discord
         private IServiceProvider map;
         private IStatMapper Mapper;
 
-        public RaidLogger Logger;
+        public ConsoleLogger Logger;
         public readonly BotConfiguration Config;
 
         private PokemonRaidBotDbContext dbContext
@@ -46,7 +46,7 @@ namespace PokemonGoRaidBot.Services.Discord
 
             bot = map.GetService<DiscordSocketClient>();
             Mapper = map.GetService<IStatMapper>();
-            Logger = map.GetService<RaidLogger>();
+            Logger = map.GetService<ConsoleLogger>();
             Config = map.GetService<BotConfiguration>();
             commands = map.GetService<CommandService>();
 
@@ -206,10 +206,9 @@ namespace PokemonGoRaidBot.Services.Discord
                     var channel = (SocketGuildChannel)message.Channel;
                     var guild = channel.Guild;
 
-                    await dbContext.AddOrUpdateGuild(guild);
 
                     var guildConfig = Config.GetGuildConfig(guild.Id);
-                    
+
                     ISocketMessageChannel outputchannel = null;
 
                     //get output channel
@@ -249,6 +248,10 @@ namespace PokemonGoRaidBot.Services.Discord
                         var post = parser.ParsePost(message, Config);
                         await DoPost(post, message, parser, outputchannel);
                     }
+
+
+                    await dbContext.AddOrUpdateGuild(guild, guildConfig.City);
+                    await dbContext.AddOrUpdateChannel(channel, guildConfig.ChannelCities.ContainsKey(channel.Id) ? guildConfig.ChannelCities[channel.Id] : null);
                 }
             }
             catch (Exception e)

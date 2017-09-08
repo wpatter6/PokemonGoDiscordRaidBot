@@ -11,6 +11,8 @@ namespace PokemonGoRaidBot.Data.Entities
         public ulong ServerId { get; set; }
         public DiscordServerEntity Server { get; set; }
 
+        public string City { get; set; }
+
         public DateTime FirstSeenDate { get; set; }
         public DateTime LastSeenDate { get; set; }
 

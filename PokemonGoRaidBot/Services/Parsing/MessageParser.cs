@@ -449,7 +449,7 @@ namespace PokemonGoRaidBot.Services.Parsing
 
         public TimeSpan? ParseTimeSpanBase(string str, int offset)
         {
-            TimeSpan tsout = new TimeSpan(), ts = new TimeSpan();
+            TimeSpan tsout = new TimeSpan();
             if (TimeSpan.TryParse(str, out tsout))
             {
                 var postedDate = DateTime.Today.Add(tsout).AddHours(offset);

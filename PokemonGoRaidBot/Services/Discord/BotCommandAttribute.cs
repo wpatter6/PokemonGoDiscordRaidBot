@@ -1,12 +1,12 @@
 ﻿using System;
 
-namespace PokemonGoRaidBot
+namespace PokemonGoRaidBot.Services.Discord
 {
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-    internal class RaidBotCommandAttribute : Attribute
+    internal class BotCommandAttribute : Attribute
     {
         public readonly string Command;
-        public RaidBotCommandAttribute (string command)
+        public BotCommandAttribute (string command)
         {
             Command = command;
         }
