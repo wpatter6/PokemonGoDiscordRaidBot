@@ -25,7 +25,7 @@
     "joinMe": "\\b((i'?(m|ll| am) )?(omw|my way|coming|go(ing?)?|join(ing)?|can\\b|head(ed|ing)|be|(just|only) (me|one))( t?here)?)\\b", //indicates the current user is joining
     "joinMore": "^((?!need|use).)*\\b([0-9]{1,2}|\\b(one|two|three|four|five|six|seven|eight|nine|ten)) more\\b", //indicates more are joining, add to existing value
     "joinLess": "\\b([0-9]{1,2}|\\b(one|two|three|four|five|six|seven|eight|nine|ten)) (people |ppl |person )?((are |had to )?(leav(ing|e)|go)|just left)\\b", //indicates some are leaving, subtract from existing value
-    "joinTime": "\\b(be|get|it )?(there|arrive|way|start(ing)?|begin|go) ((in|at) )?===!!!===", //determines if timespan is a "join" time
+    "joinTime": "\\b(be|get|it )?(there|arrive|way|start(ing)?|begin(ning)?|go) ((in|at) )?===!!!===", //determines if timespan is a "join" time
     "pokemonInvalidators": "^(any|need|or|and)$", //if this comes before pokemon name, they're asking if any exist,
     "pokemonTooShort": "^(art|gen|mac|bay)$",
     "nonAlphaNumericWithPunctuation": "[^a-zA-Z0-9 ?\\.,:]",
