@@ -47,13 +47,12 @@ namespace PokemonGoRaidBot.Services
 
         public void LogToFile(string message, string folder = "log")
         {
-            var fileName = string.Format("/log_{0}", DateTime.Now.Date.ToShortDateString());
+            var fileName = string.Format(@"\log_{0}.txt", DateTime.Now.Date.ToString("yyyy-MM-dd"));
             var path = Path.Combine(AppContext.BaseDirectory, folder);
-            var loc = Path.Combine(path, fileName);
-            var msg = string.Format("{0}: {1}", DateTime.Now.ToShortTimeString(), message);
+            var msg = string.Format("{0}: {1}\n-----------", DateTime.Now.ToShortTimeString(), message);
             if (!Directory.Exists(path)) Directory.CreateDirectory(path);
 
-            File.AppendAllLines(path, new string[] { msg });
+            File.AppendAllLines(path + fileName, new string[] { msg });
         }
     }
 }
