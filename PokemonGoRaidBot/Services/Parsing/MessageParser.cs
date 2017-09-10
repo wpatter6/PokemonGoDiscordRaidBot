@@ -21,6 +21,7 @@ namespace PokemonGoRaidBot.Services.Parsing
 
         private const int latLongComparisonMaxMeters = 80;
         private const int maxRaidMinutes = 120;
+        private const int defaultRaidMinutes = 60;
         private const string matchedWordReplacement = "#|#|#|#";//when trying to match location, replace pokemon names and time spans with this string
         private const string matchedPokemonWordReplacement = "#$##$$###";
         private const string matchedLocationWordReplacement = "&&&&-&-&&&&";
@@ -57,7 +58,7 @@ namespace PokemonGoRaidBot.Services.Parsing
                 Color = GetRandomColorRGB(),
                 LastMessageDate = DateTime.Now,
                 ChannelMessages = new Dictionary<ulong, PokemonRaidPostOwner>(),
-                EndDate = DateTime.Now + new TimeSpan(0, maxRaidMinutes, 0),
+                EndDate = DateTime.Now + new TimeSpan(0, defaultRaidMinutes, 0),
                 MentionedRoleIds = new List<ulong>()
             };
 
@@ -149,7 +150,10 @@ namespace PokemonGoRaidBot.Services.Parsing
             if (joinTimeSpan.HasValue) joinTime = DateTime.Now + joinTimeSpan.Value;
             if (raidTimeSpan.HasValue)
             {
-                result.EndDate = DateTime.Now + raidTimeSpan.Value;
+                var resultTs = new TimeSpan(0, maxRaidMinutes, 0);
+                if (raidTimeSpan.Value < resultTs) resultTs = raidTimeSpan.Value;
+
+                result.EndDate = DateTime.Now + resultTs;
                 result.HasEndDate = true;
             }
             
