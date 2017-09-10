@@ -91,11 +91,11 @@ namespace PokemonGoRaidBot.Services.Discord
             return channel;
         }
 
-        [BotCommand("test")]
-        private async Task Test()
-        {
-            throw new Exception();
-        }
+        //[BotCommand("test")]
+        //private async Task Test()
+        //{
+        //    throw new Exception();
+        //}
 
         [BotCommand("r")]
         [BotCommand("raid")]
