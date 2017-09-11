@@ -106,7 +106,8 @@ namespace PokemonGoRaidBot.Data
 
         public async Task<PokemonRaidPost> AddOrUpdatePost(PokemonRaidPost post)
         {
-            var locationEntity = await Locations.SingleOrDefaultAsync(x => x.ServerId == post.GuildId && x.Name == post.Location);
+            var loc = Uri.UnescapeDataString(post.FullLocation);
+            var locationEntity = await Locations.SingleOrDefaultAsync(x => x.ServerId == post.GuildId && x.Name == loc);
             if (locationEntity == null)
             {
                 var newLoc = _mapper.Map<RaidPostLocationEntity>(post);

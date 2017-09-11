@@ -20,6 +20,7 @@ namespace PokemonGoRaidBot.Services.Parsing
         public ParserLanguage Language;
 
         private const int latLongComparisonMaxMeters = 80;
+        private const int eggMinutes = 60;
         private const int maxRaidMinutes = 120;
         private const int defaultRaidMinutes = 60;
         private const string matchedWordReplacement = "#|#|#|#";//when trying to match location, replace pokemon names and time spans with this string
@@ -192,7 +193,7 @@ namespace PokemonGoRaidBot.Services.Parsing
                     result.MentionedRoleIds.Add(role.Id);
             }
 
-            result.IsValid = result.PokemonId != default(int) && (!string.IsNullOrWhiteSpace(result.Location) || result.JoinedUsers.Count() > 0);
+            result.IsValid = result.PokemonId != default(int) && (!string.IsNullOrWhiteSpace(result.Location));
 
             return result;
         }
@@ -238,6 +239,7 @@ namespace PokemonGoRaidBot.Services.Parsing
             if (string.IsNullOrEmpty(message)) return;
 
             var joinReg = Language.RegularExpressions["joinTime"];
+            var eggReg = Language.RegularExpressions["eggTime"];
             var actualRegEnd = Language.RegularExpressions["timeActualEnd"];
             if (actualRegEnd.IsMatch(message))
             {
@@ -290,7 +292,7 @@ namespace PokemonGoRaidBot.Services.Parsing
 
                     string part = DateTime.Now.Hour < hour ? "p" : DateTime.Now.ToString("tt").ToLower();
 
-                    if (part.First() == 'p') hour += 12;
+                    if (part.First() == 'p' && hour < 12) hour += 12;
 
                     var tsout = ParseTimeSpanBase(string.Format("{0}:{1}", hour, minute), TimeOffset * -1);
                     
@@ -340,7 +342,11 @@ namespace PokemonGoRaidBot.Services.Parsing
                         message = joinReg.Replace(message, matchedWordReplacement);
                         joinTimeSpan = ts;
                     }
-                    else
+                    else if (eggReg.IsMatch(message))
+                    {
+                        message = eggReg.Replace(message, matchedWordReplacement);
+                        raidTimeSpan = ts.Add(new TimeSpan(0, eggMinutes, 0));
+                    } else
                         raidTimeSpan = ts;
                 }
                 if (joinTimeSpan.HasValue && raidTimeSpan.HasValue)
@@ -367,6 +373,11 @@ namespace PokemonGoRaidBot.Services.Parsing
                     {
                         message = joinReg.Replace(match.Groups[0].Value, matchedWordReplacement);
                         joinTimeSpan = new TimeSpan(hour, min, 0);
+                    }
+                    else if (eggReg.IsMatch(message))
+                    {
+                        message = eggReg.Replace(message, matchedWordReplacement);
+                        raidTimeSpan = new TimeSpan(hour, min + eggMinutes, 0);
                     }
                     else
                         raidTimeSpan = new TimeSpan(hour, min, 0);
@@ -402,6 +413,11 @@ namespace PokemonGoRaidBot.Services.Parsing
                         message = joinReg.Replace(message, matchedWordReplacement);
                         joinTimeSpan = new TimeSpan(0, 30, 0);
                     }
+                    else if (eggReg.IsMatch(message))
+                    {
+                        message = eggReg.Replace(message, matchedWordReplacement);
+                        raidTimeSpan = new TimeSpan(0, 30 + eggMinutes, 0);
+                    }
                     else
                         raidTimeSpan = new TimeSpan(0, 30, 0);
                     return;
@@ -421,6 +437,11 @@ namespace PokemonGoRaidBot.Services.Parsing
                         {
                             message = joinReg.Replace(message, matchedWordReplacement);
                             joinTimeSpan = new TimeSpan(hour, 0, 0);
+                        }
+                        else if (eggReg.IsMatch(message))
+                        {
+                            message = eggReg.Replace(message, matchedWordReplacement);
+                            raidTimeSpan = new TimeSpan(hour, eggMinutes, 0);
                         }
                         else
                             raidTimeSpan = new TimeSpan(hour, 0, 0);
@@ -442,6 +463,11 @@ namespace PokemonGoRaidBot.Services.Parsing
                         {
                             message = joinReg.Replace(message, matchedWordReplacement);
                             joinTimeSpan = new TimeSpan(0, min, 0);
+                        }
+                        else if (eggReg.IsMatch(message))
+                        {
+                            message = eggReg.Replace(message, matchedWordReplacement);
+                            raidTimeSpan = new TimeSpan(0, min + eggMinutes, 0);
                         }
                         else
                             raidTimeSpan = new TimeSpan(0, min, 0);

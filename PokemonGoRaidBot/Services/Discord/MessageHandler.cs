@@ -426,7 +426,7 @@ namespace PokemonGoRaidBot.Services.Discord
         /// 403 Error is output to console if bot user doesn't have role access to manage messages.
         /// </summary>
         /// <param name="post"></param>
-        /// <param name="outputchannel"></param>
+        /// <param name="parser"></param>
         public async Task<List<IUserMessage>> MakePost(PokemonRaidPost post, MessageParser parser)
         {
             var results = new List<IUserMessage>();
@@ -563,10 +563,11 @@ namespace PokemonGoRaidBot.Services.Discord
                 //Check if user in existing post is mentioned, get latest post associated with user
                 foreach (var mentionedUser in message.MentionedUsers)
                 {
-                    existing = guildConfig.Posts.OrderByDescending(x => x.Responses.Max(xx => xx.MessageDate))
+                    existing = channelPosts.OrderByDescending(x => x.Responses.Max(xx => xx.MessageDate))
                         .FirstOrDefault(x => x.ChannelMessages.Keys.Contains(message.Channel.Id)
                             && (x.Responses.Where(xx => xx.UserId == mentionedUser.Id).Count() > 0 || x.JoinedUsers.Where(xx => xx.Id == mentionedUser.Id).Count() > 0)
-                            && x.PokemonId == (post.PokemonId == 0 ? x.PokemonId : post.PokemonId));
+                            && x.PokemonId == (post.PokemonId == 0 ? x.PokemonId : post.PokemonId)
+                            && (string.IsNullOrWhiteSpace(x.Location) || string.IsNullOrWhiteSpace(post.Location) || parser.CompareLocationStrings(x.Location, post.Location)));
 
                     if (existing != null)
                         break;
@@ -603,7 +604,7 @@ namespace PokemonGoRaidBot.Services.Discord
             if (existing != null)
             {
                 if (add) existing = MergePosts(existing, post);
-                existing.IsExisting = true;
+                existing.IsValid = existing.IsExisting = true;
                 return existing;
             }
             else if (add && post.IsValid)
@@ -664,10 +665,10 @@ namespace PokemonGoRaidBot.Services.Discord
 
             post1.ChannelMessages = post1.ChannelMessages.Concat(post2.ChannelMessages.Where(x => !post1.ChannelMessages.ContainsKey(x.Key))).ToDictionary(x => x.Key, y => y.Value);
 
-            foreach (var key in post1.ChannelMessages.Keys.Where(x => post2.ChannelMessages.Keys.Contains(x)))
-            {
-                post2.ChannelMessages.Remove(key);
-            }
+            //foreach (var key in post1.ChannelMessages.Keys.Where(x => post2.ChannelMessages.Keys.Contains(x)))
+            //{
+            //    post2.ChannelMessages.Remove(key);
+            //}
 
             post1.Responses.AddRange(post2.Responses);
             post1.MentionedRoleIds.AddRange(post2.MentionedRoleIds.Where(x => !post1.MentionedRoleIds.Contains(x)));

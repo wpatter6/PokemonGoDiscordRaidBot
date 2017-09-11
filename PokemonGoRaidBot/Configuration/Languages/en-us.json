@@ -9,7 +9,7 @@
     "locationStart": "\\b([a-zA-Z0-9'(\\bn\\.|\\bs\\.|\\be\\.|\\bw\\.) ]*)", //indicates location using word "at", includes n. s. e. w.
     "locationStartPre": "\\b(at|near|to|around|by|off?)\\b",
     "locationEnd": "([a-zA-Z0-9' ]*\\b(park|school|lake|church|museum( of [a-zA-Z]+ ?[a-zA-Z]*\\b)?|mural|statue|building|station|theat(er|re)|course|sign|store|cafe|cent(er|re))( (n(orth)?|s(outh)?|e(ast)?|w(est)))?\\b)", //words coming after a landmark name
-    "locationExcludeWords": "\\b(left|too?|any(one)?|in|on|up|by|just|pop(ped|ping)?|with(out)?|ha(s|d|ve)|some(one)?|facebook|for|just|off|start(ing|ed)?|th(ere|is|en|at)|had|only|here|btw|are|am|direct(ions|ly))\\b|\\?|\\.|,", //remove these from parsed locations
+    "locationExcludeWords": "\\b(any(body|one)?|left|too?|any(one)?|in|on|up|by|just|pop(ped|ping)?|with(out)?|ha(s|d|ve)|some(one)?|facebook|for|from|just|off|start(ing|ed)?|th(ere|is|en|at)|had|only|here|btw|are|am|direct(ions|ly))\\b|\\?|\\.|,", //remove these from parsed locations
     "locationCleanWords": "^(at|near|around|by) ",
     "timeActualEnd": "\\b([0-9]{1,2}):?([0-9]{2})? ?(am?|pm?)\\b", //match where numbers indicate an actual time
     "timeActualStart": "\\b([0-9]{1,2}):?([0-9]{2})?\\b",
@@ -22,10 +22,11 @@
     "timeMin": "(1?[1-9]?[0-9]) ?(mi?n?s?|minutes?)\\b",
     "joinEnd": "[^:]?\\b([0-9]{1,2}|(\\b(one|two|three|four|five|six|seven|eight|nine|ten))) (for|here|join(ed|ing)are|going|people|on (the|our)|coming|(just)? arriv(ed|ing)|of us|confirmed|head(ed|ing)|will)\\b", //indicates the number of people will be joining, with match words coming after #
     "joinStart": "\\b(have|are|there'?s|we'?re|currently|got) ([0-9]{1,2}|(\\b(one|two|three|four|five|six|seven|eight|nine|ten)))\\b", //indicates the number of people will be joining, with match words coming before #
-    "joinMe": "\\b((i'?(m|ll| am) )?(omw|my way|coming|go(ing?)?|join(ing)?|can\\b|head(ed|ing)|be|(just|only) (me|one))( t?here)?)\\b", //indicates the current user is joining
+    "joinMe": "\\b((i'?(m|ll| am) )?(do|omw|my way|coming|go(ing?)?|join(ing)?|can\\b|head(ed|ing)|be|(just|only) (me|one))( t?here)?)\\b", //indicates the current user is joining
     "joinMore": "^((?!need|use).)*\\b([0-9]{1,2}|\\b(one|two|three|four|five|six|seven|eight|nine|ten)) more\\b", //indicates more are joining, add to existing value
     "joinLess": "\\b([0-9]{1,2}|\\b(one|two|three|four|five|six|seven|eight|nine|ten)) (people |ppl |person )?((are |had to )?(leav(ing|e)|go)|just left)\\b", //indicates some are leaving, subtract from existing value
     "joinTime": "\\b(be|get|it )?(there|arrive|way|start(ing)?|begin(ning)?|go) ((in|at) )?===!!!===", //determines if timespan is a "join" time
+    "eggTime": "\\b(egg|hatch(es|ing)?|spawn(s|ing)?|pop(s|ping)?)\\b",//deterines if timespan is "egg" time
     "pokemonInvalidators": "^(any|need|or|and)$", //if this comes before pokemon name, they're asking if any exist,
     "pokemonTooShort": "^(art|gen|mac|bay)$",
     "nonAlphaNumericWithPunctuation": "[^a-zA-Z0-9 ?\\.,:]",
@@ -41,7 +42,7 @@
     "postHeader": "`[{0}]`**{1}** {2}{3}\n{4} ([?](https://github.com/wpatter6/PokemonGoDiscordRaidBot/wiki/How-to-Post-Effectively))",
     "postLocation": " at **{0}**",
     "postEnds": " ends **{0:h:mmt}**",
-    "postEndsUnsure": " *ends before **{0:h:mmt}***",
+    "postEndsUnsure": " *ends around **{0:h:mmt}***",
     "postJoined": "***{0} joined:*** {1}",
     "postRolesTagged": "; Roles: {0}",
     "directMessage": "**{0} {1} {2}**{3} ({4}).",
