@@ -15,10 +15,10 @@
     "timeActualStart": "\\b([0-9]{1,2}):?([0-9]{2})?\\b",
     "timeActualStartPre": "\\b(at|around)\\b",
     "timeSpan": "(1?[0-9]):([0-9]{2})", //match where numbers indicate hours and minute
-    "timeHourMin": "([0-2]{1})? ?(h|hr|hours?) ?a?n?d? ?(1?[1-9]?[0-9]) ?(m|mi|min|mins|minutes?)\\b", //match where numbers like 1h3m or 1 hour 3 minutes
+    "timeHourMin": "\\b([0-2]{1})? ?(h|hr|hours?) ?a?n?d? ?(1?[1-9]?[0-9]) ?(m|mi|min|mins|minutes?)\\b", //match where numbers like 1h3m or 1 hour 3 minutes
     "timeHourHalf": "hour and (a )?half",
     "timeHalfHour": "half (an? )?hour",
-    "timeHour": "([0-2]{1})? ?\\b(h|hr|hours?)\\b",
+    "timeHour": "\\b([0-2]{1})? ?(h|hr|hours?)\\b",
     "timeMin": "(1?[1-9]?[0-9]) ?(mi?n?s?|minutes?)\\b",
     "joinEnd": "[^:]?\\b([0-9]{1,2}|(\\b(one|two|three|four|five|six|seven|eight|nine|ten))) (for|here|join(ed|ing)are|going|people|on (the|our)|coming|(just)? arriv(ed|ing)|of us|confirmed|head(ed|ing)|will)\\b", //indicates the number of people will be joining, with match words coming after #
     "joinStart": "\\b(have|are|there'?s|we'?re|currently|got) ([0-9]{1,2}|(\\b(one|two|three|four|five|six|seven|eight|nine|ten)))\\b", //indicates the number of people will be joining, with match words coming before #
@@ -26,11 +26,11 @@
     "joinMore": "^((?!need|use).)*\\b([0-9]{1,2}|\\b(one|two|three|four|five|six|seven|eight|nine|ten)) more\\b", //indicates more are joining, add to existing value
     "joinLess": "\\b([0-9]{1,2}|\\b(one|two|three|four|five|six|seven|eight|nine|ten)) (people |ppl |person )?((are |had to )?(leav(ing|e)|go)|just left)\\b", //indicates some are leaving, subtract from existing value
     "joinTime": "\\b(be|get|it )?(there|arrive|way|start(ing)?|begin(ning)?|go) ((in|at) )?===!!!===", //determines if timespan is a "join" time
-    "eggTime": "\\b(egg|hatch(es|ing)?|spawn(s|ing)?|pop(s|ping)?)\\b",//deterines if timespan is "egg" time
+    "eggTime": "\\b(egg|hatch(es|ing)?|spawn(s|ing)?|pop(s|ping)?)\\b", //deterines if timespan is "egg" time
     "pokemonInvalidators": "^(any|need|or|and)$", //if this comes before pokemon name, they're asking if any exist,
     "pokemonTooShort": "^(art|gen|mac|bay)$",
     "nonAlphaNumericWithPunctuation": "[^a-zA-Z0-9 ?\\.,:]",
-    "smallWords": "[0-9]?[0-9]?(1st|2nd|3rd|(4|5|6|7|8|9|0)th)|\\b(at?|the|and|of)\\b", //These will not be made uppercase if they're found in a location
+    "smallWords": "([0-9]?[0-9]?(1st|2nd|3rd|(4|5|6|7|8|9|0|11|12|13)th))|\\b(at?|the|and|of)\\b", //These will not be made uppercase if they're found in a location
     "discordRole": "\\<\\@\\&([0-9]+)\\>",
     "discordUser": "\\<\\@([0-9]+)\\>",
     "discordChannel": "\\<\\#([0-9]+)\\>",
