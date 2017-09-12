@@ -566,8 +566,8 @@ namespace PokemonGoRaidBot.Services.Parsing
             if (loc1 == loc2 || loc1.StartsWith(loc2) || loc2.StartsWith(loc1)) return true;
 
             //Check if they used any abbreviations -- not language dependent
-            var abbrReg1 = new Regex(loc1.Replace(" ", "[a-zA-Z]* ").Trim() + "[a-zA-Z]*");
-            var abbrReg2 = new Regex(loc2.Replace(" ", "[a-zA-Z]* ").Trim() + "[a-zA-Z]*");
+            var abbrReg1 = new Regex(Regex.Escape(loc1).Replace(" ", "[a-zA-Z]* ").Trim() + "[a-zA-Z]*");
+            var abbrReg2 = new Regex(Regex.Escape(loc2).Replace(" ", "[a-zA-Z]* ").Trim() + "[a-zA-Z]*");
 
             if (abbrReg1.IsMatch(loc2)) return true;
             if (abbrReg2.IsMatch(loc1)) return true;

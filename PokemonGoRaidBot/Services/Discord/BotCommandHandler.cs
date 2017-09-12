@@ -399,7 +399,7 @@ namespace PokemonGoRaidBot.Services.Discord
 
             Handler.MergePosts(post1, post2);
 
-            if(!await Handler.DeletePost(post2, Message.Author.Id, !IsAdmin))
+            if(!await Handler.DeletePost(post2, Message.Author.Id, IsAdmin))
             {
                 await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoPostAccess"]);
                 return;
