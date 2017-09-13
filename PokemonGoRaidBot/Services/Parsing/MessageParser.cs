@@ -95,7 +95,9 @@ namespace PokemonGoRaidBot.Services.Parsing
                 else if (userReg.IsMatch(word))
                 {
                     var userId = Convert.ToUInt64(userReg.Match(word).Groups[1].Value);
-                    cleanedword = message.MentionedUsers.FirstOrDefault(x => x.Id == userId)?.Username ?? cleanedword;
+                    var user = (IGuildUser)message.MentionedUsers.FirstOrDefault(x => x.Id == userId);
+
+                    cleanedword = (word.Contains("!") ? user?.Nickname : user?.Username) ?? cleanedword;
                     messageString = messageString.Replace(word, "@" + cleanedword);
                     isMention = true;
                 }
