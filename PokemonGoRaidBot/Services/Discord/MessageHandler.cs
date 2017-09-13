@@ -745,6 +745,11 @@ namespace PokemonGoRaidBot.Services.Discord
             await channel.SendMessageAsync($"```{message}```");
         }
 
+        public int GetPostCount(int days, ulong serverId)
+        {
+            return dbContext.Posts.Where(x => x.PostedDate > DateTime.Now.AddDays(days * -1) && x.ServerId == serverId).Count();
+        }
+
         public List<IGrouping<PokemonEntity, RaidPostEntity>> GetBossAggregates(int count = 5, Expression <Func<RaidPostEntity, bool>> where = null)
         {
             if (where == null) where = x => x.PostedDate > DateTime.Now.AddDays(-7);

@@ -343,31 +343,61 @@ namespace PokemonGoRaidBot.Services.Discord
         private async Task Stats()
         {
             int count = 5, days = 7;
+            string aggregate = "boss";
 
-            switch (Command.Count())
+            var ct = Command.Count();
+            if(ct > 1)
             {
-                case 2:
-                    if(!int.TryParse(Command[1], out count))
-                        await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandInvalidNumber"], Command[1]));
-                    break;
-                case 3:
-                    if (!int.TryParse(Command[1], out count))
-                        await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandInvalidNumber"], Command[1]));
-                    if (!int.TryParse(Command[2], out days))
-                        await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandInvalidNumber"], Command[2]));
-                    break;
+                var paramStart = 1;
+                if (!int.TryParse(Command[1], out count))
+                {
+                    aggregate = Command[1];
+                    paramStart++;
+                }
+                if(ct >= paramStart)
+                { 
+                    if (!int.TryParse(Command[paramStart], out count))
+                    { 
+                        await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandInvalidNumber"], Command[paramStart]));
+                        return;
+                    }
 
+                    if (ct >= paramStart + 1)
+                    {
+                        if (!int.TryParse(Command[paramStart + 1], out days))
+                        {
+                            await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandInvalidNumber"], Command[paramStart + 1]));
+                            return;
+                        }
+                    }
+                }
             }
-            days = Math.Abs(days);
             
+            days = Math.Abs(days);
+            string statString = "";
+            switch (aggregate)
+            {//only boss for now, maybe other aggregates later.
+                case "boss":
+                    statString = GetBossStats(count, days);
+                    break;
+                default:
+                    await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandInvalidNumber"], aggregate));
+                    break;
+            }
+            await Handler.MakeCommandMessage(Message.Channel, statString);
+        }
+
+        private string GetBossStats(int count, int days)
+        {
+            var statString = "";
             var result = Handler.GetBossAggregates(count, x => x.PostedDate > DateTime.Now.AddDays(-1 * days) && x.ChannelPosts.Where(y => y.Channel.ServerId == Guild.Id).Count() > 0);
-            string statString = string.Format("Top {0} Bosses in {2} for the last {1} days:", count, days, Guild.Name);
+            var total = Handler.GetPostCount(days, Guild.Id);
+            statString = string.Format("Top {0} Bosses for the last {2} days out of {3:#,##0} total:", count, Guild.Name, days, total);
             int i = 1;
 
-            foreach(var grouping in result)
+            foreach (var grouping in result)
                 statString += string.Format("\n#{0}: {1} with {2} posts.", i++, grouping.Key.Name, grouping.Count());
-
-            await Handler.MakeCommandMessage(Message.Channel, statString);
+            return statString;
         }
 
         //[RaidBotCommand("test")]
