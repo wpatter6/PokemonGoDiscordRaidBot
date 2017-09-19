@@ -23,7 +23,7 @@
 ![Pinning messages posted in channel](http://i.imgur.com/1JgHR2F.png)
 
 ###### *All channels formatting and outputting to their specific channel as 'threads'*
-![All output to specific channel](http://i.imgur.com/l12BNJk.png)
+![All output to specific channel](https://imgur.com/CDvSLCY.png)
 
 ###### *info command will give useful information about the raid with a link to boss counters*
 ![info command](http://i.imgur.com/7LN3Asy.png)
