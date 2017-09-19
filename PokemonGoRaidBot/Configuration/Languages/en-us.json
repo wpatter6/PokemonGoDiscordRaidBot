@@ -23,7 +23,7 @@
     "joinEnd": "[^:]?\\b([0-9]{1,2}|(\\b(one|two|three|four|five|six|seven|eight|nine|ten))) (for|here|join(ed|ing)are|going|people|on (the|our)|coming|(just)? arriv(ed|ing)|of us|confirmed|head(ed|ing)|will)\\b", //indicates the number of people will be joining, with match words coming after #
     "joinStart": "\\b(have|are|there'?s|we'?re|currently|got) ([0-9]{1,2}|(\\b(one|two|three|four|five|six|seven|eight|nine|ten)))\\b", //indicates the number of people will be joining, with match words coming before #
     "joinMe": "\\b((i'?(m|ll| am) )?(do|omw|my way|coming|go(ing?)?|join(ing)?|can\\b|head(ed|ing)|be|(just|only) (me|one))( t?here)?)\\b", //indicates the current user is joining
-    "joinMore": "^((?!need|use).)*\\b([0-9]{1,2}|\\b(one|two|three|four|five|six|seven|eight|nine|ten)) more\\b", //indicates more are joining, add to existing value
+    "joinMore": "\\b([0-9]{1,2}|\b(one|two|three|four|five|six|seven|eight|nine|ten)) more\\b", //indicates more are joining, add to existing value
     "joinLess": "\\b([0-9]{1,2}|\\b(one|two|three|four|five|six|seven|eight|nine|ten)) (people |ppl |person )?((are |had to )?(leav(ing|e)|go)|just left)\\b", //indicates some are leaving, subtract from existing value
     "joinTime": "\\b(be|get|it )?(there|arrive|way|start(ing)?|begin(ning)?|go) ((in|at) )?===!!!===", //determines if timespan is a "join" time
     "eggTime": "\\b(egg|hatch(es|ing)?|spawn(s|ing)?|pop(s|ping)?)\\b", //deterines if timespan is "egg" time
