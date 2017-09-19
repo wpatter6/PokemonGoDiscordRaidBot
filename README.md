@@ -67,15 +67,15 @@
 <hr/>
 
 ## Bot Commands:
-*Underline indicates shorthand version of command, `*` means optional parameter. *
-* `!__r__aid [pokemon] [time left] [location]` Creates a new raid post with the specified [pokemon] name, [time left] (formatted H:MM), and [location], which must be identifiable by google maps.  Creates a new raid post whether a matching one exists or not.
-* `!__j__oin [raid*] [number*] [arrival time*]` Joins the specified number of people to the specified `raid` Id.  Adding + or - before the number will add or subtract from an existing value.  If pokemon name is used instead of Id, will join the most recently posted in channel matching the start of the pokemon name.  If no parameters, will join 1 to the most recently posted raid in that channel.
-* `!__un__join [raid*]` Removes your join information from the raid.  If `raid` is blank, unjoins all.
-* `!__i__nfo [name*]` Displays information about the selected raid, or all of the raids if `name` is blank.  Information was taken from https://pokemongo.gamepress.gg.
-* `!__d__elete [raid]` Deletes a raid post with the corresponding Id.  Use `all` to delete all raids posted by you.  The thumbs down emoji reaction will delete the raid as well, if done by the raid poster or server admin.
-* `!__m__erge [raid1] [raid2]` Merges `raid2` into `raid1`.  Can only be done by admin or original poster of `raid2`.
-* `!__loc__ation [raid] [new location]` Allows the poster of the raid or admin to change the location of a post.
-* `!__h__elp` Shows help message.
+*Parenthesis indicate shorthand version of command, `*` means optional parameter. *
+* `!(r)aid [pokemon] [time left] [location]` Creates a new raid post with the specified [pokemon] name, [time left] (formatted H:MM), and [location], which must be identifiable by google maps.  Creates a new raid post whether a matching one exists or not.
+* `!(j)oin [raid*] [number*] [arrival time*]` Joins the specified number of people to the specified `raid` Id.  Adding + or - before the number will add or subtract from an existing value.  If pokemon name is used instead of Id, will join the most recently posted in channel matching the start of the pokemon name.  If no parameters, will join 1 to the most recently posted raid in that channel.
+* `!(un)join [raid*]` Removes your join information from the raid.  If `raid` is blank, unjoins all.
+* `!(i)nfo [name*]` Displays information about the selected raid, or all of the raids if `name` is blank.  Information was taken from https://pokemongo.gamepress.gg.
+* `!(d)elete [raid]` Deletes a raid post with the corresponding Id.  Use `all` to delete all raids posted by you.  The thumbs down emoji reaction will delete the raid as well, if done by the raid poster or server admin.
+* `!(m)erge [raid1] [raid2]` Merges `raid2` into `raid1`.  Can only be done by admin or original poster of `raid2`.
+* `!(loc)ation [raid] [new location]` Allows the poster of the raid or admin to change the location of a post.
+* `!(h)elp` Shows help message.
 
 ## Admin Commands:
 *requires Manage Server or Admin role permission*
