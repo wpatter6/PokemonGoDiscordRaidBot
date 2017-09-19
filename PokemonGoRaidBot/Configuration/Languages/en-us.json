@@ -133,7 +133,7 @@
     "helpDeletePlace": "Removes specified place from the server's list.",
     "helpHelp": "Shows this message.",
     "helpAdmin": "Requires Server Admin or Manage Server Permissions.",
-    "helpParenthesis": "Command can be shortened to value in (parenthesis).",
+    "helpParenthesis": "Command can be shortened to underlined value.",
     "commandNoAccess": "You do not have the necessary permissions to change this setting.  You must be a server moderator or administrator to make this change.",
     "commandNoChannelSuccess": "Bot will no longer output to a single channel.  Use !channel to undo this.",
     "commandNoPostAccess": "Only the creator of the post, server mods, or administrators can modify raid posts.",

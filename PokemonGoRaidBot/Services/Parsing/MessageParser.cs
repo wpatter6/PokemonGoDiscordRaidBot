@@ -805,14 +805,14 @@ namespace PokemonGoRaidBot.Services.Parsing
 
             embed.AddField($"__**{Language.Strings["helpCommands"]}**__", info);
 
-            embed.AddField(string.Format("{0}(r)aid [pokemon] [time left] [location]", config.Prefix), Language.Strings["helpRaid"]);
-            embed.AddField(string.Format("{0}(j)oin [raid] [number]", config.Prefix), Language.Strings["helpJoin"]);
-            embed.AddField(string.Format("{0}(un)join [raid]", config.Prefix), Language.Strings["helpUnJoin"]);
-            embed.AddField(string.Format("{0}(d)elete [raid id]", config.Prefix), Language.Strings["helpDelete"]);
-            embed.AddField(string.Format("{0}(m)erge [raid1] [raid2]", config.Prefix), Language.Strings["helpMerge"]);
-            embed.AddField(string.Format("{0}(loc)ation [raid] [new location]", config.Prefix), Language.Strings["helpLocation"]);
-            embed.AddField(string.Format("{0}(i)nfo [name]", config.Prefix), Language.Strings["helpInfo"]);
-            embed.AddField(string.Format("{0}(h)elp", config.Prefix), Language.Strings["helpHelp"]);
+            embed.AddField(string.Format("{0}__r__aid [pokemon] [time left] [location]", config.Prefix), Language.Strings["helpRaid"]);
+            embed.AddField(string.Format("{0}__j__oin [raid] [number]", config.Prefix), Language.Strings["helpJoin"]);
+            embed.AddField(string.Format("{0}__un__join [raid]", config.Prefix), Language.Strings["helpUnJoin"]);
+            embed.AddField(string.Format("{0}__d__elete [raid id]", config.Prefix), Language.Strings["helpDelete"]);
+            embed.AddField(string.Format("{0}__m__erge [raid1] [raid2]", config.Prefix), Language.Strings["helpMerge"]);
+            embed.AddField(string.Format("{0}__loc__ation [raid] [new location]", config.Prefix), Language.Strings["helpLocation"]);
+            embed.AddField(string.Format("{0}__i__nfo [name]", config.Prefix), Language.Strings["helpInfo"]);
+            embed.AddField(string.Format("{0}__h__elp", config.Prefix), Language.Strings["helpHelp"]);
 
             if (admin)
             {
