@@ -24,6 +24,8 @@ namespace PokemonGoRaidBot.Services.Discord
         private IServiceProvider map;
         private IStatMapper Mapper;
 
+        private List<string> DeleteEmojis = new List<string>(new string[] { "👎", "👎🏻", "👎🏽", "👎🏾", "👎🏿" });
+
         public ConsoleLogger Logger;
         public readonly BotConfiguration Config;
 
@@ -88,7 +90,7 @@ namespace PokemonGoRaidBot.Services.Discord
             if (arg3.UserId == bot.CurrentUser.Id) return;
 
             var message = await arg2.GetMessageAsync(arg1.Id);
-            if (message == null || string.IsNullOrEmpty(message.Content) || !(arg2 is SocketGuildChannel) || arg3.Emote.Name == "👎") return;
+            if (message == null || string.IsNullOrEmpty(message.Content) || !(arg2 is SocketGuildChannel) || DeleteEmojis.Contains(arg3.Emote.Name)) return;
             var guildConfig = Config.GetGuildConfig(((SocketGuildChannel)arg2).Guild.Id);
             var channel = (SocketGuildChannel)arg2;
 
@@ -139,7 +141,7 @@ namespace PokemonGoRaidBot.Services.Discord
 
             if (post != null && user != null)
             {
-                if (arg3.Emote.Name == "👎")//thumbs down will be quick way to delete a raid by poster/admin
+                if (DeleteEmojis.Contains(arg3.Emote.Name))//thumbs down will be quick way to delete a raid by poster/admin
                 {
                     await DeletePost(post, user.Id, user.GuildPermissions.Administrator || user.GuildPermissions.ManageGuild);
                 }
