@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace PokemonGoRaidBot.Services.Discord
+namespace PokemonGoRaidBot.Services
 {
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
     internal class BotCommandAttribute : Attribute

@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 using System.Text;
 using PokemonGoRaidBot.Objects;
+using PokemonGoRaidBot.Objects.Interfaces;
 
 namespace PokemonGoRaidBot.Configuration
 {
-    public class GuildConfiguration
+    public class ServerConfiguration
     {
-        public GuildConfiguration()
+        public ServerConfiguration()
         {
             ChannelCities = new Dictionary<ulong, string>();
             PokemonAliases = new Dictionary<int, List<string>>();
@@ -28,5 +29,6 @@ namespace PokemonGoRaidBot.Configuration
         public List<ulong> PinChannels { get; set; }
         public List<ulong> MuteChannels { get; set; }
         public Dictionary<string, GeoCoordinate> Places { get; set; }
+        public ChatTypes? ChatType { get; set; }
     }
 }

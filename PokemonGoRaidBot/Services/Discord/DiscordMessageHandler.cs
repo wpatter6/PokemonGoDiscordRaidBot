@@ -17,7 +17,7 @@ using PokemonGoRaidBot.Objects.Interfaces;
 
 namespace PokemonGoRaidBot.Services.Discord
 {
-    public class MessageHandler
+    public class DiscordMessageHandler : IChatMessageHandler
     {
         private CommandService commands;
         private DiscordSocketClient bot;
@@ -27,7 +27,7 @@ namespace PokemonGoRaidBot.Services.Discord
         private List<string> DeleteEmojis = new List<string>(new string[] { "👎", "👎🏻", "👎🏽", "👎🏾", "👎🏿" });
 
         public ConsoleLogger Logger;
-        public readonly BotConfiguration Config;
+        public BotConfiguration Config { get; private set; }
 
         private PokemonRaidBotDbContext dbContext
         {
@@ -38,11 +38,11 @@ namespace PokemonGoRaidBot.Services.Discord
         }
 
         private List<MessageParser> ParserCache = new List<MessageParser>();
-        private List<GuildConfiguration> GuildConfigCache = new List<GuildConfiguration>();
+        private List<ServerConfiguration> GuildConfigCache = new List<ServerConfiguration>();
 
         Dictionary<ulong, ISocketMessageChannel> channelCache;
 
-        public MessageHandler(IServiceProvider provider)
+        public DiscordMessageHandler(IServiceProvider provider)
         {
             map = provider;
 
@@ -85,13 +85,13 @@ namespace PokemonGoRaidBot.Services.Discord
             }
         }
 
-        public async Task ReactionRemoved(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2, SocketReaction arg3)
+        private async Task ReactionRemoved(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2, SocketReaction arg3)
         {
             if (arg3.UserId == bot.CurrentUser.Id) return;
 
             var message = await arg2.GetMessageAsync(arg1.Id);
             if (message == null || string.IsNullOrEmpty(message.Content) || !(arg2 is SocketGuildChannel) || DeleteEmojis.Contains(arg3.Emote.Name)) return;
-            var guildConfig = Config.GetGuildConfig(((SocketGuildChannel)arg2).Guild.Id);
+            var guildConfig = Config.GetServerConfig(((SocketGuildChannel)arg2).Guild.Id, ChatTypes.Discord);
             var channel = (SocketGuildChannel)arg2;
 
             var parser = GetParser(guildConfig);
@@ -112,7 +112,7 @@ namespace PokemonGoRaidBot.Services.Discord
                     var tasks = new List<Task>();
                     foreach (var resultmessage in messages.Where(x => x.Channel.Id != message.Channel.Id))
                     {
-                        tasks.Add(resultmessage.RemoveReactionAsync(arg3.Emote, bot.CurrentUser));
+                        tasks.Add(resultmessage.RemoveReactionAsync(arg3.Emote.Name, new DiscordChatUser(bot.CurrentUser)));
                     }
 
                     Task.WaitAll(tasks.ToArray());
@@ -121,7 +121,7 @@ namespace PokemonGoRaidBot.Services.Discord
             }
         }
 
-        public async Task ReactionAdded(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2, SocketReaction arg3)
+        private async Task ReactionAdded(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2, SocketReaction arg3)
         {
             if (arg3.UserId == bot.CurrentUser.Id) return;
 
@@ -131,7 +131,7 @@ namespace PokemonGoRaidBot.Services.Discord
             var embed = message.Embeds.FirstOrDefault();
             if (embed == null || string.IsNullOrEmpty(embed.Description)) return;
 
-            var guildConfig = Config.GetGuildConfig(((SocketGuildChannel)arg2).Guild.Id);
+            var guildConfig = Config.GetServerConfig(((SocketGuildChannel)arg2).Guild.Id, ChatTypes.Discord);
             //var message = arg1.Value;
             var channel = (SocketGuildChannel)arg2;
             var user = channel.Guild.GetUser(arg3.UserId);
@@ -159,7 +159,7 @@ namespace PokemonGoRaidBot.Services.Discord
                     var tasks = new List<Task>();
                     foreach (var resultmessage in messages.Where(x => x.Channel.Id != message.Channel.Id))
                     {
-                        tasks.Add(resultmessage.AddReactionAsync(arg3.Emote));
+                        tasks.Add(resultmessage.AddReactionAsync(arg3.Emote.Name));
                     }
 
                     Task.WaitAll(tasks.ToArray());
@@ -188,7 +188,7 @@ namespace PokemonGoRaidBot.Services.Discord
 
                     if (message.Content == lang.Strings["stop"])
                     {
-                        await DirectMessageUser(message.Author, lang.Strings["dmStart"]);
+                        await DirectMessageUser(new DiscordChatUser(message.Author), lang.Strings["dmStart"]);
                         Config.NoDMUsers.Add(message.Author.Id);
                         Config.Save();
                     }
@@ -196,10 +196,10 @@ namespace PokemonGoRaidBot.Services.Discord
                     {
                         Config.NoDMUsers.RemoveAll(x => x == message.Author.Id);
                         Config.Save();
-                        await DirectMessageUser(message.Author, lang.Strings["dmReStart"]);
+                        await DirectMessageUser(new DiscordChatUser(message.Author), lang.Strings["dmReStart"]);
                     }
                     else
-                        await DirectMessageUser(message.Author, lang.Strings["dmResp"] + lang.Strings["dmStop"]);
+                        await DirectMessageUser(new DiscordChatUser(message.Author), lang.Strings["dmResp"] + lang.Strings["dmStop"]);
 
                     return;
                 }
@@ -209,7 +209,7 @@ namespace PokemonGoRaidBot.Services.Discord
                     var guild = channel.Guild;
 
 
-                    var guildConfig = Config.GetGuildConfig(guild.Id);
+                    var guildConfig = Config.GetServerConfig(guild.Id, ChatTypes.Discord);
 
                     ISocketMessageChannel outputchannel = null;
 
@@ -242,13 +242,13 @@ namespace PokemonGoRaidBot.Services.Discord
                     //Someone is issuing a command, respond in their channel
                     if (message.HasStringPrefix(Config.Prefix, ref argPos))
                     {
-                        await DoCommand(message, parser);
+                        await DoCommand(new DiscordChatMessage(message), parser);
                     }
                     //try to see if a raid was posted
                     else if (doPost)
                     {
-                        var post = parser.ParsePost(message, Config);
-                        await DoPost(post, message, parser, outputchannel);
+                        var post = parser.ParsePost(new DiscordChatMessage(message), Config);
+                        await DoPost(post, new DiscordChatMessage(message), parser, new DiscordChatChannel(outputchannel));
                     }
 
 
@@ -274,7 +274,7 @@ namespace PokemonGoRaidBot.Services.Discord
                 foreach (var guild in bot.Guilds)
                 {
                     var deletedPosts = new List<PokemonRaidPost>();
-                    var posts = Config.GetGuildConfig(guild.Id).Posts;
+                    var posts = Config.GetServerConfig(guild.Id, ChatTypes.Discord).Posts;
                     foreach (var post in posts)
                     {
                         if (post.EndDate < now)
@@ -362,7 +362,7 @@ namespace PokemonGoRaidBot.Services.Discord
         /// <param name="message"></param>
         /// <param name="parser"></param>
         /// <returns></returns>
-        private async Task DoCommand(SocketUserMessage message, MessageParser parser)
+        private async Task DoCommand(IChatMessage message, MessageParser parser)
         {
             var executor = new BotCommandHandler(this, message, parser);
             await executor.Execute();
@@ -375,7 +375,7 @@ namespace PokemonGoRaidBot.Services.Discord
         /// <param name="outputchannel"></param>
         /// <param name="pin"></param>
         /// <returns></returns>
-        public async Task DoPost(PokemonRaidPost post, SocketUserMessage message, MessageParser parser, ISocketMessageChannel outputchannel, bool force = false)
+        public async Task DoPost(PokemonRaidPost post, IChatMessage message, MessageParser parser, IChatChannel outputchannel, bool force = false)
         {
             //var post = await parser.ParsePost(message, Config);//await DoResponse(message, parser);//returns null if 
 
@@ -394,14 +394,12 @@ namespace PokemonGoRaidBot.Services.Discord
                     {
                         if ((post.LatLong == null || !post.LatLong.HasValue) && !string.IsNullOrWhiteSpace(post.Location))
                         {
-                            var guildChannel = (SocketGuildChannel)message.Channel;
-
-                            var guildConfig = Config.GetGuildConfig(guildChannel.Guild.Id);
+                            var guildConfig = Config.GetServerConfig(message.Channel.Server.Id, ChatTypes.Discord);
 
                             if (guildConfig.Places.ContainsKey(post.Location.ToLower()))
                                 post.LatLong = guildConfig.Places[post.Location.ToLower()];
                             else
-                                post.LatLong = await parser.GetLocationLatLong(post.FullLocation, guildChannel, Config);
+                                post.LatLong = await parser.GetLocationLatLong(post.FullLocation, message.Channel, Config);
                         }
 
                         await MakePost(post, parser);
@@ -429,9 +427,10 @@ namespace PokemonGoRaidBot.Services.Discord
         /// </summary>
         /// <param name="post"></param>
         /// <param name="parser"></param>
-        public async Task<List<IUserMessage>> MakePost(PokemonRaidPost post, MessageParser parser)
+        public async Task<List<IChatMessage>> MakePost(PokemonRaidPost post, MessageParser parser)
         {
-            var results = new List<IUserMessage>();
+            var results = new List<IChatMessage>();
+            var output = new DiscordMessageOutput(parser.Lang, parser.TimeOffset);
             try
             {
                 post = await dbContext.AddOrUpdatePost(post);
@@ -447,11 +446,11 @@ namespace PokemonGoRaidBot.Services.Discord
                 var channelNum = 0;
                 var outputChannel = GetChannel(post.OutputChannelId);
                 //IUserMessage messageResult;
-                Embed headerEmbed, responsesEmbed;
+                IChatEmbed headerEmbed, responsesEmbed;
                 string mentionString, channelString;
-                var guildConfig = Config.GetGuildConfig(post.GuildId);
+                var guildConfig = Config.GetServerConfig(post.GuildId, ChatTypes.Discord);
 
-                parser.MakePostWithEmbed(post, guildConfig, out headerEmbed, out responsesEmbed, out channelString, out mentionString);
+                output.MakePostWithEmbed(post, guildConfig, out headerEmbed, out responsesEmbed, out channelString, out mentionString);
 
                 foreach (var channelMessage in post.ChannelMessages)
                 {
@@ -465,20 +464,20 @@ namespace PokemonGoRaidBot.Services.Discord
 
                         if (channelMessage.Value.MessageId != default(ulong))
                         {
-                            var messageResult1 = (IUserMessage)await fromChannel.GetMessageAsync(channelMessage.Value.MessageId);
+                            var messageResult1 = (SocketUserMessage)await fromChannel.GetMessageAsync(channelMessage.Value.MessageId);
                             if (messageResult1 != null)
                             {
-                                results.Add(messageResult1);
+                                results.Add(new DiscordChatMessage(messageResult1));
 
                                 //only modify post if something changed
                                 if (!messageResult1.Embeds.FirstOrDefault()?.Description.Equals(fromChannelMessage, StringComparison.OrdinalIgnoreCase) ?? true)
-                                    await messageResult1.ModifyAsync(x => { x.Content = channelNum == 0 ? mentionString : " "; x.Embed = headerEmbed; });
+                                    await messageResult1.ModifyAsync(x => { x.Content = channelNum == 0 ? mentionString : " "; x.Embed = (Embed)headerEmbed.GetEmbed(); });
                             }
                         }
                         else
                         {
-                            var messageResult2 = await fromChannel.SendMessageAsync(channelNum == 0 ? mentionString : " ", false, headerEmbed);
-                            results.Add(messageResult2);
+                            var messageResult2 = await fromChannel.SendMessageAsync(channelNum == 0 ? mentionString : " ", false, (Embed)headerEmbed.GetEmbed());
+                            results.Add(new DiscordChatMessage(messageResult2));
                             try
                             {
                                 var options = new RequestOptions();
@@ -507,15 +506,15 @@ namespace PokemonGoRaidBot.Services.Discord
                         var messageResult3 = (IUserMessage)await outputChannel.GetMessageAsync(post.OutputMessageId);
                         if (messageResult3 != null)
                         {
-                            results.Add(messageResult3);
-                            await messageResult3.ModifyAsync(x => { x.Embed = responsesEmbed; x.Content = channelString; });
+                            results.Add(new DiscordChatMessage(messageResult3));
+                            await messageResult3.ModifyAsync(x => { x.Embed = (Embed)responsesEmbed.GetEmbed(); x.Content = channelString; });
                         }
                     }
                     else
                     {
 
-                        var messageResult4 = await outputChannel.SendMessageAsync(channelString, false, responsesEmbed);
-                        results.Add(messageResult4);
+                        var messageResult4 = await outputChannel.SendMessageAsync(channelString, false, (Embed)responsesEmbed.GetEmbed());
+                        results.Add(new DiscordChatMessage(messageResult4));
 
                         post.OutputMessageId = messageResult4.Id;
                     }
@@ -533,7 +532,7 @@ namespace PokemonGoRaidBot.Services.Discord
         /// <param name="user"></param>
         /// <param name="message"></param>
         /// <returns></returns>
-        public async Task DirectMessageUser(SocketUser user, string message)
+        public async Task DirectMessageUser(IChatUser user, string message)
         {
             if (Config.NoDMUsers.Contains(user.Id)) return;
             var channel = await user.GetOrCreateDMChannelAsync();
@@ -555,9 +554,9 @@ namespace PokemonGoRaidBot.Services.Discord
         /// </summary>
         /// <param name="post"></param>
         /// <returns>Returns either the new post or the one it matched with.</returns>
-        public PokemonRaidPost AddPost(PokemonRaidPost post, MessageParser parser, SocketUserMessage message, bool add = true, bool force = false)
+        public PokemonRaidPost AddPost(PokemonRaidPost post, MessageParser parser, IChatMessage message, bool add = true, bool force = false)
         {
-            var guildConfig = Config.GetGuildConfig(post.GuildId);
+            var guildConfig = Config.GetServerConfig(post.GuildId, ChatTypes.Discord);
             var channelPosts = guildConfig.Posts.Where(x => x.ChannelMessages.Keys.Where(xx => post.ChannelMessages.Keys.Contains(xx)).Count() > 0);
             PokemonRaidPost existing = null;
             if (!force)
@@ -742,7 +741,7 @@ namespace PokemonGoRaidBot.Services.Discord
         /// <param name="channel"></param>
         /// <param name="message"></param>
         /// <returns></returns>
-        public async Task MakeCommandMessage(ISocketMessageChannel channel, string message)
+        public async Task MakeCommandMessage(IChatChannel channel, string message)
         {
             await channel.SendMessageAsync($"```{message}```");
         }
@@ -759,21 +758,21 @@ namespace PokemonGoRaidBot.Services.Discord
         }
         
 
-        public void JoinCount_Changed(object sender, JoinedCountChangedEventArgs e)
+        private void JoinCount_Changed(object sender, JoinedCountChangedEventArgs e)
         {
             PokemonRaidPost post = null;
-            GuildConfiguration guildConfig = null;
+            ServerConfiguration guildConfig = null;
             PokemonRaidJoinedUser joinedUser = null;
 
             if (sender is PokemonRaidPost)
             {
                 post = (PokemonRaidPost)sender;
-                guildConfig = Config.GetGuildConfig(post.GuildId);
+                guildConfig = Config.GetServerConfig(post.GuildId, ChatTypes.Discord);
             }
             else if (sender is PokemonRaidJoinedUser)
             {
                 joinedUser = (PokemonRaidJoinedUser)sender;
-                guildConfig = Config.GetGuildConfig(joinedUser.GuildId);
+                guildConfig = Config.GetServerConfig(joinedUser.GuildId, ChatTypes.Discord);
                 //var guild = bot.Guil
                 post = guildConfig.Posts.FirstOrDefault(x => x.UniqueId == joinedUser.PostId);
             }
@@ -804,7 +803,7 @@ namespace PokemonGoRaidBot.Services.Discord
                     var user = bot.GetUser(id);
 
                     if(user != default(SocketUser))
-                        tasks.Add(DirectMessageUser(user, $"{message}\n{parser.Language.Strings["dmStop"]}"));//TODO
+                        tasks.Add(DirectMessageUser(new DiscordChatUser(user), $"{message}\n{parser.Language.Strings["dmStop"]}"));//TODO
                 }
                 Task.WaitAll(tasks.ToArray());
             }
@@ -816,7 +815,7 @@ namespace PokemonGoRaidBot.Services.Discord
             
             return channelCache[id] = (ISocketMessageChannel)bot.GetChannel(id);
         }
-        private MessageParser GetParser(GuildConfiguration guildConfig)
+        private MessageParser GetParser(ServerConfiguration guildConfig)
         {
             var botTimezone = TimeZoneInfo.Local.GetUtcOffset(DateTime.Now).Hours - (TimeZoneInfo.Local.IsDaylightSavingTime(DateTime.Now) ? 1 : 0);
             var serverTimezone = guildConfig.Timezone ?? botTimezone;
@@ -835,11 +834,7 @@ namespace PokemonGoRaidBot.Services.Discord
         }
         private PokemonRaidPost GetPost(string uid, ulong guildId)
         {
-            return Config.GetGuildConfig(guildId).Posts.FirstOrDefault(x => x.UniqueId == uid);
+            return Config.GetServerConfig(guildId, ChatTypes.Discord).Posts.FirstOrDefault(x => x.UniqueId == uid);
         }
-        //private PokemonRaidBotDbContext GetDbContext()
-        //{
-        //    return map.GetService<PokemonRaidBotDbContext>();
-        //}
     }
 }

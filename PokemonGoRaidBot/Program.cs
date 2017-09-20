@@ -52,7 +52,7 @@ namespace PokemonGoRaidBot
 
             await logger.Log("Startup", $"PokemonDiscordRaidBot: Stat database exists.");
 
-            var handler = serviceProvider.GetService<MessageHandler>();
+            var handler = serviceProvider.GetService<DiscordMessageHandler>();
 
             //handler = new CommandHandler(serviceProvider, config, logger);
             await handler.ConfigureAsync();
@@ -86,8 +86,11 @@ namespace PokemonGoRaidBot
 
                 Console.WriteLine("Please enter the following information to save into your Configuration/config.json file");
 
-                Console.Write("Bot Token: ");
+                Console.Write("Discord Bot Token: ");
                 config.Token = Console.ReadLine();//Read the bot token from console.
+
+                Console.Write("Slack Bot Token: ");
+                config.SlackToken = Console.ReadLine();//Read the bot token from console.
 
                 Console.Write("Google Geocoding Api Key: ");
                 config.GoogleApiKey = Console.ReadLine();//Read google API key from console
@@ -125,7 +128,7 @@ namespace PokemonGoRaidBot
                 .AddSingleton<IConnectionString>(config)
                 .AddSingleton<IStatMapper>(new StatMapper())
                 .AddSingleton(new CommandService(new CommandServiceConfig { CaseSensitiveCommands = false }))
-                .AddSingleton<MessageHandler>();
+                .AddSingleton<DiscordMessageHandler>();
             
             var provider = new DefaultServiceProviderFactory().CreateServiceProvider(services);
             

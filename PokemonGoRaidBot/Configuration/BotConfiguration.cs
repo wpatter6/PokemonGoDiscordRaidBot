@@ -14,11 +14,12 @@ namespace PokemonGoRaidBot.Configuration
         public string Version { get; set; }
         public string Prefix { get; set; }
         public string Token { get; set; }
+        public string SlackToken { get; set; }
         public string OutputChannel { get; set; }
         public string DefaultLanguage { get; set; }
         public string StatDBConnectionString { get; set; }
 
-        public List<GuildConfiguration> GuildConfigs { get; set; }
+        public List<ServerConfiguration> GuildConfigs { get; set; }
         public List<ulong> NoDMUsers { get; set; }
 
         //public List<PokemonInfo> PokemonInfoList { get; set; }
@@ -30,17 +31,19 @@ namespace PokemonGoRaidBot.Configuration
             return GuildConfigs.Where(x => x.Id == id).Count() > 0;
         }
 
-        public GuildConfiguration GetGuildConfig(ulong id)
+        public ServerConfiguration GetServerConfig(ulong id, ChatTypes chatType)
         {
-            var result = GuildConfigs.FirstOrDefault(x => x.Id == id);
+            var result = GuildConfigs.FirstOrDefault(x => x.Id == id && (x.ChatType ?? ChatTypes.Discord) == chatType);
             if(result == null)
             {
-                result = new GuildConfiguration()
+                result = new ServerConfiguration()
                 {
-                    Id = id
+                    Id = id,
+                    ChatType = chatType
                 };
                 GuildConfigs.Add(result);
             }
+            result.ChatType = chatType;
             return result;
         }
 
@@ -48,7 +51,7 @@ namespace PokemonGoRaidBot.Configuration
         {
             Prefix = "!";
             Token = "";
-            GuildConfigs = new List<GuildConfiguration>();
+            GuildConfigs = new List<ServerConfiguration>();
         }
 
         public void Save(string dir = "Configuration/config.json")
@@ -76,7 +79,7 @@ namespace PokemonGoRaidBot.Configuration
             if (string.IsNullOrEmpty(result.DefaultLanguage)) result.DefaultLanguage = "en-us";
             if (string.IsNullOrEmpty(result.StatDBConnectionString)) result.StatDBConnectionString = "Data Source=raidstats.db;";
 
-            if (result.GuildConfigs == null) result.GuildConfigs = new List<GuildConfiguration>();
+            if (result.GuildConfigs == null) result.GuildConfigs = new List<ServerConfiguration>();
             if (result.NoDMUsers == null) result.NoDMUsers = new List<ulong>();
 
             result.Save();
