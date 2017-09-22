@@ -761,7 +761,7 @@ namespace PokemonGoRaidBot.Services.Discord
         private void JoinCount_Changed(object sender, JoinedCountChangedEventArgs e)
         {
             PokemonRaidPost post = null;
-            ServerConfiguration guildConfig = null;
+            IBotServerConfiguration guildConfig = null;
             PokemonRaidJoinedUser joinedUser = null;
 
             if (sender is PokemonRaidPost)
@@ -815,7 +815,7 @@ namespace PokemonGoRaidBot.Services.Discord
             
             return channelCache[id] = (ISocketMessageChannel)bot.GetChannel(id);
         }
-        private MessageParser GetParser(ServerConfiguration guildConfig)
+        private MessageParser GetParser(IBotServerConfiguration guildConfig)
         {
             var botTimezone = TimeZoneInfo.Local.GetUtcOffset(DateTime.Now).Hours - (TimeZoneInfo.Local.IsDaylightSavingTime(DateTime.Now) ? 1 : 0);
             var serverTimezone = guildConfig.Timezone ?? botTimezone;

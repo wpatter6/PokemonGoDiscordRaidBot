@@ -15,11 +15,13 @@ namespace PokemonGoRaidBot.Services.Parsing
     public class ParserLanguage
     {
         private dynamic Language;
-        public ParserLanguage(string language = "en-us")
+        public ParserLanguage(string language = "en-us", string languageFilePath = null)
         {
-            string file = Path.Combine(AppContext.BaseDirectory, string.Format("Configuration/Languages/{0}.json", language));
+            string file = languageFilePath ?? Path.Combine(AppContext.BaseDirectory, string.Format(@"Configuration\Languages\0}.json", language));
             if (!File.Exists(file))
-                file = Path.Combine(AppContext.BaseDirectory, "Configuration/Languages/en-us.json");
+                file = Path.Combine(AppContext.BaseDirectory, @"Configuration\Languages\en-us.json");
+            if (!File.Exists(file))//for testing/mocking
+                file = language;
 
            Language = JsonConvert.DeserializeObject<dynamic>(File.ReadAllText(file));
         }

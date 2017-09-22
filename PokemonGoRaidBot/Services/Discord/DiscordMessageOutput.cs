@@ -23,7 +23,7 @@ namespace PokemonGoRaidBot.Services.Discord
             CultureInfo.CurrentCulture = new CultureInfo(language);
         }
 
-        public IChatEmbed GetHelpEmbed(BotConfiguration config, bool admin)
+        public IChatEmbed GetHelpEmbed(IBotConfiguration config, bool admin)
         {
             var embed = new DiscordChatEmbed();
 
@@ -83,7 +83,7 @@ namespace PokemonGoRaidBot.Services.Discord
             return headerembed;
         }
 
-        public string MakeInfoLine(PokemonInfo info, BotConfiguration config, ulong guildId, int paddingSize = 0)
+        public string MakeInfoLine(PokemonInfo info, IBotConfiguration config, ulong guildId, int paddingSize = 0)
         {
             var lineFormat = Language.Formats["infoLine"];// "\n{0}: {7}Tier={1} BossCP={2:#,##0} MinCP={3:#,##0} MaxCP={4:#,##0} CatchRate={5}%{6}";
             var padding = 0;
@@ -127,7 +127,7 @@ namespace PokemonGoRaidBot.Services.Discord
             return response;
         }
 
-        public void MakePostWithEmbed(PokemonRaidPost post, ServerConfiguration guildConfig, out IChatEmbed header, out IChatEmbed response, out string channel, out string mentions)
+        public void MakePostWithEmbed(PokemonRaidPost post, IBotServerConfiguration guildConfig, out IChatEmbed header, out IChatEmbed response, out string channel, out string mentions)
         {
             var headerstring = MakePostHeader(post);
             response = MakeResponseEmbed(post, guildConfig, headerstring);
@@ -146,7 +146,7 @@ namespace PokemonGoRaidBot.Services.Discord
             //mentions = channel +/* users +*/ roles;
         }
 
-        public IChatEmbed MakeResponseEmbed(PokemonRaidPost post, ServerConfiguration guildConfig, string header)
+        public IChatEmbed MakeResponseEmbed(PokemonRaidPost post, IBotServerConfiguration guildConfig, string header)
         {
             var embed = new DiscordChatEmbed();
 

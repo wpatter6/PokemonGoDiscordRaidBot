@@ -9,7 +9,7 @@ namespace PokemonGoRaidBot.Services.Slack
 {
     public class SlackMessageOutput : IChatMessageOutput
     {
-        public IChatEmbed GetHelpEmbed(BotConfiguration config, bool admin)
+        public IChatEmbed GetHelpEmbed(IBotConfiguration config, bool admin)
         {
             throw new NotImplementedException();
         }
@@ -19,7 +19,7 @@ namespace PokemonGoRaidBot.Services.Slack
             throw new NotImplementedException();
         }
 
-        public string MakeInfoLine(PokemonInfo info, BotConfiguration config, ulong guildId, int paddingSize = 0)
+        public string MakeInfoLine(PokemonInfo info, IBotConfiguration config, ulong guildId, int paddingSize = 0)
         {
             throw new NotImplementedException();
         }
@@ -29,12 +29,12 @@ namespace PokemonGoRaidBot.Services.Slack
             throw new NotImplementedException();
         }
 
-        public void MakePostWithEmbed(PokemonRaidPost post, ServerConfiguration guildConfig, out IChatEmbed header, out IChatEmbed response, out string channel, out string mentions)
+        public void MakePostWithEmbed(PokemonRaidPost post, IBotServerConfiguration guildConfig, out IChatEmbed header, out IChatEmbed response, out string channel, out string mentions)
         {
             throw new NotImplementedException();
         }
 
-        public IChatEmbed MakeResponseEmbed(PokemonRaidPost post, ServerConfiguration guildConfig, string header)
+        public IChatEmbed MakeResponseEmbed(PokemonRaidPost post, IBotServerConfiguration guildConfig, string header)
         {
             throw new NotImplementedException();
         }

@@ -78,7 +78,7 @@ namespace PokemonGoRaidBot
             if (!Directory.Exists(Path.Combine(AppContext.BaseDirectory, "Configuration")))
                 Directory.CreateDirectory(Path.Combine(AppContext.BaseDirectory, "Configuration"));
 
-            string loc = Path.Combine(AppContext.BaseDirectory, "Configuration/config.json");
+            string loc = Path.Combine(AppContext.BaseDirectory, @"Configuration\config.json");
 
             if (!File.Exists(loc))// Check if the configuration file exists.
             {

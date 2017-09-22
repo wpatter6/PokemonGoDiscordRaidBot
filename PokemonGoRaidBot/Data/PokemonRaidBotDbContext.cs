@@ -19,7 +19,6 @@ namespace PokemonGoRaidBot.Data
         public PokemonRaidBotDbContext(IConnectionString cstr, IStatMapper mapper)
         {
             _cstr = cstr.GetConnectionString();
-
             _mapper = mapper;
         }
 

@@ -16,9 +16,9 @@ namespace PokemonGoRaidBot.Services
         private IChatMessageHandler Handler;
         private IChatMessage Message;
         private IChatMessageOutput Output;
+        private IBotServerConfiguration GuildConfig;
+        private IBotConfiguration Config;
         private MessageParser Parser;
-        private BotConfiguration Config;
-        private ServerConfiguration GuildConfig;
 
         private List<string> Command;
 

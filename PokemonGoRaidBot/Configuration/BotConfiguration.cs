@@ -9,7 +9,7 @@ using PokemonGoRaidBot.Objects.Interfaces;
 
 namespace PokemonGoRaidBot.Configuration
 {
-    public class BotConfiguration : IConnectionString
+    public class BotConfiguration : IBotConfiguration
     {
         public string Version { get; set; }
         public string Prefix { get; set; }
@@ -19,19 +19,26 @@ namespace PokemonGoRaidBot.Configuration
         public string DefaultLanguage { get; set; }
         public string StatDBConnectionString { get; set; }
 
-        public List<ServerConfiguration> GuildConfigs { get; set; }
+        public List<IBotServerConfiguration> GuildConfigs { get; set; }
         public List<ulong> NoDMUsers { get; set; }
 
         //public List<PokemonInfo> PokemonInfoList { get; set; }
 
         public string GoogleApiKey { get; set; }
 
+        public BotConfiguration()
+        {
+            Prefix = "!";
+            Token = "";
+            GuildConfigs = new List<IBotServerConfiguration>();
+        }
+
         public bool HasGuildConfig(ulong id)
         {
             return GuildConfigs.Where(x => x.Id == id).Count() > 0;
         }
 
-        public ServerConfiguration GetServerConfig(ulong id, ChatTypes chatType)
+        public IBotServerConfiguration GetServerConfig(ulong id, ChatTypes chatType)
         {
             var result = GuildConfigs.FirstOrDefault(x => x.Id == id && (x.ChatType ?? ChatTypes.Discord) == chatType);
             if(result == null)
@@ -47,20 +54,14 @@ namespace PokemonGoRaidBot.Configuration
             return result;
         }
 
-        public BotConfiguration()
-        {
-            Prefix = "!";
-            Token = "";
-            GuildConfigs = new List<ServerConfiguration>();
-        }
 
-        public void Save(string dir = "Configuration/config.json")
+        public void Save(string dir = @"Configuration\config.json")
         {
             string file = Path.Combine(AppContext.BaseDirectory, dir);
             File.WriteAllText(file, ToJson());
         }
 
-        public static BotConfiguration Load(string dir = "Configuration/config.json")
+        public static BotConfiguration Load(string dir = @"Configuration\config.json")
         {
             string file = Path.Combine(AppContext.BaseDirectory, dir);
             var result = JsonConvert.DeserializeObject<BotConfiguration>(File.ReadAllText(file));
@@ -79,7 +80,7 @@ namespace PokemonGoRaidBot.Configuration
             if (string.IsNullOrEmpty(result.DefaultLanguage)) result.DefaultLanguage = "en-us";
             if (string.IsNullOrEmpty(result.StatDBConnectionString)) result.StatDBConnectionString = "Data Source=raidstats.db;";
 
-            if (result.GuildConfigs == null) result.GuildConfigs = new List<ServerConfiguration>();
+            if (result.GuildConfigs == null) result.GuildConfigs = new List<IBotServerConfiguration>();
             if (result.NoDMUsers == null) result.NoDMUsers = new List<ulong>();
 
             result.Save();

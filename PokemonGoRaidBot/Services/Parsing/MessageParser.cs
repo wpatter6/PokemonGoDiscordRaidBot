@@ -32,10 +32,10 @@ namespace PokemonGoRaidBot.Services.Parsing
         public string Lang;
         public int TimeOffset;
 
-        public MessageParser(string language = "en-us", int timeZoneOffset = 0)
+        public MessageParser(string language = "en-us", int timeZoneOffset = 0, string languageFilePath = null)
         {
             Lang = language;
-            Language = new ParserLanguage(language);
+            Language = new ParserLanguage(language, languageFilePath);
             TimeOffset = timeZoneOffset;
             CultureInfo.CurrentCulture = new CultureInfo(language);
         }
@@ -47,7 +47,7 @@ namespace PokemonGoRaidBot.Services.Parsing
         /// <param name="message"></param>
         /// <param name="config"></param>
         /// <returns>If return value is null, or property 'Pokemon' is null, raid post is invalid.</returns>
-        public PokemonRaidPost ParsePost(IChatMessage message, BotConfiguration config)
+        public PokemonRaidPost ParsePost(IChatMessage message, IBotConfiguration config)
         {
             //var guild = ((SocketGuildChannel)message.Channel).Guild;
             var guildConfig = config.GetServerConfig(message.Server.Id, message.ChatType);
@@ -208,7 +208,7 @@ namespace PokemonGoRaidBot.Services.Parsing
         /// <param name="name"></param>
         /// <param name="config"></param>
         /// <returns></returns>
-        public PokemonInfo ParsePokemon(string name, BotConfiguration config, IChatServer server)
+        public PokemonInfo ParsePokemon(string name, IBotConfiguration config, IChatServer server)
         {
 
             var cleanedName = Regex.Replace(name, @"\W", "").ToLower();//never want any special characters in string
@@ -495,7 +495,7 @@ namespace PokemonGoRaidBot.Services.Parsing
         /// </summary>
         /// <param name="message"></param>
         /// <returns>The string representation of the location</returns>
-        public string ParseLocation(string message, ServerConfiguration guildConfig)
+        public string ParseLocation(string message, IBotServerConfiguration guildConfig)
         {
             var cleanedMessage = Language.RegularExpressions["locationExcludeWords"].Replace(message, matchedWordReplacement).ToLower();
 
@@ -511,11 +511,13 @@ namespace PokemonGoRaidBot.Services.Parsing
             var cleanreg = Language.RegularExpressions["locationCleanWords"];
             var cleaned = cleanreg.Replace(result.Trim(), "", 1);
 
-            var cleanedLocation = cleaned.Replace(", ", "").Replace(".", "").Replace("  ", " ").Replace(matchedWordReplacement, "").Trim();
+            var cleanedLocation = cleaned.Replace(",", "").Replace(".", "").Replace("  ", " ").Replace(matchedWordReplacement, "").Trim();
+
+            if (Language.RegularExpressions["locationTooShort"].IsMatch(cleanedLocation)) return "";
 
             return ToTitleCase(cleanedLocation);
         }
-        public PokemonRaidPost ParsePostFromPostMessage(string message, ServerConfiguration config)
+        public PokemonRaidPost ParsePostFromPostMessage(string message, IBotServerConfiguration config)
         {
             var uidReg = Language.RegularExpressions["postUniqueId"];
             if (!uidReg.IsMatch(message)) return null;
@@ -691,7 +693,7 @@ namespace PokemonGoRaidBot.Services.Parsing
         /// <param name="channel"></param>
         /// <param name="config"></param>
         /// <returns></returns>
-        public async Task<GeoCoordinate> GetLocationLatLong(string location, IChatChannel channel, BotConfiguration config)
+        public async Task<GeoCoordinate> GetLocationLatLong(string location, IChatChannel channel, IBotConfiguration config)
         {
             if (string.IsNullOrEmpty(config.GoogleApiKey)) return null;
 
@@ -737,7 +739,7 @@ namespace PokemonGoRaidBot.Services.Parsing
 
             return new GeoCoordinate();
         }
-        public string GetFullLocation(string location, ServerConfiguration guildConfig, ulong channelId)
+        public string GetFullLocation(string location, IBotServerConfiguration guildConfig, ulong channelId)
         {
             var city = guildConfig.ChannelCities.ContainsKey(channelId) ? guildConfig.ChannelCities[channelId] : guildConfig.City ?? "";
             if (!string.IsNullOrEmpty(city)) city = " near " + city;

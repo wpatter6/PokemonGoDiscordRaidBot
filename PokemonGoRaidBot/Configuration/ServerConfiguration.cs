@@ -6,7 +6,7 @@ using PokemonGoRaidBot.Objects.Interfaces;
 
 namespace PokemonGoRaidBot.Configuration
 {
-    public class ServerConfiguration
+    public class ServerConfiguration : IBotServerConfiguration
     {
         public ServerConfiguration()
         {
