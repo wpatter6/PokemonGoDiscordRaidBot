@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using PokemonGoRaidBot.Objects;
 using Discord.WebSocket;
+using Discord;
 
 namespace PokemonGoRaidBot.Services.Discord
 {
@@ -27,7 +28,7 @@ namespace PokemonGoRaidBot.Services.Discord
             Name = guild.Name;
 
             Roles = guild.Roles.Where(x => x.IsMentionable).Select(xx => new DiscordChatRole(xx));
-            Channels = guild.Channels.Select(x => new DiscordChatChannel((ISocketMessageChannel)x));
+            Channels = guild.Channels.Select(x => new DiscordChatChannel((IChannel)x));
             Users = guild.Users.Select(x => new DiscordChatUser(x));
         }
     }

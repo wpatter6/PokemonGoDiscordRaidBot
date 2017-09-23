@@ -219,8 +219,11 @@ namespace PokemonGoRaidBot.Services.Discord
                     else
                     {
                         outputchannel = (ISocketMessageChannel)guild.Channels.FirstOrDefault(x => x.Name == Config.OutputChannel);
-                        guildConfig.OutputChannelId = outputchannel.Id;
-                        Config.Save();
+                        if(outputchannel != null)
+                        {
+                            guildConfig.OutputChannelId = outputchannel.Id;
+                            Config.Save();
+                        }
                     }
 
                     var context = new SocketCommandContext(bot, message);
@@ -248,7 +251,7 @@ namespace PokemonGoRaidBot.Services.Discord
                     else if (doPost)
                     {
                         var post = parser.ParsePost(new DiscordChatMessage(message));
-                        await DoPost(post, new DiscordChatMessage(message), parser, new DiscordChatChannel(outputchannel));
+                        await DoPost(post, new DiscordChatMessage(message), parser, outputchannel == null ? null : new DiscordChatChannel(outputchannel));
                     }
 
 
@@ -379,7 +382,7 @@ namespace PokemonGoRaidBot.Services.Discord
         /// <param name="outputchannel"></param>
         /// <param name="pin"></param>
         /// <returns></returns>
-        public async Task DoPost(PokemonRaidPost post, IChatMessage message, MessageParser parser, IChatChannel outputchannel, bool force = false)
+        public async Task DoPost(PokemonRaidPost post, IChatMessage message, MessageParser parser, IChatChannel outputchannel = null, bool force = false)
         {
             //var post = await parser.ParsePost(message, Config);//await DoResponse(message, parser);//returns null if 
 

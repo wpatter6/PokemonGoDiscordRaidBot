@@ -11,7 +11,7 @@ namespace PokemonGoRaidBot.Services.Discord
 {
     public class DiscordChatChannel : IChatChannel
     {
-        private IMessageChannel _channel;
+        private IChannel _channel;
 
         public ChatTypes ChatType => ChatTypes.Discord;
 
@@ -21,7 +21,7 @@ namespace PokemonGoRaidBot.Services.Discord
 
         public IChatServer Server { get; private set; }
 
-        public DiscordChatChannel(IMessageChannel channel)
+        public DiscordChatChannel(IChannel channel)
         {
             Id = channel.Id;
             _channel = channel;
@@ -35,12 +35,23 @@ namespace PokemonGoRaidBot.Services.Discord
 
         public IDisposable EnterTypingState()
         {
-            return _channel.EnterTypingState();
+            if(_channel is IMessageChannel)
+                return ((IMessageChannel)_channel).EnterTypingState();
+            return new DummyDisposable();
         }
 
         public async Task SendMessageAsync(string message, bool tts = false, object embed = null)
         {
-            await _channel.SendMessageAsync(message, tts, (Embed)embed);
+            if (_channel is IMessageChannel)
+                await ((IMessageChannel)_channel).SendMessageAsync(message, tts, (Embed)embed);
+        }
+    }
+
+    class DummyDisposable : IDisposable
+    {
+        public void Dispose()
+        {
+            
         }
     }
 }
