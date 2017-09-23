@@ -795,7 +795,7 @@ namespace PokemonGoRaidBot.Services.Discord
                     e.Count,
                     joinstr,
                     post.PokemonName,
-                    e.ArriveTime.HasValue && !joinstr.Equals(parser.Language.Strings["quitting"]) ? string.Format(" *at {0:hh:mmt}*", e.ArriveTime.Value) : "",
+                    e.ArriveTime.HasValue && !joinstr.Equals(parser.Language.Strings["quitting"]) ? string.Format(parser.Language.Formats["postjoinTime"], e.ArriveTime.Value.ToString("t")) : "",
                     e.UserName);
 
                 var usersToDM = new List<ulong>();

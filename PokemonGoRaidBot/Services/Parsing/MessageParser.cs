@@ -38,7 +38,7 @@ namespace PokemonGoRaidBot.Services.Parsing
             Lang = language;
             Language = new ParserLanguage(language, languageFilePath);
             TimeOffset = timeZoneOffset;
-            CultureInfo.CurrentCulture = new CultureInfo(language);
+            CultureInfo.CurrentCulture = Language.GetCultureInfo();
         }
 
         #region Input

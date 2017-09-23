@@ -509,8 +509,8 @@ namespace PokemonGoRaidBot.Services
             //}
         }
 
-        [BotCommand("language")]
-        private async Task Language()
+        [BotCommand("culture")]
+        private async Task Culture()
         {
             if (!await CheckAdminAccess()) return;
 

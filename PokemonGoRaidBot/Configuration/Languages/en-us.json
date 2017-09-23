@@ -39,12 +39,16 @@
     "latLong": "\\b([-+]?)([1-8]?\\d(\\.\\d+)|90(\\.0+)) *,? *([-+]?)(180(\\.0+)|((1[0-7]\\d)|([1-9]?\\d))(\\.\\d+))\\b"
   },
   "formats": {
+    "time12Hour": "h:mmt",
+    "time24Hour": "H:mm",
     "infoLine": "\n{0}: {1}Tier:{2} BossCP:{3} MaxCP:{5} CatchRate:{6}% {7}", //shown for !info command
     "postHeader": "`[{0}]`**{1}** {2}{3}\n{4} ([?](https://github.com/wpatter6/PokemonGoDiscordRaidBot/wiki/How-to-Post-Effectively))",
     "postLocation": " at **{0}**",
-    "postEnds": " ends **{0:h:mmt}**",
-    "postEndsUnsure": " *ends around **{0:h:mmt}***",
+    "postEnds": " ends **{0}**",
+    "postEndsUnsure": " *ends around **{0}***",
+    "postjoinTime": " *at {0}*",//FIX
     "postJoined": "***{0} joined:*** {1}",
+    "postJoinUser": "@{0}(**{1}**{2})",
     "postRolesTagged": "; Roles: {0}",
     "directMessage": "**{0} {1} {2}**{3} ({4}).",
     "responseInfo": "[`{0:h:mm}#{1}`] **@{2}**:",
@@ -125,7 +129,7 @@
     "helpUnMuteAll": "Un Mutes all channels.",
     "helpMuteList": "Lists all channels that are muted.",
     "helpTimezone": "Will set the GMT offset of the discord server [gmt offset] for all time output.",
-    "helpLanguage": "Will set the language of the server.  A language file with the matching name must exist in bot config.  Default is \"en-us\"",
+    "helpCulture": "Will set the culture of the server for time outputs.  If a language file with the matching name exists in bot config, that language file will be used.  Default is \"en-us\".",
     "helpCity": "Will set the city of the current server.  This value gets appended to the location when using the Google geocoding API for better accuracy.",
     "helpChannelCity": "Will set the city of the selected channel",
     "helpCities": "Displays the city configured to the server and each channel.",

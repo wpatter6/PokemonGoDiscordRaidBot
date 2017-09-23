@@ -9,14 +9,19 @@ using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using PokemonGoRaidBot.Objects;
+using System.Globalization;
 
 namespace PokemonGoRaidBot.Services.Parsing
 {
     public class ParserLanguage
     {
         private dynamic Language;
+        private CultureInfo Culture;
+        private string Lang;
+
         public ParserLanguage(string language = "en-us", string languageFilePath = null)
         {
+            Lang = language;
             string file = languageFilePath ?? Path.Combine(AppContext.BaseDirectory, string.Format(@"Configuration\Languages\{0}.json", language));
             if (!File.Exists(file))
                 file = Path.Combine(AppContext.BaseDirectory, @"Configuration\Languages\en-us.json");
@@ -107,6 +112,20 @@ namespace PokemonGoRaidBot.Services.Parsing
                 
                 return (_pokemon = ((JArray)Language.pokemon).ToObject<List<PokemonInfo>>());
             }
+        }
+
+        public CultureInfo GetCultureInfo()
+        {
+            if (Culture != null) return Culture;
+
+            Culture = new CultureInfo(Lang);
+
+            if (string.IsNullOrEmpty(Culture.DateTimeFormat.AMDesignator))//24 hour format culture
+                Culture.DateTimeFormat.ShortTimePattern = Formats["time24Hour"];
+            else
+                Culture.DateTimeFormat.ShortTimePattern = Formats["time12Hour"];
+
+            return Culture;
         }
     }
 }

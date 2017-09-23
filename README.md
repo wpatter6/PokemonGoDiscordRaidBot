@@ -94,7 +94,7 @@
 * `!unmuteall` Removes all channels on the server from mute channels.
 * `!mutelist` Lists all muted channels.
 * `!timezone [gmt offset]` Will set the GMT offset of the discord server [gmt offset] for all time output.
-* `!language [language]` Will set the language of the server.  A language file with the matching name must exist in bot config.  Default is \"en-us\"
+* `!culture [culture]` Will set the culture of the server for time outputs.  If a language file with the matching name exists in bot config, that language file will be used.  Default is \"en-us\".
 * `!city [name]` - Will set the city of the current server.  This value gets appended to the location when using the Google geocoding API for better accuracy.
 * `!channelcity [channel name] [city name]` Will set the city of the selected channel to be used in Google geocoding.
 * `!cities` Displays the city configured to the server and each channel.

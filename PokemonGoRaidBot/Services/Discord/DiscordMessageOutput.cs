@@ -20,7 +20,7 @@ namespace PokemonGoRaidBot.Services.Discord
         {
             Language = new ParserLanguage(language);
             TimeOffset = timeZoneOffset;
-            CultureInfo.CurrentCulture = new CultureInfo(language);
+            CultureInfo.CurrentCulture = Language.GetCultureInfo();
         }
 
         public IChatEmbed GetHelpEmbed(IBotConfiguration config, bool admin)
@@ -58,7 +58,7 @@ namespace PokemonGoRaidBot.Services.Discord
                 embed.AddField(string.Format("*{0}unmuteall", config.Prefix), Language.Strings["helpUnMuteAll"]);
                 embed.AddField(string.Format("*{0}mutelist", config.Prefix), Language.Strings["helpMuteList"]);
                 embed.AddField(string.Format("*{0}timezone [gmt offset]", config.Prefix), Language.Strings["helpTimezone"]);
-                embed.AddField(string.Format("*{0}language [language]", config.Prefix), Language.Strings["helpLanguage"]);
+                embed.AddField(string.Format("*{0}culture [culture]", config.Prefix), Language.Strings["helpCulture"]);
                 embed.AddField(string.Format("*{0}city [city]", config.Prefix), Language.Strings["helpCity"]);
                 embed.AddField(string.Format("*{0}channelcity [channel name] [city]", config.Prefix), Language.Strings["helpChannelCity"]);
                 embed.AddField(string.Format("*{0}cities", config.Prefix), Language.Strings["helpCities"]);
@@ -121,7 +121,7 @@ namespace PokemonGoRaidBot.Services.Discord
                 post.UniqueId,
                 string.Format("[{0}]({1})", post.PokemonName, string.Format(Language.Formats["pokemonInfoLink"], post.PokemonId)),
                 !string.IsNullOrEmpty(location) ? string.Format(Language.Formats["postLocation"], location) : "",
-                string.Format(!post.HasEndDate ? Language.Formats["postEndsUnsure"] : Language.Formats["postEnds"], post.EndDate.AddHours(TimeOffset)),
+                string.Format(!post.HasEndDate ? Language.Formats["postEndsUnsure"] : Language.Formats["postEnds"], post.EndDate.AddHours(TimeOffset).ToString("t")),
                 joinCount > 0 ? string.Format(Language.Formats["postJoined"], joinCount, joinString) : Language.Strings["postNoneJoined"]
                 );
             return response;
