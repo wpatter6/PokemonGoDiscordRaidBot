@@ -90,7 +90,7 @@ namespace PokemonGoRaidBot.Services.Discord
             if (arg3.UserId == bot.CurrentUser.Id) return;
 
             var message = await arg2.GetMessageAsync(arg1.Id);
-            if (message == null || string.IsNullOrEmpty(message.Content) || !(arg2 is SocketGuildChannel) || DeleteEmojis.Contains(arg3.Emote.Name)) return;
+            if (message == null || !(arg2 is SocketGuildChannel) || DeleteEmojis.Contains(arg3.Emote.Name)) return;
             var guildConfig = Config.GetServerConfig(((SocketGuildChannel)arg2).Guild.Id, ChatTypes.Discord);
             var channel = (SocketGuildChannel)arg2;
 
@@ -247,7 +247,7 @@ namespace PokemonGoRaidBot.Services.Discord
                     //try to see if a raid was posted
                     else if (doPost)
                     {
-                        var post = parser.ParsePost(new DiscordChatMessage(message), Config);
+                        var post = parser.ParsePost(new DiscordChatMessage(message));
                         await DoPost(post, new DiscordChatMessage(message), parser, new DiscordChatChannel(outputchannel));
                     }
 
@@ -287,6 +287,7 @@ namespace PokemonGoRaidBot.Services.Discord
 
                     foreach (var post in deletedPosts)
                     {
+                        posts.Remove(post);
                         var messages = new List<IMessage>();
 
                         if (post.OutputMessageId != default(ulong))
@@ -305,7 +306,6 @@ namespace PokemonGoRaidBot.Services.Discord
                             try
                             {
                                 if (messages.Count() > 0) await outputChannel.DeleteMessagesAsync(messages);
-                                posts.Remove(post);
                             }
                             catch (Exception e)
                             {
@@ -335,6 +335,10 @@ namespace PokemonGoRaidBot.Services.Discord
                                     {
                                         DoError(e);
                                     }
+                                }
+                                else
+                                {
+
                                 }
                             }
                         }
@@ -464,7 +468,7 @@ namespace PokemonGoRaidBot.Services.Discord
 
                         if (channelMessage.Value.MessageId != default(ulong))
                         {
-                            var messageResult1 = (SocketUserMessage)await fromChannel.GetMessageAsync(channelMessage.Value.MessageId);
+                            var messageResult1 = (IUserMessage)await fromChannel.GetMessageAsync(channelMessage.Value.MessageId);
                             if (messageResult1 != null)
                             {
                                 results.Add(new DiscordChatMessage(messageResult1));
@@ -821,16 +825,15 @@ namespace PokemonGoRaidBot.Services.Discord
             var serverTimezone = guildConfig.Timezone ?? botTimezone;
             var timeOffset = serverTimezone - botTimezone;
 
-            return GetParser(guildConfig.Language ?? "en-us", timeOffset);
-        }
-        private MessageParser GetParser(string lang, int offset)
-        {
-            var parser = ParserCache.FirstOrDefault(x => x.Lang == lang && x.TimeOffset == offset);
+            var lang = guildConfig.Language ?? "en-us";
+
+            var parser = ParserCache.FirstOrDefault(x => x.Lang == lang && x.TimeOffset == timeOffset);
             if (parser != null) return parser;
 
-            parser = new MessageParser(lang, offset);
+            parser = new MessageParser(guildConfig, lang, timeOffset);
             ParserCache.Add(parser);
             return parser;
+
         }
         private PokemonRaidPost GetPost(string uid, ulong guildId)
         {

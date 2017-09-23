@@ -21,6 +21,6 @@ namespace PokemonGoRaidBot.Objects.Interfaces
 
         void Save(string dir = "Configuration/config.json");
         bool HasGuildConfig(ulong id);
-        IBotServerConfiguration GetServerConfig(ulong id, ChatTypes chatType);
+        IBotServerConfiguration GetServerConfig(ulong id, ChatTypes chatType, string name = "");
     }
 }

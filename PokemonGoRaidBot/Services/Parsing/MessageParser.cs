@@ -1,18 +1,16 @@
-﻿//using Discord.WebSocket;
-using PokemonGoRaidBot.Configuration;
-using PokemonGoRaidBot.Objects;
-using System;
+﻿using System;
+using System.IO;
+using System.Net;
+using System.Linq;
+using System.Globalization;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using System.Linq;
-using System.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.Threading.Tasks;
-using System.Net;
-//using Discord;
-using System.Globalization;
 using PokemonGoRaidBot.Objects.Interfaces;
+using PokemonGoRaidBot.Configuration;
+using PokemonGoRaidBot.Objects;
 
 namespace PokemonGoRaidBot.Services.Parsing
 {
@@ -29,11 +27,14 @@ namespace PokemonGoRaidBot.Services.Parsing
         private const string matchedLocationWordReplacement = "&&&&-&-&&&&";
         private const string matchedTimeWordReplacement = "===!!!===";
 
+        private IBotServerConfiguration serverConfig;
+
         public string Lang;
         public int TimeOffset;
 
-        public MessageParser(string language = "en-us", int timeZoneOffset = 0, string languageFilePath = null)
+        public MessageParser(IBotServerConfiguration serverConfig, string language = "en-us", int timeZoneOffset = 0, string languageFilePath = null)
         {
+            this.serverConfig = serverConfig;
             Lang = language;
             Language = new ParserLanguage(language, languageFilePath);
             TimeOffset = timeZoneOffset;
@@ -47,10 +48,10 @@ namespace PokemonGoRaidBot.Services.Parsing
         /// <param name="message"></param>
         /// <param name="config"></param>
         /// <returns>If return value is null, or property 'Pokemon' is null, raid post is invalid.</returns>
-        public PokemonRaidPost ParsePost(IChatMessage message, IBotConfiguration config)
+        public PokemonRaidPost ParsePost(IChatMessage message)
         {
             //var guild = ((SocketGuildChannel)message.Channel).Guild;
-            var guildConfig = config.GetServerConfig(message.Server.Id, message.ChatType);
+            //var guildConfig = config.GetServerConfig(message.Server.Id, message.ChatType, message.Server.Name);
 
             var result = new PokemonRaidPost()
             {
@@ -119,7 +120,7 @@ namespace PokemonGoRaidBot.Services.Parsing
 
                 if (result.PokemonId == default(int))
                 {
-                    var pokemon = ParsePokemon(cleanedword, config, message.Server);
+                    var pokemon = ParsePokemon(cleanedword);
                     if (pokemon != null)
                     {
                         result.PokemonId = pokemon.Id;
@@ -177,10 +178,10 @@ namespace PokemonGoRaidBot.Services.Parsing
             }
             else
             {
-                result.Location = ParseLocation(unmatchedString, guildConfig);
+                result.Location = ParseLocation(unmatchedString, serverConfig);
 
                 if (!string.IsNullOrEmpty(result.Location))
-                    result.FullLocation = GetFullLocation(result.Location, guildConfig, message.Channel.Id);
+                    result.FullLocation = GetFullLocation(result.Location, serverConfig, message.Channel.Id);
             }
 
             result.Responses.Add(new PokemonMessage(message.User.Id, message.User.Name, messageString, DateTime.Now, message.Channel.Name));
@@ -205,19 +206,15 @@ namespace PokemonGoRaidBot.Services.Parsing
         /// The string must be longer than three characters
         /// And will only match aliases exactly, or the beginning or entierty of the pokemon's name.
         /// </summary>
-        /// <param name="name"></param>
-        /// <param name="config"></param>
         /// <returns></returns>
-        public PokemonInfo ParsePokemon(string name, IBotConfiguration config, IChatServer server)
+        public PokemonInfo ParsePokemon(string name)
         {
 
             var cleanedName = Regex.Replace(name, @"\W", "").ToLower();//never want any special characters in string
 
             if (cleanedName.Length < 3 || Language.RegularExpressions["pokemonTooShort"].IsMatch(name)) return null;
-
-            var guildConfig = config.GetServerConfig(server.Id, server.ChatType);
-
-            var result = Language.Pokemon.FirstOrDefault(x => guildConfig.PokemonAliases.Where(xx => xx.Value.Contains(name.ToLower())).Count() > 0);
+            
+            var result = Language.Pokemon.FirstOrDefault(x => serverConfig.PokemonAliases.Where(xx => xx.Value.Contains(name.ToLower())).Count() > 0);
             if (result != null && result.CatchRate > 0) return result;
 
             result = Language.Pokemon.FirstOrDefault(x => x.Aliases.Contains(cleanedName));
@@ -479,7 +476,12 @@ namespace PokemonGoRaidBot.Services.Parsing
             }
 
         }
-
+        /// <summary>
+        /// Base methods for parsing timespans.
+        /// </summary>
+        /// <param name="str"></param>
+        /// <param name="offset"></param>
+        /// <returns></returns>
         public TimeSpan? ParseTimeSpanBase(string str, int offset)
         {
             TimeSpan tsout = new TimeSpan();
@@ -517,6 +519,12 @@ namespace PokemonGoRaidBot.Services.Parsing
 
             return ToTitleCase(cleanedLocation);
         }
+        /// <summary>
+        /// Parses a bot's message to get an existing post from the config using the unique id.
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="config"></param>
+        /// <returns></returns>
         public PokemonRaidPost ParsePostFromPostMessage(string message, IBotServerConfiguration config)
         {
             var uidReg = Language.RegularExpressions["postUniqueId"];
@@ -542,7 +550,7 @@ namespace PokemonGoRaidBot.Services.Parsing
             {
                 var groups = crossStreetsReg.Match(message).Groups;
 
-                return groups[1].Value.Replace($" {groups[3].Value} ", $" {Language.Strings["and"]} ");
+                return groups[1].Value.Replace(groups[3].Value, $" {Language.Strings["and"]} ");
             }
 
             var startReg = Language.CombineRegex(" ", "locationStartPre", "locationStart");//basically "at [foo] [bar].
@@ -788,174 +796,6 @@ namespace PokemonGoRaidBot.Services.Parsing
             return result.ToArray();
         }
         #endregion
-        #endregion
-
-        #region Output
-        //public string[] GetRaidHelpString(BotConfig config)
-        //{
-        //    return GetFullHelpString(config, false);
-        //}
-        //public Embed GetHelpEmbed(BotConfiguration config, bool admin)
-        //{
-        //    var embed = new EmbedBuilder();
-
-        //    string info = $"*{Language.Strings["helpParenthesis"]}*";
-        //    if (admin) info += $"\n\\**{Language.Strings["helpAdmin"]}*";
-
-        //    embed.AddField($"__**{Language.Strings["helpCommands"]}**__", info);
-
-        //    embed.AddField(string.Format("{0}__r__aid [pokemon] [time left] [location]", config.Prefix), Language.Strings["helpRaid"]);
-        //    embed.AddField(string.Format("{0}__j__oin [raid] [number]", config.Prefix), Language.Strings["helpJoin"]);
-        //    embed.AddField(string.Format("{0}__un__join [raid]", config.Prefix), Language.Strings["helpUnJoin"]);
-        //    embed.AddField(string.Format("{0}__d__elete [raid id]", config.Prefix), Language.Strings["helpDelete"]);
-        //    embed.AddField(string.Format("{0}__m__erge [raid1] [raid2]", config.Prefix), Language.Strings["helpMerge"]);
-        //    embed.AddField(string.Format("{0}__loc__ation [raid] [new location]", config.Prefix), Language.Strings["helpLocation"]);
-        //    embed.AddField(string.Format("{0}__i__nfo [name]", config.Prefix), Language.Strings["helpInfo"]);
-        //    embed.AddField(string.Format("{0}__h__elp", config.Prefix), Language.Strings["helpHelp"]);
-
-        //    if (admin)
-        //    {
-        //        embed.AddField(string.Format("*{0}channel [name]", config.Prefix), string.Format(Language.Strings["helpChannel"], config.OutputChannel));
-        //        embed.AddField(string.Format("*{0}nochannel", config.Prefix), Language.Strings["helpNoChannel"]);
-        //        embed.AddField(string.Format("*{0}alias [pokemon] [alias]", config.Prefix), Language.Strings["helpAlias"]);
-        //        embed.AddField(string.Format("*{0}removealias [pokemon] [alias]", config.Prefix), Language.Strings["helpRemoveAlias"]);
-        //        embed.AddField(string.Format("*{0}pin [channel name]", config.Prefix), Language.Strings["helpPin"]);
-        //        embed.AddField(string.Format("*{0}unpin [channel name]", config.Prefix), Language.Strings["helpUnPin"]);
-        //        embed.AddField(string.Format("*{0}pinall", config.Prefix), Language.Strings["helpPinAll"]);
-        //        embed.AddField(string.Format("*{0}unpinall", config.Prefix), Language.Strings["helpUnPinAll"]);
-        //        embed.AddField(string.Format("*{0}pinlist", config.Prefix), Language.Strings["helpPinList"]);
-        //        embed.AddField(string.Format("*{0}mute [channel name]", config.Prefix), Language.Strings["helpMute"]);
-        //        embed.AddField(string.Format("*{0}unmute [channel name]", config.Prefix), Language.Strings["helpUnMute"]);
-        //        embed.AddField(string.Format("*{0}muteall", config.Prefix), Language.Strings["helpMuteAll"]);
-        //        embed.AddField(string.Format("*{0}unmuteall", config.Prefix), Language.Strings["helpUnMuteAll"]);
-        //        embed.AddField(string.Format("*{0}mutelist", config.Prefix), Language.Strings["helpMuteList"]);
-        //        embed.AddField(string.Format("*{0}timezone [gmt offset]", config.Prefix), Language.Strings["helpTimezone"]);
-        //        embed.AddField(string.Format("*{0}language [language]", config.Prefix), Language.Strings["helpLanguage"]);
-        //        embed.AddField(string.Format("*{0}city [city]", config.Prefix), Language.Strings["helpCity"]);
-        //        embed.AddField(string.Format("*{0}channelcity [channel name] [city]", config.Prefix), Language.Strings["helpChannelCity"]);
-        //        embed.AddField(string.Format("*{0}cities", config.Prefix), Language.Strings["helpCities"]);
-        //        embed.AddField(string.Format("*{0}place", config.Prefix), Language.Strings["helpPlace"]);
-        //        embed.AddField(string.Format("*{0}deleteplace", config.Prefix), Language.Strings["helpDeletePlace"]);
-        //        embed.AddField(string.Format("*{0}places", config.Prefix), Language.Strings["helpPlaces"]);
-        //    }
-
-        //    return embed.Build();
-        //}
-        /// <summary>
-        /// Returns a single row of pokemon info for the !info command.
-        /// </summary>
-        /// <param name="info"></param>
-        /// <returns></returns>
-        //public string MakeInfoLine(PokemonInfo info, BotConfiguration config, ulong guildId, int paddingSize = 0)
-        //{
-        //    var lineFormat = Language.Formats["infoLine"];// "\n{0}: {7}Tier={1} BossCP={2:#,##0} MinCP={3:#,##0} MaxCP={4:#,##0} CatchRate={5}%{6}";
-        //    var padding = 0;
-        //    if (paddingSize > 0)
-        //        padding = paddingSize - info.BossNameFormatted.Length;
-
-        //    var allAliases = new List<string>(info.Aliases);
-
-        //    if (config.GetDiscordServerConfig(guildId).PokemonAliases.ContainsKey(info.Id))
-        //        allAliases.AddRange(config.GetDiscordServerConfig(guildId).PokemonAliases[info.Id]);
-
-        //    return string.Format(lineFormat,
-        //        info.BossNameFormatted,
-        //        new String(' ', padding),
-        //        info.Tier,
-        //        info.BossCP.ToString() + (info.BossCP < 9999 ? " " : ""),
-        //        info.MinCP.ToString() + (info.MinCP < 999 ? " " : ""),
-        //        info.MaxCP.ToString() + (info.MaxCP < 999 ? " " : ""),
-        //        info.CatchRate * 100,
-        //        allAliases.Count() == 0 ? "" : Language.Strings["aliases"] + ": " + string.Join(",", allAliases)
-        //        );
-        //}
-        /// <summary>
-        /// Creates the Discord.Embed object containing the message thread of the raid post
-        /// </summary>
-        /// <param name="post"></param>
-        /// <returns></returns>
-        //public Embed MakeResponseEmbed(PokemonRaidPost post, ServerConfiguration guildConfig, string header)
-        //{
-        //    var builder = new EmbedBuilder();
-
-        //    builder.WithColor(post.Color[0], post.Color[1], post.Color[2]);
-
-        //    builder.WithDescription(header);
-        //    builder.WithUrl(string.Format(Language.Formats["pokemonInfoLink"], post.PokemonId));
-            
-        //    builder.WithThumbnailUrl(string.Format(Language.Formats["imageUrlLargePokemon"], post.PokemonId.ToString().PadLeft(3, '0')));
-
-        //    foreach (var message in post.Responses.OrderBy(x => x.MessageDate).Skip(Math.Max(0, post.Responses.Count() - 10)))//max fields is 25
-        //    {
-        //        builder.AddField(string.Format(Language.Formats["responseInfo"], message.MessageDate.AddHours(TimeOffset), message.ChannelName, message.Username), message.Content);
-        //    }
-            
-        //    return builder.Build();
-        //}
-        /// <summary>
-        /// Creates the post itself for all possible channel outputs
-        /// </summary>
-        /// <param name="post"></param>
-        /// <param name="header"></param>
-        /// <param name="response"></param>
-        /// <param name="channel"></param>
-        /// <param name="mentions"></param>
-        //public void MakePostWithEmbed(PokemonRaidPost post, ServerConfiguration guildConfig, out Embed header, out Embed response, out string channel, out string mentions)
-        //{
-        //    var headerstring = MakePostHeader(post);
-        //    response = MakeResponseEmbed(post, guildConfig, headerstring);
-        //    header = MakeHeaderEmbed(post, headerstring);
-
-        //    var joinedUserIds = post.JoinedUsers.Select(x => x.Id);
-        //    var mentionUserIds = post.Responses.Select(x => x.UserId.ToString()).Distinct().ToList();
-
-        //    mentionUserIds.AddRange(post.JoinedUsers.Select(x => x.Id.ToString()).Distinct());
-
-
-        //    channel = $"<#{string.Join(">, <#", post.ChannelMessages.Keys)}>";
-        //    //var users = mentionUserIds.Count() > 0 ? $",<@{string.Join(">,<@", mentionUserIds.Distinct())}>" : "";
-        //    mentions = post.MentionedRoleIds.Count() > 0 ? $"<@&{string.Join(">, <@&", post.MentionedRoleIds.Distinct())}>" : "";
-
-        //    //mentions = channel +/* users +*/ roles;
-        //}
-        /// <summary>
-        /// Makes the header embed
-        /// </summary>
-        /// <param name="post"></param>
-        /// <param name="text"></param>
-        /// <returns></returns>
-        //public Embed MakeHeaderEmbed(PokemonRaidPost post, string text = null)
-        //{
-        //    if (string.IsNullOrEmpty(text)) text = MakePostHeader(post);
-        //    var headerembed = new EmbedBuilder();
-        //    headerembed.WithColor(post.Color[0], post.Color[1], post.Color[2]);
-        //    headerembed.WithUrl(string.Format(Language.Formats["pokemonInfoLink"], post.PokemonId));
-        //    headerembed.WithDescription(Language.RegularExpressions["discordChannel"].Replace(text, "").Replace(" in ", " ").Replace("  ", " "));
-            
-        //    headerembed.WithThumbnailUrl(string.Format(Language.Formats["imageUrlSmallPokemon"], post.PokemonId.ToString().PadLeft(3, '0')));
-            
-        //    return headerembed.Build();
-        //}
-        //public string MakePostHeader(PokemonRaidPost post)
-        //{
-        //    var joinString = string.Join(", ", post.JoinedUsers.Where(x => x.PeopleCount > 0).Select(x => string.Format("@{0}(**{1}**{2})", x.Name, x.PeopleCount, x.ArriveTime.HasValue ? $" *@{x.ArriveTime.Value.ToString("h:mmt")}*" : "")));
-        //    //var roleString = string.Join(",", post.MentionedRoleIds.Where(x => x > 0).Select(x => string.Format("<@&{0}>", x)));
-
-        //    var joinCount = post.JoinedUsers.Sum(x => x.PeopleCount);
-
-        //    var location = post.Location;
-
-        //    if (post.LatLong != null && post.LatLong.HasValue) location = string.Format("[{0}]({1})", location, string.Format(Language.Formats["googleMapLink"], post.LatLong.Latitude, post.LatLong.Longitude));
-
-        //    string response = string.Format(Language.Formats["postHeader"],
-        //        post.UniqueId,
-        //        string.Format("[{0}]({1})", post.PokemonName, string.Format(Language.Formats["pokemonInfoLink"], post.PokemonId)),
-        //        !string.IsNullOrEmpty(location) ? string.Format(Language.Formats["postLocation"], location) : "",
-        //        string.Format(!post.HasEndDate ? Language.Formats["postEndsUnsure"] : Language.Formats["postEnds"], post.EndDate.AddHours(TimeOffset)),
-        //        joinCount > 0 ? string.Format(Language.Formats["postJoined"], joinCount, joinString) : Language.Strings["postNoneJoined"]
-        //        );
-        //    return response;
-        //}
         #endregion
     }
 }

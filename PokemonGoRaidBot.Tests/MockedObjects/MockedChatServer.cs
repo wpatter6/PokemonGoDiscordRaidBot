@@ -14,9 +14,9 @@ namespace PokemonGoRaidBot.Tests.MockedObjects
             ChatType = chatType.HasValue ? chatType.Value : ChatTypes.Discord;
             Id = id;
             Name = name;
-            ((List<IChatRole>)Roles).AddRange(roles);
-            ((List<IChatChannel>)Channels).AddRange(channels);
-            ((List<IChatUser>)Users).AddRange(users);
+            if(roles != null) ((List<IChatRole>)Roles).AddRange(roles);
+            if (channels != null) ((List<IChatChannel>)Channels).AddRange(channels);
+            if(users != null) ((List<IChatUser>)Users).AddRange(users);
         }
 
         public ChatTypes ChatType { get; set; }

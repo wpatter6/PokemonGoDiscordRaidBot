@@ -22,6 +22,11 @@ namespace PokemonGoRaidBot.Configuration
         public List<IBotServerConfiguration> GuildConfigs { get; set; }
         public List<ulong> NoDMUsers { get; set; }
 
+        private static JsonSerializerSettings jsonSettings = new JsonSerializerSettings()
+        {
+            TypeNameHandling = TypeNameHandling.Auto
+        };
+
         //public List<PokemonInfo> PokemonInfoList { get; set; }
 
         public string GoogleApiKey { get; set; }
@@ -38,7 +43,7 @@ namespace PokemonGoRaidBot.Configuration
             return GuildConfigs.Where(x => x.Id == id).Count() > 0;
         }
 
-        public IBotServerConfiguration GetServerConfig(ulong id, ChatTypes chatType)
+        public IBotServerConfiguration GetServerConfig(ulong id, ChatTypes chatType, string name = "")
         {
             var result = GuildConfigs.FirstOrDefault(x => x.Id == id && (x.ChatType ?? ChatTypes.Discord) == chatType);
             if(result == null)
@@ -46,7 +51,8 @@ namespace PokemonGoRaidBot.Configuration
                 result = new ServerConfiguration()
                 {
                     Id = id,
-                    ChatType = chatType
+                    ChatType = chatType,
+                    Name = name
                 };
                 GuildConfigs.Add(result);
             }
@@ -64,7 +70,7 @@ namespace PokemonGoRaidBot.Configuration
         public static BotConfiguration Load(string dir = @"Configuration\config.json")
         {
             string file = Path.Combine(AppContext.BaseDirectory, dir);
-            var result = JsonConvert.DeserializeObject<BotConfiguration>(File.ReadAllText(file));
+            var result = JsonConvert.DeserializeObject<BotConfiguration>(File.ReadAllText(file), jsonSettings);
 
             var version = Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
             if (result.Version != version)
@@ -88,7 +94,7 @@ namespace PokemonGoRaidBot.Configuration
         }
 
         public string ToJson()
-            => JsonConvert.SerializeObject(this, Formatting.Indented);
+            => JsonConvert.SerializeObject(this, Formatting.Indented, jsonSettings);
         
         private static List<PokemonInfo> GetDefaultPokemonInfoList()
         {

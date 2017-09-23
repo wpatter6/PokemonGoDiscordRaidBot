@@ -80,7 +80,7 @@ namespace PokemonGoRaidBot.Services
                 return post;
             }
 
-            post = Handler.AddPost(Parser.ParsePost(Message, Config), Parser, Message, false);
+            post = Handler.AddPost(Parser.ParsePost(Message), Parser, Message, false);
             return post;
         }
         private async Task<IChatChannel> GetChannelFromName(string name)
@@ -109,7 +109,7 @@ namespace PokemonGoRaidBot.Services
                 return;
             }
 
-            var post = Parser.ParsePost(Message, Config);
+            var post = Parser.ParsePost(Message);
 
             if (post.PokemonId == default(int))
             {
@@ -296,7 +296,7 @@ namespace PokemonGoRaidBot.Services
         {
             if (Command.Count() > 1 && Command[1].Length > 2)
             {
-                var info = Parser.ParsePokemon(Command[1], Config, Message.Server);
+                var info = Parser.ParsePokemon(Command[1]);
 
                 if (info != null) {
                     var message = "```css" + Output.MakeInfoLine(info, Config, Message.Server.Id) + "```" + string.Format(Parser.Language.Formats["pokemonInfoLink"], info.Id);
@@ -575,7 +575,7 @@ namespace PokemonGoRaidBot.Services
         {
             if (!await CheckAdminAccess()) return;
 
-            PokemonInfo foundInfo = Parser.ParsePokemon(Command[1], Config, Message.Server);
+            PokemonInfo foundInfo = Parser.ParsePokemon(Command[1]);
 
             if (foundInfo == null)
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPokemonNotFound"], Command[1]));
@@ -594,7 +594,7 @@ namespace PokemonGoRaidBot.Services
             if (!await CheckAdminAccess()) return;
             var aresp = "";
 
-            var info = Parser.ParsePokemon(Command[1], Config, Message.Server);
+            var info = Parser.ParsePokemon(Command[1]);
 
             var existing = GuildConfig.PokemonAliases.FirstOrDefault(x => x.Value.Contains(Command[2].ToLower()));
             if (!existing.Equals(default(KeyValuePair<int, List<string>>)))

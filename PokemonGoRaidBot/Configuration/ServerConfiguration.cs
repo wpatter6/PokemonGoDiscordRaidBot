@@ -18,6 +18,7 @@ namespace PokemonGoRaidBot.Configuration
             Places = new Dictionary<string, GeoCoordinate>();
         }
         public ulong Id { get; set; }
+        public string Name { get; set; }
         public ulong? OutputChannelId { get; set; }
         public int? Timezone { get; set; }
         public string LinkFormat { get; set; }

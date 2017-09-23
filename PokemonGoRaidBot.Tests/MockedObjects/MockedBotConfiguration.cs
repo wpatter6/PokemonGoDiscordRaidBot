@@ -24,7 +24,7 @@ namespace PokemonGoRaidBot.Tests.MockedObjects
             return StatDBConnectionString;
         }
 
-        public IBotServerConfiguration GetServerConfig(ulong id, ChatTypes chatType)
+        public IBotServerConfiguration GetServerConfig(ulong id, ChatTypes chatType, string name = "")
         {
             throw new NotImplementedException();
         }
