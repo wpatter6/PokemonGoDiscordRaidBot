@@ -38,8 +38,7 @@ namespace PokemonGoRaidBot.Services.Discord
 
         public async Task<IChatChannel> GetOrCreateDMChannelAsync()
         {
-            var ch = await _user.GetOrCreateDMChannelAsync();
-            return new DiscordChatChannel((ISocketMessageChannel)ch);
+            return new DiscordChatChannel(await _user.GetOrCreateDMChannelAsync());
         }
     }
 }
