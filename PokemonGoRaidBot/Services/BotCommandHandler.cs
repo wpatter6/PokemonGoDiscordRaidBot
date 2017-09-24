@@ -85,7 +85,7 @@ namespace PokemonGoRaidBot.Services
         }
         private async Task<IChatChannel> GetChannelFromName(string name)
         {
-            var channel = Message.Server.Channels.FirstOrDefault(x => x.Name.ToLower() == name.ToLower());
+            var channel = Message.Server.Channels.FirstOrDefault(x => (x.Name ?? "").ToLower() == (name ?? "").ToLower());
 
             if (channel == null)
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandGuildNoChannel"], Message.Server.Name, name));
@@ -643,11 +643,11 @@ namespace PokemonGoRaidBot.Services
             {
                 GuildConfig.PinChannels.Add(channel.Id);
                 Config.Save();
-                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Strings["commandPinSuccess"], channel.Name));//$"{pinchannel.Name} added to Pin Channels.");
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPinSuccess"], channel.Name));//$"{pinchannel.Name} added to Pin Channels.");
             }
             else
             {
-                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Strings["commandPinAlreadyDone"], channel.Name));// $"{pinchannel.Name} is already in Pin Channels.");
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPinAlreadyDone"], channel.Name));// $"{pinchannel.Name} is already in Pin Channels.");
             }
         }
 

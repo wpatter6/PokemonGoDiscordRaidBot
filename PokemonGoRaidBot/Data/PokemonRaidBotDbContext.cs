@@ -97,6 +97,12 @@ namespace PokemonGoRaidBot.Data
                 Channels.Add(channelEntity);
             }
 
+            if(channelEntity.Server == null || channelEntity.ServerId == 0)
+            {
+                channelEntity.Server = _mapper.Map<DiscordServerEntity>(channel.Guild);
+                channelEntity.ServerId = channel.Guild.Id;
+            }
+
             channelEntity.LastSeenDate = DateTime.Now;
             channelEntity.City = city ?? channelEntity.City;
 
