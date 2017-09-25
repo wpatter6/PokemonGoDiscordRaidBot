@@ -14,6 +14,6 @@ namespace PokemonGoRaidBot.Objects.Interfaces
 
         IDisposable EnterTypingState();
 
-        Task SendMessageAsync(string message, bool tts = false, object embed = null);
+        Task SendMessageAsync(string message, bool tts = false, IChatEmbed embed = null);
     }
 }

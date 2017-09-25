@@ -40,10 +40,10 @@ namespace PokemonGoRaidBot.Services.Discord
             return new DummyDisposable();
         }
 
-        public async Task SendMessageAsync(string message, bool tts = false, object embed = null)
+        public async Task SendMessageAsync(string message, bool tts = false, IChatEmbed embed = null)
         {
             if (_channel is IMessageChannel)
-                await ((IMessageChannel)_channel).SendMessageAsync(message, tts, (Embed)embed);
+                await ((IMessageChannel)_channel).SendMessageAsync(message, tts, (Embed)embed?.GetEmbed());
         }
     }
 

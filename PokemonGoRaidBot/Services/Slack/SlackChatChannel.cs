@@ -22,7 +22,7 @@ namespace PokemonGoRaidBot.Services.Slack
             throw new NotImplementedException();
         }
 
-        public Task SendMessageAsync(string message, bool tts = false, object embed = null)
+        public Task SendMessageAsync(string message, bool tts = false, IChatEmbed embed = null)
         {
             throw new NotImplementedException();
         }
