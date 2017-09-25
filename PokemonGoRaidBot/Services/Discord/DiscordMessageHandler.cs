@@ -831,7 +831,7 @@ namespace PokemonGoRaidBot.Services.Discord
             var lang = guildConfig.Language ?? "en-us";
 
             var parser = ParserCache.FirstOrDefault(x => x.Lang == lang && x.TimeOffset == timeOffset);
-            if (parser != null) return parser;
+            if (parser != null && parser.Language.Lang == lang) return parser;
 
             parser = new MessageParser(guildConfig, lang, timeOffset);
             ParserCache.Add(parser);

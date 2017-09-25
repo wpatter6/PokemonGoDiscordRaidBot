@@ -38,6 +38,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Configuration\Languages\nl-nl.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Configuration\Languages\en-us.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

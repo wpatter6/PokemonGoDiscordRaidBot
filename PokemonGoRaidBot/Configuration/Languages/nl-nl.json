@@ -1,0 +1,464 @@
+{
+  "regularExpressions": { //will require grammar to translate
+    "hourAliases": "^(h|u|uur?)$", //different ways the word "hours" is typed in chat
+    "minuteAliases": "^(m|minuten|min|mins?)$", //different ways the word "minutes" is typed in chat
+    "aAliases": "^(een?)$", //words like "a" or "an"
+    "atAliases": "^(bij|op?)$", //words like "at"
+    "garbage": "\\b(zag|gezien|rond|raids?|veel|niet?|als|of|wie|wat|wanneer|waar|waarom|hoe|gen|binnenkort|spawn|volgende)\\b", //meaningless words that clutter things up and are unlikely to be part of location strings
+    "locationCrossStreets": "(([\\p{L}0-9\\-]* ?[\\p{L}0-9\\-]+)( \\& | a?nd? |\\/|\\\\| en )([\\p{L}0-9\\-]+ ?[\\p{L}\\-]*))", //Cross streets regex, like 12th and Broadway
+    "locationStart": "\\b([\\p{L}0-9'(\\bn\\.|\\bz\\.|\\bo\\.|\\bw\\.) ]*)", //indicates location using word "at", includes n. s. e. w.
+    "locationStartPre": "\\b(bij|vlakbij|rond|rondom|op|naast?|in)\\b",//the word that triggers the locationStart matching
+    "locationEnd": "([\\p{L}0-9' ]*\\b(park|school|meer|rivier|kerk|museum( of [\\p{L}]+ ?[\\p{L}]*\\b)?|mural|beeld|gebouw|station|theater|statue|sign|winkel|supermarkt|cafe)( (n(oord)?|z(uid)?|o(ost)?|w(est)))?\\b)", //words coming after a landmark name -- generally most reliable
+    "locationExcludeWords": "\\b(iemand?|resterend|ook?|op|buurt|gewoon|whatsapp|iemand?|facebook|hatch(ing|en)?|hier|btw|ben|zijn|routeomschrijving)\\b|\\?|\\.|,", //remove these from parsed locations
+    "locationCleanWords": "^(bij|rondom) ", //removed from string after location parsing
+    "locationTooShort": "^(at?|the|and|of|in|en)$",//throw these away if this is all that's left when returning location
+    "timeActualEnd": "\\b([0-9]{1,2}):?([0-9]{2})? ?(am?|pm?)\\b", //match where numbers indicate an actual time
+    "timeActualStart": "\\b([0-9]{1,2}):?([0-9]{2})?\\b",//also indicates an actual time
+    "timeActualStartPre": "\\b(bij|rondom)\\b",//triggers actual start matching
+    "timeSpan": "([1-2]?[0-9]):([0-9]{2})", //match where numbers indicate hours and minute
+    "timeHourMin": "\\b([0-2]{1})? ?(u|h|uur?) ?e?n? ?(1?[1-9]?[0-9]) ?(m|min|mins|minuten?)\\b", //match where numbers like 1h3m or 1 hour 3 minutes
+    "timeHourHalf": "en een half uur",
+    "timeHalfHour": "half uur",
+    "timeHour": "\\b([0-2]{1})? ?(h|hr|hour(s|en)?|uur(en)?)\\b",
+    "timeMin": "(1?[1-9]?[0-9]) ?(mi?n?s?|minuten?)\\b",
+    "joinEnd": "[^:]?\\b([0-9]{1,2}|(\\b(een|twee|drie|vier|vijf|zes|zeven|acht|negen|tien))) (for|here|join(ed|ing)are|going|people|on (the|our)|coming|(just)? arriv(ed|ing)|of us|confirmed|head(ed|ing)|will)\\b", //indicates the number of people will be joining, with match words coming after #
+    "joinStart": "\\b(have|are|there'?s|we'?re|currently|got) ([0-9]{1,2}|(\\b(een|twee|drie|vier|vijf|zes|zeven|acht|negen|tien)))\\b", //indicates the number of people will be joining, with match words coming before #
+    "joinMe": "\\b((i'?(m|ll| am) )?(do|omw|my way|coming|go(ing?)?|join(ing)?|can\\b|head(ed|ing)|be|(just|only) (me|one))( t?here)?)\\b", //indicates the current user is joining
+    "joinMore": "\\b([0-9]{1,2}|\b(een|twee|drie|vier|vijf|zes|zeven|acht|negen|tien)) more\\b", //indicates more are joining, add to existing value
+    "joinLess": "\\b([0-9]{1,2}|\\b(een|twee|drie|vier|vijf|zes|zeven|acht|negen|tien)) (mensen |ppl |spelers |blauwen |gelen |blauwe |gele )?((zijn |moesten )?weg|zijn net weg)\\b", //indicates some are leaving, subtract from existing value
+    "joinTime": "\\b(ben|kan) er?(daar|onderweg|start(en)?|begin(en)?|go|gaan) ((in|bij) )?===!!!===", //determines if timespan is a "join" time
+    "eggTime": "\\b(ei|hatch(es|en)?|spawn(s|en)?)\\b", //deterines if timespan is "egg" time
+    "pokemonInvalidators": "^(nog|nodig|of|en)$", //if this comes before pokemon name, they're asking if any exist,
+    "pokemonTooShort": "^(art|gen|mac|bay)$",//these are words that often accidenatlly match with the first 3 letters of a raid boss name, so throw them out
+    "nonAlphaNumericWithPunctuation": "[^\\p{L}0-9 ?\\.,:]",
+    "smallWords": "([0-9]?[0-9]?(eerste|tweede|derde|(4|5|6|7|8|9|0|11|12|13)th))|\\b(bij?|de|en|van)\\b", //These will not be made uppercase if they're found in a location
+    "discordRole": "\\<\\@\\&([0-9]+)\\>",
+    "discordUser": "\\<\\@!?([0-9]+)\\>",
+    "discordChannel": "\\<\\#([0-9]+)\\>",
+    "postUniqueId": "^`\\[([\\p{L}0-9]+)\\]`",
+    "latLong": "\\b([-+]?)([1-8]?\\d(\\.\\d+)|90(\\.0+)) *,? *([-+]?)(180(\\.0+)|((1[0-7]\\d)|([1-9]?\\d))(\\.\\d+))\\b"
+  },
+  "formats": {//uses discord markdown 
+    "time12Hour": "h:mmt",
+    "time24Hour": "H:mm",
+    "infoLine": "\n{0}: {1}Tier:{2} BossCP:{3} MaxCP:{5} Vangkans:{6}% {7}", //shown for !info command
+    "postHeader": "`[{0}]`**{1}** {2}{3}\n{4} ([?](https://github.com/wpatter6/PokemonGoDiscordRaidBot/wiki/How-to-Post-Effectively))",
+    "postLocation": " bij **{0}**",
+    "postEnds": " stopt om **{0}**",
+    "postEndsUnsure": " *stopt rond **{0}***",
+    "postjoinTime": " *bij {0}*",//FIX
+    "postJoined": "***{0} gejoined:*** {1}",
+    "postJoinUser": "@{0}(**{1}**{2})",
+    "postRolesTagged": "; Rollen: {0}",
+    "directMessage": "**{0} {1} {2}**{3} ({4}).",
+    "responseInfo": "[`{0:h:mm}#{1}`] **@{2}**:",
+    "commandUnknown": "Onbekend commando \"{0}\".  Typ {1}help om alle commando's voor deze bot te zien.",
+    "commandInvalidNumber": "Ongeldig nummer \"{0}\".",
+    "commandRaidPokemonInvalid": "Ongeldige raid naam \"{0}\".",
+    "commandRaidTimespanInvalid": "Ongeldige tijdsduur \"{0}\".",
+    "commandChannelSuccess": "Output channel voor {0} is veranderd in {1}.",
+    "commandChannelCleared": "Output channel override voor {0} is verwijderd, standaard waarde \"{1}\" zal gebruikt worden.",
+    "commandChannelCityCleared": "Channel {0} override stad is verwijderd, standaard waarde \"{1}\" zal gebruikt worden.",
+    "commandAliasSuccess": "Alias \"{0}\" toegevoegd aan {1}.",
+    "commandPokemonNotFound": "Pokemon met de naam \"{0}\" kan niet worden gevonden.",
+    "commandRemoveAliasSuccess": "Alias \"{0}\" is verwijderd voor {1}.",
+    "commandRemoveAliasNotFound": "Alias \"{0}\" niet gevonden voor {1}.  ",
+    "commandRemoveAliasNotFoundAvaliable": "Aliassen die verwijderd kunnen worden zijn: {0}.",
+    "commandRemoveAliasNotFoundNone": "Geen alias gevonden voor {0}",
+    "commandPostNotFound": "Raid post met naam of Id \"{0}\" kan niet worden gevonden.",
+    "commandPinSuccess": "{0} toegevoegd aan de Pin Channels.",
+    "commandPinAlreadyDone": "{0} bestaat al in de Pin Channels.",
+    "commandUnPinSuccess": "{0} is verwijderd van de Pin Channels.",
+    "commandUnPinAlreadyDone": "{0} is niet toegevoegd aan de Pin Channels.",
+    "commandPinListHeader": "Pinned Channels: {0}",
+    "commandMuteSuccess": "{0} is toegevoegd aan de Muted Channels.",
+    "commandMuteAlreadyDone": "{0} bestaat al in de Muted Channels.",
+    "commandUnMuteSuccess": "{0} is verwijderd van de Muted Channels.",
+    "commandUnMuteAlreadyDone": "{0} is verwijderd van de Muted Channels.",
+    "commandMuteListHeader": "Muted Channels: {0}",
+    "commandGuildNoChannel": "{0} bevat geen kanaal met de naam \"{1}\".",
+    "commandTimezoneSuccess": "Tijdzone voor {0} is veranderd in GMT{1}.",
+    "commandLanguageSuccess": "Taal voor {0} is veranderd in  \"{1}\". Wanneer de taal niet bestaat valt de bot terug op \"en-us\".",
+    "commandCitySuccess": "Stad voor {0} is veranderd in \"{1}\".",
+    "commandPlaceSuccess": "Spot {0} toegevoegd{1}.",
+    "commandDeletePlaceNotFound": "De spot {0} kan niet worden gevonden.",
+    "commandDeletePlaceSuccess": "Spot {0} verwijderd.",
+    "imageUrlLargePokemon": "https://assets.pokemon.com/assets/cms2/img/pokedex/detail/{0}.png",
+    "imageUrlSmallPokemon": "https://assets.pokemon.com/assets/cms2/img/pokedex/detail/{0}.png?width=48&height=48",
+    "googleMapLink": "https://www.google.com/maps/dir/Current+Location/{0},{1}",
+    "googleMapGeocodeApi": "https://maps.googleapis.com/maps/api/geocode/json?address={0}&key={1}",
+    "pokemonInfoLink": "https://pokemongo.gamepress.gg/pokemon/{0}#raid-boss-counters"
+  },
+  "strings": {//words returned by bot at some point -- no formatting, etc
+    "and": "en", //" & " will be replaced with this
+    "at": "bij", //" @ "will be replaced with this
+    "stop": "stop",
+    "start": "start",
+    "joining": "join(t|en)",
+    "quitting": "stop(t|pen)",
+    "themselves": "hen zelf",
+    "questionMark": "?",
+    "aliases": "Aliassen",
+    "dmResp": "Ik kan alleen dingen doen in de server chat. ",
+    "dmStop": "Reageer op dit bericht met \"stop\" om geen berichten meer te ontvangen van mij.",
+    "dmStart": "Stopping direct messages. Respond with \"start\" to undo.",
+    "dmReStart": "Starting direct messages. Respond with \"stop\" to undo.",
+    "helpTop": "Make posts like normal in order to create a raid, or use the following explicit commands.  Only post a single raid in a single message.  To create a new raid post when one with the same pokemon already exists in the channel, be sure to include the location.  Cross streets and landmark names will generally work best for locations.  The post will be pinned in the current channel and/or posted in the designated output channel \"{0}\", depending on the bot configuration on this server.",
+    "helpRaidTop": "Een raid in een chat posten zorgt ervoor dat deze bot de raid in het ingestelde channel post, of pint in het huidige channel.",
+    "helpCommands": "Commando's",
+    "helpAdminCommands": "Admin Commando's",
+    "helpRaid": "Creates a new raid post with the specified [pokemon], [time] (formatted H:MM), and [location].",
+    "helpJoin": "Joins the specified number of people to the specified [raid] Id.  Adding + or - before the number will add or subtract from an existing value.  If pokemon name is used instead of Unique Id, this will join the most recently posted in channel matching the start of the pokemon name.  If no parameters, it will join 1 to the most recently posted raid in that channel.",
+    "helpUnJoin": "Removes your join information from the raid.  If [raid] is blank, unjoins all.",
+    "helpInfo": "Displays information about the selected raid, or all of the raids if [name] is not entered.",
+    "helpChannel": "Changes the bot output channel on this server to the value passed in for [name].  If blank, the override is removed and the value \"{0}\" is used.",
+    "helpNoChannel": "Prevents bot from posting in any specific channel.  Pin functionality can still be used in specific channels.",
+    "helpAlias": "Adds an alias for a pokemon.",
+    "helpRemoveAlias": "Removes an alias for a pokemon.",
+    "helpDelete": "Deletes a raid post with the corresponding Id.  Use `all` to delete all raids posted by you.  Can only be done by admins or the poster of the raid.",
+    "helpMerge": "Merges [raid2] into [raid1].  Can only be done by admin or original poster of [raid2].  Only raid Unique Ids can be used to merge.",
+    "helpLocation": "Allows the poster of the raid or server managers to change the location of a post.",
+    "helpPin": "Raids posted in the specified channel will be posted and pinned in the channel itself.  Bot requires \"Manage Messages\" role permission to pin.",
+    "helpUnPin": "Removes channel from pin channels.",
+    "helpPinAll": "Adds all channels on the server to pin channels.",
+    "helpUnPinAll": "Removes all channels on the server from pin channels.",
+    "helpPinList": "Lists all channels which will pin their raids.",
+    "helpMute": "Mutes the bot from using messages from the selected channel to create raids.  Commands can still be used.",
+    "helpUnMute": "Removes the selected channel from the mute list.",
+    "helpMuteAll": "Mutes all channels.  Use this if only explicit commands should be used on this server to create and join raids.",
+    "helpUnMuteAll": "Un Mutes all channels.",
+    "helpMuteList": "Lists all channels that are muted.",
+    "helpTimezone": "Will set the GMT offset of the discord server [gmt offset] for all time output.",
+    "helpCulture": "Will set the culture of the server for time outputs.  If a language file with the matching name exists in bot config, that language file will be used.  Default is \"en-us\".",
+    "helpCity": "Will set the city of the current server.  This value gets appended to the location when using the Google geocoding API for better accuracy.",
+    "helpChannelCity": "Will set the city of the selected channel",
+    "helpCities": "Displays the city configured to the server and each channel.",
+    "helpPlace": "Allows a location to be manually added to the server's list.",
+    "helpPlaces": "Displays all locations that have been added to the server's list.",
+    "helpDeletePlace": "Removes specified place from the server's list.",
+    "helpHelp": "Shows this message.",
+    "helpAdmin": "Requires Server Admin or Manage Server Permissions.",
+    "helpParenthesis": "Command can be shortened to underlined value.  Do not include brackets or parenthesis in bot commands.",
+    "commandNoAccess": "You do not have the necessary permissions to change this setting.  You must be a server moderator or administrator to make this change.",
+    "commandNoChannelSuccess": "Bot will no longer output to a single channel.  Use !channel to undo this.",
+    "commandNoPostAccess": "Alleen de maker van deze post, server mods, of admins mogen raid posts aanpassen.",
+    "commandUnPinAllSuccess": "Alle channels zijn verwijderd van de pin lijst.",
+    "commandPinAllSuccess": "Alle channels zijn toegevoegd aan to pin lijst.",
+    "commandPinListNone": "Geen channels in de Pin Lijst.",
+    "commandMuteListNone": "Geen channels in de Mute Lijst.",
+    "commandUnMuteAllSuccess": "Alle channels zijn verwijderd van de mute lijst.",
+    "commandMuteAllSuccess": "Alle channels zijn toegevoegd aan de mute lijst.",
+    "commandInvalidNumberOfParameters": "Ongeldig nummer of parameters.",
+    "commandRaidLocationInvalid": "Locatie mag niet leeg zijn.",
+    "postNoneJoined": "Nog niemand heeft gejoined."
+  },
+  "pokemon": [
+    {
+      "Id": 129,
+      "Tier": 1,
+      "Name": "Magikarp",
+      "BossCP": 1165,
+      "MinCP": 104,
+      "MaxCP": 125,
+      "CatchRate": 0.59
+    },
+    {
+      "Id": 153,
+      "Tier": 1,
+      "Name": "Bayleef",
+      "BossCP": 4375,
+      "MinCP": 689,
+      "MaxCP": 740,
+      "CatchRate": 0.1
+    },
+    {
+      "Id": 156,
+      "Tier": 1,
+      "Name": "Quilava",
+      "BossCP": 5085,
+      "MinCP": 793,
+      "MaxCP": 847,
+      "CatchRate": 0.1
+    },
+    {
+      "Id": 159,
+      "Tier": 1,
+      "Name": "Croconaw",
+      "BossCP": 5207,
+      "MinCP": 857,
+      "MaxCP": 913,
+      "CatchRate": 0.1
+    },
+    {
+      "Id": 89,
+      "Tier": 2,
+      "Name": "Muk",
+      "BossCP": 12269,
+      "MinCP": 1474,
+      "MaxCP": 1548,
+      "CatchRate": 0.17
+    },
+    {
+      "Id": 103,
+      "Tier": 2,
+      "Name": "Exeggutor",
+      "BossCP": 13839,
+      "MinCP": 1589,
+      "MaxCP": 1666,
+      "CatchRate": 0.17
+    },
+    {
+      "Id": 110,
+      "Tier": 2,
+      "Name": "Weezing",
+      "BossCP": 12318,
+      "MinCP": 1180,
+      "MaxCP": 1247,
+      "CatchRate": 0.17
+    },
+    {
+      "Id": 125,
+      "Tier": 2,
+      "Name": "Electabuzz",
+      "BossCP": 12390,
+      "MinCP": 1188,
+      "MaxCP": 1255,
+      "CatchRate": 0.17
+    },
+    {
+      "Id": 126,
+      "Tier": 2,
+      "Name": "Magmar",
+      "BossCP": 12718,
+      "MinCP": 1220,
+      "MaxCP": 1288,
+      "CatchRate": 0.17
+    },
+    {
+      "Id": 59,
+      "Tier": 3,
+      "Name": "Arcanine",
+      "BossCP": 17832,
+      "MinCP": 1546,
+      "MaxCP": 1622,
+      "CatchRate": 0.08
+    },
+    {
+      "Id": 65,
+      "Tier": 3,
+      "Name": "Alakazam",
+      "BossCP": 22646,
+      "MinCP": 1569,
+      "MaxCP": 1649,
+      "CatchRate": 0.08
+    },
+    {
+      "Id": 68,
+      "Tier": 3,
+      "Name": "Machamp",
+      "BossCP": 18144,
+      "MinCP": 1574,
+      "MaxCP": 1650,
+      "CatchRate": 0.08
+    },
+    {
+      "Id": 94,
+      "Tier": 3,
+      "Name": "Gengar",
+      "BossCP": 19768,
+      "MinCP": 1420,
+      "MaxCP": 1496,
+      "CatchRate": 0.08
+    },
+    {
+      "Id": 134,
+      "Tier": 3,
+      "Name": "Vaporeon",
+      "BossCP": 16696,
+      "MinCP": 1724,
+      "MaxCP": 1804,
+      "CatchRate": 0.1
+    },
+    {
+      "Id": 135,
+      "Tier": 3,
+      "Name": "Jolteon",
+      "BossCP": 19883,
+      "MinCP": 1484,
+      "MaxCP": 1560,
+      "CatchRate": 0.1
+    },
+    {
+      "Id": 136,
+      "Tier": 3,
+      "Name": "Flareon",
+      "BossCP": 21155,
+      "MinCP": 1581,
+      "MaxCP": 1659,
+      "CatchRate": 0.1
+    },
+    {
+      "Id": 3,
+      "Tier": 4,
+      "Name": "Venusaur",
+      "BossCP": 26921,
+      "MinCP": 1395,
+      "MaxCP": 1467,
+      "CatchRate": 0.04
+    },
+    {
+      "Id": 6,
+      "Tier": 4,
+      "Name": "Charizard",
+      "BossCP": 28485,
+      "MinCP": 1461,
+      "MaxCP": 1535,
+      "CatchRate": 0.04
+    },
+    {
+      "Id": 9,
+      "Tier": 4,
+      "Name": "Blastoise",
+      "BossCP": 24162,
+      "MinCP": 1241,
+      "MaxCP": 1309,
+      "CatchRate": 0.04
+    },
+    {
+      "Id": 112,
+      "Tier": 4,
+      "Name": "Rhydon",
+      "BossCP": 30512,
+      "MinCP": 1804,
+      "MaxCP": 1886,
+      "CatchRate": 0.04
+    },
+    {
+      "Id": 131,
+      "Tier": 4,
+      "Name": "Lapras",
+      "BossCP": 21768,
+      "MinCP": 1414,
+      "MaxCP": 1487,
+      "CatchRate": 0.04
+    },
+    {
+      "Id": 143,
+      "Tier": 4,
+      "Name": "Snorlax",
+      "BossCP": 25419,
+      "MinCP": 1833,
+      "MaxCP": 1917,
+      "CatchRate": 0.04
+    },
+    {
+      "Id": 248,
+      "Tier": 4,
+      "Name": "Tyranitar",
+      "BossCP": 34707,
+      "MinCP": 2011,
+      "MaxCP": 2097,
+      "CatchRate": 0.04,
+      "Aliases": [ "ttar" ]
+    },
+    {
+      "Id": 144,
+      "Tier": 5,
+      "Name": "Articuno",
+      "BossCP": 37603,
+      "MinCP": 1599,
+      "MaxCP": 1676,
+      "CatchRate": 0.03
+    },
+    {
+      "Id": 145,
+      "Tier": 5,
+      "Name": "Zapdos",
+      "BossCP": 42691,
+      "MinCP": 1820,
+      "MaxCP": 1902,
+      "CatchRate": 0.03
+    },
+    {
+      "Id": 146,
+      "Tier": 5,
+      "Name": "Moltres",
+      "BossCP": 41953,
+      "MinCP": 1788,
+      "MaxCP": 1870,
+      "CatchRate": 0.03
+    },
+    {
+      "Id": 150,
+      "Tier": 5,
+      "Name": "Mewtwo",
+      "BossCP": 56557,
+      "MinCP": -1,
+      "MaxCP": 2275,
+      "CatchRate": -1
+    },
+    {
+      "Id": 151,
+      "Tier": 5,
+      "Name": "Mew",
+      "BossCP": 37733,
+      "MinCP": -1,
+      "MaxCP": 1762,
+      "CatchRate": -1
+    },
+    {
+      "Id": 243,
+      "Tier": 5,
+      "Name": "Raikou",
+      "BossCP": 42932,
+      "MinCP": -1,
+      "MaxCP": 1913,
+      "CatchRate": 0.03
+    },
+    {
+      "Id": 244,
+      "Tier": 5,
+      "Name": "Entei",
+      "BossCP": 38628,
+      "MinCP": -1,
+      "MaxCP": 1930,
+      "CatchRate": 0.03
+    },
+    {
+      "Id": 245,
+      "Tier": 5,
+      "Name": "Suicune",
+      "BossCP": 34471,
+      "MinCP": -1,
+      "MaxCP": 1613,
+      "CatchRate": 0.03
+    },
+    {
+      "Id": 249,
+      "Tier": 5,
+      "Name": "Lugia",
+      "BossCP": 42753,
+      "MinCP": 1969,
+      "MaxCP": 2056,
+      "CatchRate": 0.02
+    },
+    {
+      "Id": 250,
+      "Tier": 5,
+      "Name": "Ho-Oh",
+      "BossCP": 55251,
+      "MinCP": -1,
+      "MaxCP": 2657,
+      "CatchRate": -1
+    },
+    {
+      "Id": 251,
+      "Tier": 5,
+      "Name": "Celebi",
+      "BossCP": 37726,
+      "MinCP": -1,
+      "MaxCP": 1766,
+      "CatchRate": -1
+    }
+  ]
+}
