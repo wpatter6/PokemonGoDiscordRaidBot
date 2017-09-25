@@ -115,7 +115,15 @@ namespace PokemonGoRaidBot.Services.Discord
 
             var location = post.Location;
 
-            if (post.LatLong != null && post.LatLong.HasValue) location = string.Format("[{0}]({1})", location, string.Format(Language.Formats["googleMapLink"], post.LatLong.Latitude, post.LatLong.Longitude));
+            var mapLinkFormat = Language.Formats["googleMapLink"];
+
+            var old = CultureInfo.CurrentCulture.NumberFormat;
+
+            CultureInfo.CurrentCulture.NumberFormat = new CultureInfo("en-us").NumberFormat;
+
+            if (post.LatLong != null && post.LatLong.HasValue) location = string.Format("[{0}]({1})", location, string.Format(mapLinkFormat, post.LatLong.Latitude, post.LatLong.Longitude));
+
+            CultureInfo.CurrentCulture.NumberFormat = old;
 
             string response = string.Format(Language.Formats["postHeader"],
                 post.UniqueId,
