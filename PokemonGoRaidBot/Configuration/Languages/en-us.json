@@ -4,7 +4,7 @@
     "minuteAliases": "^(m|mi|min|mins|minutes?)$", //different ways the word "minutes" is typed in chat
     "aAliases": "^(an?)$", //words like "a" or "an"
     "atAliases": "^(at)$", //words like "at"
-    "garbage": "\\b(seen|around|raids?|much|not?|i'?ve|ends?|until|if|or|who|what|when|where|why|how|gen|soon|spawn|do(es)?)\\b", //meaningless words that clutter things up and are unlikely to be part of location strings
+    "garbage": "\\b(seen|saw|around|raids?|much|not?|i'?ve|ends?|until|if|or|who|what|when|where|why|how|gen|soon|spawn|do(es|ing)?|next)\\b", //meaningless words that clutter things up and are unlikely to be part of location strings
     "locationCrossStreets": "(([\\p{L}0-9\\-]* ?[\\p{L}0-9\\-]+)( \\& | a?nd? |\\/|\\\\)([\\p{L}0-9\\-]+ ?[\\p{L}\\-]*))", //Cross streets regex, like 12th and Broadway
     "locationStart": "\\b([\\p{L}0-9'(\\bn\\.|\\bs\\.|\\be\\.|\\bw\\.) ]*)", //indicates location using word "at", includes n. s. e. w.
     "locationStartPre": "\\b(at|near|to|around|by|off?)\\b",//the word that triggers the locationStart matching
