@@ -29,6 +29,10 @@ namespace PokemonGoRaidBot.Tests
 
         private List<string> GoodStringsDutch = new List<string>(new string[]
         {
+            "Ttar in Jlianapark nog 56 minuten",
+            "Snorlax naast Centraal Station 20 min resterend",
+            "Lapras bij Longboat nog 76 mins",
+            "Magikarp bij de Dom 2 en een half uur resterend",
             "Tyranitar in Julianapark 1 uur en 20 minuten resterend",
             "Tyranitar at Centraal Station nog 30 minuten",
         });
