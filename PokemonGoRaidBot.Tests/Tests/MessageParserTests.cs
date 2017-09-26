@@ -20,9 +20,10 @@ namespace PokemonGoRaidBot.Tests
             "Raikou at Dayton and Girard.  Moon Rock.  36 minutes left.  Need one more."
 
         });
-        private List<string> BadStrings = new List<string>(new string[] 
+        private List<string> BadStrings = new List<string>(new string[]
         {
-            "BLAHBLAHBLAH"
+            "Raikou is cool, google.com/maps",
+            "BLAHBLAHBLAH",
         });
 
         [TestMethod]

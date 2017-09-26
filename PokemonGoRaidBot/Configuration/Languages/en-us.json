@@ -5,11 +5,11 @@
     "aAliases": "^(an?)$", //words like "a" or "an"
     "atAliases": "^(at)$", //words like "at"
     "garbage": "\\b(seen|saw|around|raids?|much|not?|i'?ve|ends?|until|if|or|who|what|when|where|why|how|gen|soon|spawn|do(es|ing)?|next)\\b", //meaningless words that clutter things up and are unlikely to be part of location strings
-    "locationCrossStreets": "(([\\p{L}0-9\\-]* ?[\\p{L}0-9\\-]+)( \\& | a?nd? |\\/|\\\\)([\\p{L}0-9\\-]+ ?[\\p{L}\\-]*))", //Cross streets regex, like 12th and Broadway
+    "locationCrossStreets": "(([\\p{L}0-9\\-\\.]* ?[\\p{L}0-9\\-]+)( \\& | a?nd? |\\/|\\\\)([\\p{L}0-9\\-]+ ?[\\p{L}\\-]*))", //Cross streets regex, like 12th and Broadway
     "locationStart": "\\b([\\p{L}0-9'(\\bn\\.|\\bs\\.|\\be\\.|\\bw\\.) ]*)", //indicates location using word "at", includes n. s. e. w.
     "locationStartPre": "\\b(at|near|to|around|by|off?)\\b", //the word that triggers the locationStart matching
     "locationEnd": "([\\p{L}0-9' ]*\\b(park|school|lake|church|museum( of [\\p{L}]+ ?[\\p{L}]*\\b)?|mural|statue|building|station|theat(er|re)|course|sign|store|cafe|cent(er|re))( (n(orth)?|s(outh)?|e(ast)?|w(est)))?\\b)", //words coming after a landmark name -- generally most reliable
-    "locationExcludeWords": "\\b(any(body|one)?|left|too?|any(one)?|in|on|up|by|just|popp(ed|ing)|with(out)?|ha(s|d|ve)|some(one)?|facebook|will|for|from|just|off|start(ing|ed)?|hatch(ing|ed)?|th(ere|is|en|at)|had|only|here|btw|are|am|direct(ions|ly))\\b|\\?|\\.|,", //remove these from parsed locations
+    "locationExcludeWords": "\\b(any(body|one)?|left|too?|any(one)?|in|on|up|by|just|popp(ed|ing)|with(out)?|ha(s|d|ve)|some(one)?|facebook|will|for|from|just|off|start(ing|ed)?|hatch(ing|ed)?|th(ere|is|en|at)|had|only|here|btw|are|am|direct(ions|ly))\\b|\\?|,", //remove these from parsed locations
     "locationCleanWords": "^(at|near|around|by) ", //removed from string after location parsing
     "locationTooShort": "^(at?|the|and|of)$", //throw these away if this is all that's left when returning location
     "timeActualEnd": "\\b([0-9]{1,2}):?([0-9]{2})? ?(am?|pm?)\\b", //match where numbers indicate an actual time

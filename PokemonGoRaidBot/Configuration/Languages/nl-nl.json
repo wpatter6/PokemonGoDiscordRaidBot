@@ -5,7 +5,7 @@
     "aAliases": "^(een?)$", //words like "a" or "an"
     "atAliases": "^(bij|op|in|naast?)$", //words like "at"
     "garbage": "\\b(zag|gezien|rond|raids?|veel|niet?|als|of|wie|wat|wanneer|waar|waarom|hoe|gen|binnenkort|spawn|volgende)\\b", //meaningless words that clutter things up and are unlikely to be part of location strings
-    "locationCrossStreets": "(([\\p{L}0-9\\-]* ?[\\p{L}0-9\\-]+)( \\& | a?nd? |\\/|\\\\)([\\p{L}0-9\\-]+ ?[\\p{L}\\-]*))", //Cross streets regex, like 12th and Broadway
+    "locationCrossStreets": "(([\\p{L}0-9\\-\\.]* ?[\\p{L}0-9\\-]+)( \\& | a?nd? |\\/|\\\\)([\\p{L}0-9\\-]+ ?[\\p{L}\\-]*))", //Cross streets regex, like 12th and Broadway
     "locationStart": "\\b([\\p{L}0-9'(\\bn\\.|\\bz\\.|\\bo\\.|\\bw\\.) ]*)", //indicates location using word "at", includes n. s. e. w.
     "locationStartPre": "\\b(bij|vlakbij|rond|rondom|op|naast?|in)\\b", //the word that triggers the locationStart matching
     "locationEnd": "([\\p{L}0-9' ]*\\b(park|school|meer|rivier|kerk|museum( of [\\p{L}]+ ?[\\p{L}]*\\b)?|mural|beeld|gebouw|station|theater|statue|sign|winkel|supermarkt|cafe)( (n(oord)?|z(uid)?|o(ost)?|w(est)))?\\b)", //words coming after a landmark name -- generally most reliable
