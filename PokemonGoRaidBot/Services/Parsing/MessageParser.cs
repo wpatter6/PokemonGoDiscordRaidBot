@@ -545,12 +545,14 @@ namespace PokemonGoRaidBot.Services.Parsing
             if (endReg.IsMatch(message))
                 return endReg.Match(message).Groups[1].Value;
 
+            var urlReg = Language.RegularExpressions["url"];
             var crossStreetsReg = Language.RegularExpressions["locationCrossStreets"]; //pretty reliable but can have some missed matches
             if (crossStreetsReg.IsMatch(message))
             {
                 var groups = crossStreetsReg.Match(message).Groups;
 
-                return groups[1].Value.Replace(groups[3].Value, $" {Language.Strings["and"]} ");
+                if(!urlReg.IsMatch(groups[1].Value))
+                    return groups[1].Value.Replace(groups[3].Value, $" {Language.Strings["and"]} ");
             }
 
             var startReg = Language.CombineRegex(" ", "locationStartPre", "locationStart");//basically "at [foo] [bar].
