@@ -9,8 +9,8 @@
     "locationStart": "\\b([\\p{L}0-9'(\\bn\\.|\\bz\\.|\\bo\\.|\\bw\\.) ]*)", //indicates location using word "at", includes n. s. e. w.
     "locationStartPre": "\\b(bij|vlakbij|rond|rondom|op|naast?|in)\\b", //the word that triggers the locationStart matching
     "locationEnd": "([\\p{L}0-9' ]*\\b(park|school|meer|rivier|kerk|museum( of [\\p{L}]+ ?[\\p{L}]*\\b)?|mural|beeld|gebouw|station|theater|statue|sign|winkel|supermarkt|cafe)( (n(oord)?|z(uid)?|o(ost)?|w(est)))?\\b)", //words coming after a landmark name -- generally most reliable
-    "locationExcludeWords": "\\b(iemand?|resterend|ook?|in|op|buurt|gewoon|whatsapp|iemand?|facebook|hatch(ing|en)?|hier|btw|ben|zijn|routeomschrijving)\\b|\\?|\\.|,", //remove these from parsed locations
-    "locationCleanWords": "^(bij|rondom) ", //removed from string after location parsing
+    "locationExcludeWords": "\\b(iemand?|resterend|ook?|op|buurt|gewoon|whatsapp|iemand?|facebook|hatch(ing|en)?|hier|btw|ben|zijn|routeomschrijving)\\b|\\?|,", //remove these from parsed locations
+    "locationCleanWords": "^(bij|rondom|in|at) ", //removed from string after location parsing
     "locationTooShort": "^(at?|the|and|of)$", //throw these away if this is all that's left when returning location
     "timeActualEnd": "\\b([0-9]{1,2}):?([0-9]{2})? ?(am?|pm?)\\b", //match where numbers indicate an actual time
     "timeActualStart": "\\b([0-9]{1,2}):?([0-9]{2})?\\b", //also indicates an actual time

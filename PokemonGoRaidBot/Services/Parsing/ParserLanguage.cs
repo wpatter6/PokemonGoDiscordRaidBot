@@ -19,10 +19,10 @@ namespace PokemonGoRaidBot.Services.Parsing
         private CultureInfo Culture;
         public string Lang { get; private set; }
 
-        public ParserLanguage(string language = "en-us", string languageFilePath = null)
+        public ParserLanguage(string language = "en-us")
         {
             Lang = language;
-            string file = languageFilePath ?? Path.Combine(AppContext.BaseDirectory, string.Format(@"Configuration\Languages\{0}.json", language));
+            string file = Path.Combine(AppContext.BaseDirectory, string.Format(@"Configuration\Languages\{0}.json", language));
             if (!File.Exists(file))
             {
                 Lang = "en-us";

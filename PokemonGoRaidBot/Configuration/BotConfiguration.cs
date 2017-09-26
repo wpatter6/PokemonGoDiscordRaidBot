@@ -70,7 +70,8 @@ namespace PokemonGoRaidBot.Configuration
         public static BotConfiguration Load(string dir = @"Configuration\config.json")
         {
             string file = Path.Combine(AppContext.BaseDirectory, dir);
-            var result = JsonConvert.DeserializeObject<BotConfiguration>(File.ReadAllText(file), jsonSettings);
+            var fileObj = File.ReadAllText(file);
+            var result = JsonConvert.DeserializeObject<BotConfiguration>(fileObj, jsonSettings);
 
             var version = Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
             if (result.Version != version)

@@ -32,11 +32,11 @@ namespace PokemonGoRaidBot.Services.Parsing
         public string Lang;
         public int TimeOffset;
 
-        public MessageParser(IBotServerConfiguration serverConfig, string language = "en-us", int timeZoneOffset = 0, string languageFilePath = null)
+        public MessageParser(IBotServerConfiguration serverConfig, string language = "en-us", int timeZoneOffset = 0)
         {
             this.serverConfig = serverConfig;
             Lang = language;
-            Language = new ParserLanguage(language, languageFilePath);
+            Language = new ParserLanguage(language);
             TimeOffset = timeZoneOffset;
             CultureInfo.CurrentCulture = Language.GetCultureInfo();
         }
