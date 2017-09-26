@@ -37,7 +37,8 @@
     "discordChannel": "\\<\\#([0-9]+)\\>",
     "postUniqueId": "^`\\[([\\p{L}0-9]+)\\]`",
     "latLong": "\\b([-+]?)([1-8]?\\d(\\.\\d+)|90(\\.0+)) *,? *([-+]?)(180(\\.0+)|((1[0-7]\\d)|([1-9]?\\d))(\\.\\d+))\\b",
-    "url": "[-a-zA-Z0-9@:%._\\+~#=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&//=]*)"
+    "url": "[-a-zA-Z0-9@:%._\\+~#=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&//=]*)",
+    "sponsored": "\\b(starbucks|sprint|sponsored(ed)?)\\b"
   },
   "formats": {//uses discord markdown 
     "time12Hour": "h:mmt",
@@ -151,7 +152,8 @@
     "commandMuteAllSuccess": "All channels added to mute list.",
     "commandInvalidNumberOfParameters": "Invalid number of parameters.",
     "commandRaidLocationInvalid": "Location cannot be blank.",
-    "postNoneJoined": "No one joined yet."
+    "postNoneJoined": "No one joined yet.",
+    "sponsored": "Sponsored"
   },
   "pokemon": [
     {

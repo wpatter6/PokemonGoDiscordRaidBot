@@ -187,8 +187,15 @@ namespace PokemonGoRaidBot.Services.Parsing
             result.Responses.Add(new PokemonMessage(message.User.Id, message.User.Name, messageString, DateTime.Now, message.Channel.Name));
 
             var mention = message.Server.Roles.FirstOrDefault(x => x.Name == result.PokemonName); //((SocketGuildChannel)message.Channel).Guild.Roles.FirstOrDefault(x => x.Name == result.PokemonName);
-            if (mention != null && !message.MentionedRoles.ToList().Contains(mention))//avoid double notification
+            if (mention != null && !message.MentionedRoles.ToList().Contains(mention) && !result.MentionedRoleIds.Contains(mention.Id))//avoid double notification
                 result.MentionedRoleIds.Add(mention.Id);
+
+            if (Language.RegularExpressions["sponsored"].IsMatch(message.Content))
+            {
+                mention = message.Server.Roles.FirstOrDefault(x => x.Name.ToLower() == Language.Strings["sponsored"].ToLower());
+                if (mention != null && !message.MentionedRoles.ToList().Contains(mention) && !result.MentionedRoleIds.Contains(mention.Id))//avoid double notification
+                    result.MentionedRoleIds.Add(mention.Id);
+            }
 
             foreach (var role in message.Server.Roles.Where(x => !message.MentionedRoles.Contains(x) && !result.MentionedRoleIds.Contains(x.Id)))
             {//notify for roles that weren't actually mentions
