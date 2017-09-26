@@ -1,6 +1,8 @@
 # PokemonGoRaidBot
 
-##### Try it out in a sandbox environment: https://discord.gg/9SCnYAU (message me in discord if you want to try out admin commands)
+##### Try it out in a sandbox environment: https://discord.gg/9SCnYAU (message wpatter6 in discord if you want to try out admin commands)
+
+##### The bot now supports Dutch as its first non-english language!  Using the command `!culture nl-NL` will now translate your bot's output, big thanks to sjaakbanaan for doing the translation.
 
 ## What it does
 - This highly configurable discord bot will parse posts in a discord server and provide clean output to a configured channel on the discord server, and/or it can pin messages in the channel they were posted in.  

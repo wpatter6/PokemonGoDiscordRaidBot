@@ -90,7 +90,7 @@
     "googleMapGeocodeApi": "https://maps.googleapis.com/maps/api/geocode/json?address={0}&key={1}",
     "pokemonInfoLink": "https://pokemongo.gamepress.gg/pokemon/{0}#raid-boss-counters"
   },
-  "strings": {//words returned by bot at some point -- no formatting, etc
+  "strings": { //words returned by bot at some point -- no formatting, etc
     "and": "and", //" & " will be replaced with this
     "at": "at", //" @ "will be replaced with this
     "stop": "stop",
@@ -130,7 +130,7 @@
     "helpUnMuteAll": "Un Mutes all channels.",
     "helpMuteList": "Lists all channels that are muted.",
     "helpTimezone": "Will set the GMT offset of the discord server [gmt offset] for all time output.",
-    "helpCulture": "Will set the culture of the server for time outputs.  If a language file with the matching name exists in bot config, that language file will be used.  Default is \"en-us\".",
+    "helpCulture": "Will set the culture of the server for time outputs.  If a language file with the matching name exists in bot config, that language file will be used.  Default is \"en-us\".  Contact wpatter6 if you want to translate the bot into your server's lanague.",
     "helpCity": "Will set the city of the current server.  This value gets appended to the location when using the Google geocoding API for better accuracy.",
     "helpChannelCity": "Will set the city of the selected channel",
     "helpCities": "Displays the city configured to the server and each channel.",

@@ -48,7 +48,8 @@ namespace PokemonGoRaidBot.Tests
             {
                 var post = parser.ParsePost(new MockedChatMessage(str, Objects.ChatTypes.Discord));
 
-                Assert.IsTrue(post.IsValid);
+                if(!post.IsValid)
+                    Assert.IsTrue(post.IsValid);
             }
         }
 
@@ -60,7 +61,8 @@ namespace PokemonGoRaidBot.Tests
             {
                 var post = parser.ParsePost(new MockedChatMessage(str, Objects.ChatTypes.Discord));
 
-                Assert.IsFalse(post.IsValid);
+                if (post.IsValid)
+                    Assert.IsFalse(post.IsValid);
             }
         }
         #endregion
@@ -74,7 +76,8 @@ namespace PokemonGoRaidBot.Tests
             {
                 var post = parser.ParsePost(new MockedChatMessage(str, Objects.ChatTypes.Discord));
 
-                Assert.IsTrue(post.IsValid);
+                if (!post.IsValid)
+                    Assert.IsTrue(post.IsValid);
             }
         }
 
@@ -86,7 +89,8 @@ namespace PokemonGoRaidBot.Tests
             {
                 var post = parser.ParsePost(new MockedChatMessage(str, Objects.ChatTypes.Discord));
 
-                Assert.IsFalse(post.IsValid);
+                if (post.IsValid)
+                    Assert.IsFalse(post.IsValid);
             }
         }
         #endregion
