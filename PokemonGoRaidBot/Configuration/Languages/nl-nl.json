@@ -3,23 +3,23 @@
     "hourAliases": "^(h|u|uur?)$", //different ways the word "hours" is typed in chat
     "minuteAliases": "^(m|minuten|min|mins?)$", //different ways the word "minutes" is typed in chat
     "aAliases": "^(een?)$", //words like "a" or "an"
-    "atAliases": "^(bij|op?)$", //words like "at"
+    "atAliases": "^(bij|op|in|naast?)$", //words like "at"
     "garbage": "\\b(zag|gezien|rond|raids?|veel|niet?|als|of|wie|wat|wanneer|waar|waarom|hoe|gen|binnenkort|spawn|volgende)\\b", //meaningless words that clutter things up and are unlikely to be part of location strings
-    "locationCrossStreets": "(([\\p{L}0-9\\-]* ?[\\p{L}0-9\\-]+)( \\& | a?nd? |\\/|\\\\| en )([\\p{L}0-9\\-]+ ?[\\p{L}\\-]*))", //Cross streets regex, like 12th and Broadway
+    "locationCrossStreets": "(([\\p{L}0-9\\-]* ?[\\p{L}0-9\\-]+)( \\& | a?nd? |\\/|\\\\)([\\p{L}0-9\\-]+ ?[\\p{L}\\-]*))", //Cross streets regex, like 12th and Broadway
     "locationStart": "\\b([\\p{L}0-9'(\\bn\\.|\\bz\\.|\\bo\\.|\\bw\\.) ]*)", //indicates location using word "at", includes n. s. e. w.
-    "locationStartPre": "\\b(bij|vlakbij|rond|rondom|op|naast?|in)\\b",//the word that triggers the locationStart matching
+    "locationStartPre": "\\b(bij|vlakbij|rond|rondom|op|naast?|in)\\b", //the word that triggers the locationStart matching
     "locationEnd": "([\\p{L}0-9' ]*\\b(park|school|meer|rivier|kerk|museum( of [\\p{L}]+ ?[\\p{L}]*\\b)?|mural|beeld|gebouw|station|theater|statue|sign|winkel|supermarkt|cafe)( (n(oord)?|z(uid)?|o(ost)?|w(est)))?\\b)", //words coming after a landmark name -- generally most reliable
-    "locationExcludeWords": "\\b(iemand?|resterend|ook?|op|buurt|gewoon|whatsapp|iemand?|facebook|hatch(ing|en)?|hier|btw|ben|zijn|routeomschrijving)\\b|\\?|\\.|,", //remove these from parsed locations
+    "locationExcludeWords": "\\b(iemand?|resterend|ook?|in|op|buurt|gewoon|whatsapp|iemand?|facebook|hatch(ing|en)?|hier|btw|ben|zijn|routeomschrijving)\\b|\\?|\\.|,", //remove these from parsed locations
     "locationCleanWords": "^(bij|rondom) ", //removed from string after location parsing
-    "locationTooShort": "^(at?|the|and|of|in|en)$",//throw these away if this is all that's left when returning location
+    "locationTooShort": "^(at?|the|and|of)$", //throw these away if this is all that's left when returning location
     "timeActualEnd": "\\b([0-9]{1,2}):?([0-9]{2})? ?(am?|pm?)\\b", //match where numbers indicate an actual time
-    "timeActualStart": "\\b([0-9]{1,2}):?([0-9]{2})?\\b",//also indicates an actual time
-    "timeActualStartPre": "\\b(bij|rondom)\\b",//triggers actual start matching
+    "timeActualStart": "\\b([0-9]{1,2}):?([0-9]{2})?\\b", //also indicates an actual time
+    "timeActualStartPre": "\\b(bij|rondom)\\b", //triggers actual start matching
     "timeSpan": "([1-2]?[0-9]):([0-9]{2})", //match where numbers indicate hours and minute
     "timeHourMin": "\\b([0-2]{1})? ?(u|h|uur?) ?e?n? ?(1?[1-9]?[0-9]) ?(m|min|mins|minuten?)\\b", //match where numbers like 1h3m or 1 hour 3 minutes
     "timeHourHalf": "en een half uur",
     "timeHalfHour": "half uur",
-    "timeHour": "\\b([0-2]{1})? ?(h|hr|hour(s|en)?|uur(en)?)\\b",
+    "timeHour": "\\b([0-2]{1})? ?(h|hr|hours?|urr(en)?)\\b",
     "timeMin": "(1?[1-9]?[0-9]) ?(mi?n?s?|minuten?)\\b",
     "joinEnd": "[^:]?\\b([0-9]{1,2}|(\\b(een|twee|drie|vier|vijf|zes|zeven|acht|negen|tien))) (for|here|join(ed|ing)are|going|people|on (the|our)|coming|(just)? arriv(ed|ing)|of us|confirmed|head(ed|ing)|will)\\b", //indicates the number of people will be joining, with match words coming after #
     "joinStart": "\\b(have|are|there'?s|we'?re|currently|got) ([0-9]{1,2}|(\\b(een|twee|drie|vier|vijf|zes|zeven|acht|negen|tien)))\\b", //indicates the number of people will be joining, with match words coming before #
@@ -29,16 +29,17 @@
     "joinTime": "\\b(ben|kan) er?(daar|onderweg|start(en)?|begin(en)?|go|gaan) ((in|bij) )?===!!!===", //determines if timespan is a "join" time
     "eggTime": "\\b(ei|hatch(es|en)?|spawn(s|en)?)\\b", //deterines if timespan is "egg" time
     "pokemonInvalidators": "^(nog|nodig|of|en)$", //if this comes before pokemon name, they're asking if any exist,
-    "pokemonTooShort": "^(art|gen|mac|bay)$",//these are words that often accidenatlly match with the first 3 letters of a raid boss name, so throw them out
+    "pokemonTooShort": "^(art|gen|mac|bay)$", //these are words that often accidenatlly match with the first 3 letters of a raid boss name, so throw them out
     "nonAlphaNumericWithPunctuation": "[^\\p{L}0-9 ?\\.,:]",
     "smallWords": "([0-9]?[0-9]?(eerste|tweede|derde|(4|5|6|7|8|9|0|11|12|13)th))|\\b(bij?|de|en|van)\\b", //These will not be made uppercase if they're found in a location
     "discordRole": "\\<\\@\\&([0-9]+)\\>",
     "discordUser": "\\<\\@!?([0-9]+)\\>",
     "discordChannel": "\\<\\#([0-9]+)\\>",
     "postUniqueId": "^`\\[([\\p{L}0-9]+)\\]`",
-    "latLong": "\\b([-+]?)([1-8]?\\d(\\.\\d+)|90(\\.0+)) *,? *([-+]?)(180(\\.0+)|((1[0-7]\\d)|([1-9]?\\d))(\\.\\d+))\\b"
+    "latLong": "\\b([-+]?)([1-8]?\\d(\\.\\d+)|90(\\.0+)) *,? *([-+]?)(180(\\.0+)|((1[0-7]\\d)|([1-9]?\\d))(\\.\\d+))\\b",
+    "url": "[-a-zA-Z0-9@:%._\\+~#=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&//=]*)"
   },
-  "formats": {//uses discord markdown 
+  "formats": { //uses discord markdown
     "time12Hour": "h:mmt",
     "time24Hour": "H:mm",
     "infoLine": "\n{0}: {1}Tier:{2} BossCP:{3} MaxCP:{5} Vangkans:{6}% {7}", //shown for !info command
@@ -46,7 +47,7 @@
     "postLocation": " bij **{0}**",
     "postEnds": " stopt om **{0}**",
     "postEndsUnsure": " *stopt rond **{0}***",
-    "postjoinTime": " *bij {0}*",//FIX
+    "postjoinTime": " *bij {0}*", //FIX
     "postJoined": "***{0} gejoined:*** {1}",
     "postJoinUser": "@{0}(**{1}**{2})",
     "postRolesTagged": "; Rollen: {0}",
@@ -89,7 +90,7 @@
     "googleMapGeocodeApi": "https://maps.googleapis.com/maps/api/geocode/json?address={0}&key={1}",
     "pokemonInfoLink": "https://pokemongo.gamepress.gg/pokemon/{0}#raid-boss-counters"
   },
-  "strings": {//words returned by bot at some point -- no formatting, etc
+  "strings": { //words returned by bot at some point -- no formatting, etc
     "and": "en", //" & " will be replaced with this
     "at": "bij", //" @ "will be replaced with this
     "stop": "stop",
@@ -150,7 +151,7 @@
     "commandMuteAllSuccess": "Alle channels zijn toegevoegd aan de mute lijst.",
     "commandInvalidNumberOfParameters": "Ongeldig nummer of parameters.",
     "commandRaidLocationInvalid": "Locatie mag niet leeg zijn.",
-    "postNoneJoined": "Nog niemand heeft gejoined."
+    "postNoneJoined": "Er is nog niemand gejoined."
   },
   "pokemon": [
     {
