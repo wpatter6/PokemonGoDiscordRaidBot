@@ -41,7 +41,7 @@
 1. Check the [Different Configurations](https://github.com/wpatter6/PokemonGoDiscordRaidBot/wiki/Different-Configurations) wiki to determine which configuration will work best for your server.
 1. Bot requires role permission "Manage Messages" in order to pin.
 1. Configure which channel is the output channel using !channel command (or none with !nochannel)
-1. Configure which channels should have pin behavior !pin or !pinall commands.  On the first load in a server, all channels are added to the pin list.
+1. Configure which channels should have pin behavior !pin or !pinall commands.
 1. Configure the timezone of the discord server using the !timezone commands
 1. Configure the city of the discord server using the !city and !channelcity commands.  This greatly improves google maps geolocation accuracy by basically appending this value to the lat/long search each time a location is identified.
 1. Configure the culture of the discord server using !culture if outside the US.  This will allow 24 hour clock and languages (if language file exists -- see bottom for how to build)
