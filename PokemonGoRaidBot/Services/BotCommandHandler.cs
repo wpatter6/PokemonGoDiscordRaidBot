@@ -252,9 +252,10 @@ namespace PokemonGoRaidBot.Services
             if (joinedUser.PeopleCount <= 0) post.JoinedUsers.Remove(joinedUser);
 
             TimeSpan? ts1, ts2;
-            Parser.ParseTimespanFull(ref time, out ts1, out ts2);
+            DateTime? dt1, dt2;
+            Parser.ParseTimespanFull(ref time, out ts1, out ts2, out dt1, out dt2);
 
-            joinedUser.ArriveTime = (DateTime.Now + (ts1 ?? ts2)) ?? joinedUser.ArriveTime;
+            joinedUser.ArriveTime = dt2 ?? dt1 ?? (DateTime.Now + (ts1 ?? ts2)) ?? joinedUser.ArriveTime;
 
             await Handler.MakePost(post, Parser);
             Config.Save();
@@ -848,7 +849,7 @@ namespace PokemonGoRaidBot.Services
                 GuildConfig.Places[location] = latlng;
                 Config.Save();
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPlaceSuccess"], location,
-                    latlng != null && latlng.HasValue ? " at " + latlng.ToString() : ""));
+                    latlng != null && latlng.HasValue ? Parser.Language.Strings["at"] + latlng.ToString() : ""));
             }
             else
             {

@@ -148,12 +148,17 @@ namespace PokemonGoRaidBot.Services.Parsing
             var latLong = ParseLatLong(ref unmatchedString);
             
             TimeSpan? raidTimeSpan, joinTimeSpan;
-            ParseTimespanFull(ref unmatchedString, out raidTimeSpan, out joinTimeSpan);
-
-            DateTime? joinTime = null;
+            DateTime? raidTime, joinTime;
+            ParseTimespanFull(ref unmatchedString, out raidTimeSpan, out joinTimeSpan, out raidTime, out joinTime);
 
             if (joinTimeSpan.HasValue) joinTime = DateTime.Now + joinTimeSpan.Value;
-            if (raidTimeSpan.HasValue)
+
+            if (raidTime.HasValue)
+            {
+                result.EndDate = raidTime.Value;
+                result.HasEndDate = true;
+            }
+            else if (raidTimeSpan.HasValue)
             {
                 var resultTs = new TimeSpan(0, maxRaidMinutes, 0);
                 if (raidTimeSpan.Value < resultTs) resultTs = raidTimeSpan.Value;
@@ -238,10 +243,12 @@ namespace PokemonGoRaidBot.Services.Parsing
         /// <param name="message"></param>
         /// <param name="raidTimeSpan"></param>
         /// <param name="joinTimeSpan"></param>
-        public void ParseTimespanFull(ref string message, out TimeSpan? raidTimeSpan, out TimeSpan? joinTimeSpan)
+        public void ParseTimespanFull(ref string message, out TimeSpan? raidTimeSpan, out TimeSpan? joinTimeSpan, out DateTime? actualRaidTime, out DateTime? actualJoinTime)
         {
             raidTimeSpan = null;
             joinTimeSpan = null;
+            actualRaidTime = null;
+            actualJoinTime = null;
 
             if (string.IsNullOrEmpty(message)) return;
 
@@ -265,20 +272,21 @@ namespace PokemonGoRaidBot.Services.Parsing
                     if (part.First() == 'p')
                         hour += 12;
 
-                    var tsout = ParseTimeSpanBase(string.Format("{0}:{1}", hour, minute), TimeOffset * -1);
+                    var actualTime = DateTime.Today.AddHours(hour).AddMinutes(minute);
+                    //var tsout = ParseTimeSpanBase(string.Format("{0}:{1}", hour, minute), TimeOffset * -1);
 
-                    if (tsout.HasValue)
+                    //if (tsout.HasValue)
+                    //{
+                    message = message.Replace(match.Groups[0].Value, matchedTimeWordReplacement);
+
+                    if (joinReg.IsMatch(message))
                     {
-                        message = message.Replace(match.Groups[0].Value, matchedTimeWordReplacement);
-
-                        if (joinReg.IsMatch(message))
-                        {
-                            message = joinReg.Replace(message, matchedWordReplacement);
-                            joinTimeSpan = tsout.Value;
-                        }
-                        else
-                            raidTimeSpan = tsout.Value;
+                        message = joinReg.Replace(message, matchedWordReplacement);
+                        actualJoinTime = actualTime;// = tsout.Value;
                     }
+                    else
+                        actualRaidTime = actualTime;// = tsout.Value;
+                    //}
                 }
 
                 if (joinTimeSpan.HasValue && raidTimeSpan.HasValue)
@@ -518,7 +526,7 @@ namespace PokemonGoRaidBot.Services.Parsing
             var result = ParseLocationBase(cleanedMessage);
 
             var cleanreg = Language.RegularExpressions["locationCleanWords"];
-            var cleaned = cleanreg.Replace(result.Trim(), "", 1);
+            var cleaned = cleanreg.Replace(result.Trim(), "");
 
             var cleanedLocation = cleaned.Replace(",", "").Replace(".", "").Replace("  ", " ").Replace(matchedWordReplacement, "").Trim();
 
