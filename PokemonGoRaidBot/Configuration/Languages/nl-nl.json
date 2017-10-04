@@ -9,7 +9,7 @@
     "locationStart": "\\b([\\p{L}0-9'(\\bn\\.|\\bz\\.|\\bo\\.|\\bw\\.) ]*)", //indicates location using word "at", includes n. s. e. w.
     "locationStartPre": "\\b(bij|vlakbij|rond|rondom|op|naast?|in)\\b", //the word that triggers the locationStart matching
     "locationEnd": "([\\p{L}0-9' ]*\\b?(park|school|meer|rivier|kerk|museum( of [\\p{L}]+ ?[\\p{L}]*\\b)?|mural|beeld|gebouw|station|theater|statue|sign|winkel|supermarkt|cafe)( (n(oord)?|z(uid)?|o(ost)?|w(est)))?\\b)", //words coming after a landmark name -- generally most reliable
-    "locationExcludeWords": "\\b(iemand?|resterend|ook?|op|buurt|gewoon|whatsapp|iemand?|facebook|hatch(ing|en)?|hier|btw|ben|zijn|routeomschrijving)\\b|\\?|,", //remove these from parsed locations
+    "locationExcludeWords": "\\b(iemand?|resterend|ook?|buurt|gewoon|whatsapp|iemand?|facebook|hatch(ing|en)?|hier|btw|ben|zijn|tot|routeomschrijving)\\b|\\?|,", //remove these from parsed locations
     "locationCleanWords": "^(bij|rondom|in|at|naast|nog) ", //removed from string after location parsing
     "locationTooShort": "^(at?|the|and|of)$", //throw these away if this is all that's left when returning location
     "timeActualEnd": "\\b([0-9]{1,2}):?([0-9]{2})? ?(am?|pm?)\\b", //match where numbers indicate an actual time
@@ -82,7 +82,7 @@
     "commandTimezoneSuccess": "Tijdzone voor {0} is veranderd in GMT{1}.",
     "commandLanguageSuccess": "Taal voor {0} is veranderd in  \"{1}\". Wanneer de taal niet bestaat valt de bot terug op \"en-us\".",
     "commandCitySuccess": "Stad voor {0} is veranderd in \"{1}\".",
-    "commandPlaceSuccess": "Spot {0} toegevoegd{1}.",
+    "commandPlaceSuccess": "Spot {0} toegevoegd op {1}.",
     "commandDeletePlaceNotFound": "De spot {0} kan niet worden gevonden.",
     "commandDeletePlaceSuccess": "Spot {0} verwijderd.",
     "imageUrlLargePokemon": "https://assets.pokemon.com/assets/cms2/img/pokedex/detail/{0}.png",
@@ -96,8 +96,8 @@
     "at": "bij", //" @ "will be replaced with this
     "stop": "stop",
     "start": "start",
-    "joining": "join(t|en)",
-    "quitting": "stop(t|pen)",
+    "joining": "speler(s) gejoined bij",
+    "quitting": "speler(s) afgemeld voor",
     "themselves": "hen zelf",
     "questionMark": "?",
     "aliases": "Aliassen",
