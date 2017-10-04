@@ -44,7 +44,7 @@
     "time12Hour": "h:mmt",
     "time24Hour": "H:mm",
     "infoLine": "\n{0}: {1}Tier:{2} BossCP:{3} MaxCP:{5} Vangkans:{6}% {7}", //shown for !info command
-    "postHeader": "`[{0}]`**{1}** {2}{3}\n{4} ([?](https://github.com/wpatter6/PokemonGoDiscordRaidBot/wiki/How-to-Post-Effectively))",
+    "postHeader": "`[{0}]`**{1}** {2}{3}{4}\n{5} ([?](https://github.com/wpatter6/PokemonGoDiscordRaidBot/wiki/How-to-Post-Effectively))",
     "postLocation": " bij **{0}**",
     "postEnds": " stopt om **{0}**",
     "postEndsUnsure": " *stopt rond **{0}***",
@@ -54,6 +54,7 @@
     "postRolesTagged": "; Rollen: {0}",
     "directMessage": "**{0} {1} {2}**{3} ({4}).",
     "responseInfo": "[`{0:h:mm}#{1}`] **@{2}**:",
+    "groupStartTimes": "\n {0} group(s) starting at {1} ",
     "commandUnknown": "Onbekend commando \"{0}\".  Typ {1}help om alle commando's voor deze bot te zien.",
     "commandInvalidNumber": "Ongeldig nummer \"{0}\".",
     "commandRaidPokemonInvalid": "Ongeldige raid naam \"{0}\".",

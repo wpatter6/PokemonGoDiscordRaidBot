@@ -496,18 +496,46 @@ namespace PokemonGoRaidBot.Services
             await Handler.MakePost(post, Parser);
             Config.Save();
         }
+        
+        [BotCommand("s")]
+        [BotCommand("start")]
+        private async Task Start()
+        {
+            var post = GetPost(Command[1]);//GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[1]);
+            if (!post.IsExisting)
+            {
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[1]));// $"Raid post with Id \"{Command[1]}\" does not exist.");
+                return;
+            }
+
+            TimeSpan? ts1, ts2;
+            DateTime? dt1, dt2;
+
+            string txt = string.Join(" ", Command.Skip(1));
+
+            Parser.ParseTimespanFull(ref txt, out ts1, out ts2, out dt1, out dt2);
+
+            var startTime = dt1 ?? dt2 ?? (DateTime.Now + (ts1 ?? ts2));
+
+            if (startTime.HasValue)
+            {
+                if (post.JoinedUsers.Count == 0)
+                    post.JoinedUsers.Add(new PokemonRaidJoinedUser(Message.User.Id, Message.Server.Id, post.UniqueId, Message.User.Name, 1));
+
+                post.RaidStartTimes.Add(startTime.Value);
+                await Handler.MakePost(post, Parser);
+                Config.Save();
+            }
+            else
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandRaidTimespanInvalid"], string.Join(" ", Command.Skip(1))));
+        }
 
         [BotCommand("h")]
         [BotCommand("help")]
         private async Task Help()
         {
-            //var helpMessage = Parser.GetFullHelpString(Config, IsAdmin);
             var embed = Output.GetHelpEmbed(Config, Message.User.IsAdmin);
             await Message.Channel.SendMessageAsync(string.Format(Parser.Language.Strings["helpTop"], Config.OutputChannel), false, embed);
-            //foreach (var message in helpMessage)
-            //{
-            //    await Message.Channel.SendMessageAsync(message);
-            //}
         }
 
         [BotCommand("culture")]

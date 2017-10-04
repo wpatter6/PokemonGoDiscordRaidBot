@@ -109,11 +109,16 @@ namespace PokemonGoRaidBot.Services.Discord
 
         public string MakePostHeader(PokemonRaidPost post)
         {
-            var joinString = string.Join(", ", post.JoinedUsers.Where(x => x.PeopleCount > 0).Select(x => string.Format("@{0}(**{1}**{2})", x.Name, x.PeopleCount, x.ArriveTime.HasValue ? $" *@{x.ArriveTime.Value.ToString("h:mmt")}*" : "")));
+            var joinString = string.Join(", ", post.JoinedUsers.Where(x => x.PeopleCount > 0).Select(x => string.Format("@{0}(**{1}**{2})", x.Name, x.PeopleCount, x.ArriveTime.HasValue ? $" *@{x.ArriveTime.Value.ToString("t")}*" : "")));
 
             var joinCount = post.JoinedUsers.Sum(x => x.PeopleCount);
 
             var location = post.Location;
+
+            var groupStarts = string.Join(", ", post.RaidStartTimes.OrderBy(x => x.Ticks).Select(x => x.ToString("t")));
+
+            if (!string.IsNullOrEmpty(groupStarts))
+                groupStarts = string.Format(Language.Formats["groupStartTimes"], post.RaidStartTimes.Count, groupStarts);
 
             var mapLinkFormat = Language.Formats["googleMapLink"];
 
@@ -130,6 +135,7 @@ namespace PokemonGoRaidBot.Services.Discord
                 string.Format("[{0}]({1})", post.PokemonName, string.Format(Language.Formats["pokemonInfoLink"], post.PokemonId)),
                 !string.IsNullOrEmpty(location) ? string.Format(Language.Formats["postLocation"], location) : "",
                 string.Format(!post.HasEndDate ? Language.Formats["postEndsUnsure"] : Language.Formats["postEnds"], post.EndDate.AddHours(TimeOffset).ToString("t")),
+                groupStarts,
                 joinCount > 0 ? string.Format(Language.Formats["postJoined"], joinCount, joinString) : Language.Strings["postNoneJoined"]
                 );
             return response;

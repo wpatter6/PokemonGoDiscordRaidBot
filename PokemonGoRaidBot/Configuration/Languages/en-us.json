@@ -40,20 +40,21 @@
     "url": "[-a-zA-Z0-9@:%._\\+~#=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&//=]*)",
     "sponsored": "\\b(starbucks|sprint|sponsored(ed)?)\\b"
   },
-  "formats": {//uses discord markdown 
+  "formats": { //uses discord markdown
     "time12Hour": "h:mmt",
     "time24Hour": "H:mm",
     "infoLine": "\n{0}: {1}Tier:{2} BossCP:{3} MaxCP:{5} CatchRate:{6}% {7}", //shown for !info command
-    "postHeader": "`[{0}]`**{1}** {2}{3}\n{4} ([?](https://github.com/wpatter6/PokemonGoDiscordRaidBot/wiki/How-to-Post-Effectively))",
+    "postHeader": "`[{0}]`**{1}** {2}{3}{4}\n{5} ([?](https://github.com/wpatter6/PokemonGoDiscordRaidBot/wiki/How-to-Post-Effectively))",
     "postLocation": " at **{0}**",
     "postEnds": " ends **{0}**",
     "postEndsUnsure": " *ends around **{0}***",
-    "postjoinTime": " *at {0}*",//FIX
+    "postjoinTime": " *at {0}*", //FIX
     "postJoined": "***{0} joined:*** {1}",
     "postJoinUser": "@{0}(**{1}**{2})",
     "postRolesTagged": "; Roles: {0}",
     "directMessage": "**{0} {1} {2}**{3} ({4}).",
     "responseInfo": "[`{0:h:mm}#{1}`] **@{2}**:",
+    "groupStartTimes": "\n {0} group(s) starting at {1} ",
     "commandUnknown": "Unknown Command \"{0}\".  Type {1}help to see valid Commands for this bot.",
     "commandInvalidNumber": "Invalid number \"{0}\".",
     "commandRaidPokemonInvalid": "Invalid raid name \"{0}\".",

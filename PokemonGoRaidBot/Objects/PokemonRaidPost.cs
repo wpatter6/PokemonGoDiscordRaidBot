@@ -70,6 +70,8 @@ namespace PokemonGoRaidBot.Objects
 
         public List<PokemonMessage> Responses = new List<PokemonMessage>();
 
+        public List<DateTime> RaidStartTimes = new List<DateTime>();
+
         public ObservableCollection<PokemonRaidJoinedUser> JoinedUsers = new ObservableCollection<PokemonRaidJoinedUser>();
 
         public ulong GuildId;
