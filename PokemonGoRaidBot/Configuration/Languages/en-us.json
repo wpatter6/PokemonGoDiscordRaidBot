@@ -121,6 +121,8 @@
     "helpDelete": "Deletes a raid post with the corresponding Id.  Use `all` to delete all raids posted by you.  Can only be done by admins or the poster of the raid.",
     "helpMerge": "Merges [raid2] into [raid1].  Can only be done by admin or original poster of [raid2].  Only raid Unique Ids can be used to merge.",
     "helpLocation": "Allows the poster of the raid or server managers to change the location of a post.",
+    "helpEnd": "Allows the poster of the raid or admin to change the end time on a post.",
+    "helpStart": "Allows a user to explicitly declare a start time for a group in the raid.  This will be added to the post's information header.",
     "helpPin": "Raids posted in the specified channel will be posted and pinned in the channel itself.  Bot requires \"Manage Messages\" role permission to pin.",
     "helpUnPin": "Removes channel from pin channels.",
     "helpPinAll": "Adds all channels on the server to pin channels.",

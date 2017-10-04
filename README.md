@@ -77,6 +77,8 @@
 * `!(d)elete [raid]` Deletes a raid post with the corresponding Id.  Use `all` to delete all raids posted by you.  The thumbs down emoji reaction will delete the raid as well, if done by the raid poster or server admin.
 * `!(m)erge [raid1] [raid2]` Merges `raid2` into `raid1`.  Can only be done by admin or original poster of `raid2`.
 * `!(loc)ation [raid] [new location]` Allows the poster of the raid or admin to change the location of a post.
+* `!(e)nd [raid] [new end time]` Allows the poster of the raid or admin to change the end time on a post.
+* `!(s)tart [raid] [start time]` Allows a user to explicitly declare a start time for a group in the raid.  This will be added to the post's information header.
 * `!(h)elp` Shows help message.
 
 ## Admin Commands:

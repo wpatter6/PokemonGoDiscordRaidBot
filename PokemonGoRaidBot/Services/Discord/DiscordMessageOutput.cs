@@ -38,6 +38,8 @@ namespace PokemonGoRaidBot.Services.Discord
             embed.AddField(string.Format("{0}__d__elete [raid id]", config.Prefix), Language.Strings["helpDelete"]);
             embed.AddField(string.Format("{0}__m__erge [raid1] [raid2]", config.Prefix), Language.Strings["helpMerge"]);
             embed.AddField(string.Format("{0}__loc__ation [raid] [new location]", config.Prefix), Language.Strings["helpLocation"]);
+            embed.AddField(string.Format("{0}__e__nd [raid] [new end time]", config.Prefix), Language.Strings["helpEnd"]);
+            embed.AddField(string.Format("{0}__s__tart [raid] [start time]", config.Prefix), Language.Strings["helpStart"]);
             embed.AddField(string.Format("{0}__i__nfo [name]", config.Prefix), Language.Strings["helpInfo"]);
             embed.AddField(string.Format("{0}__h__elp", config.Prefix), Language.Strings["helpHelp"]);
 
