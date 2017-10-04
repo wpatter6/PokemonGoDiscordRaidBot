@@ -10,8 +10,9 @@ namespace PokemonGoRaidBot.Tests
     [TestClass]
     public class MessageParserTests
     {
-        private List<string> GoodStringsEnglish = new List<string>(new string[] 
+        private List<string> GoodStringsEnglish = new List<string>(new string[]
         {
+            "Entei at 3rd and broadway hatches at 4:30pm",
             "Raikou at 17th/stout, looks like I am only one here",
             "Raikou hatches at Potager (11th/Ogden) in 58 min. Anyone up for 3:30 raid there?",
             "Tyranitar at Broadway and 18th",
@@ -29,9 +30,11 @@ namespace PokemonGoRaidBot.Tests
 
         private List<string> GoodStringsDutch = new List<string>(new string[]
         {
+            "Lapras in Julianapark nog 30 min",
             "Ttar in Jlianapark nog 56 minuten",
             "Snorlax naast Centraal Station 20 min resterend",
             "Lapras bij Longboat nog 76 mins",
+            "Lapras op Longboat nog 76 mins",
             "Magikarp bij de Dom 2 en een half uur resterend",
             "Tyranitar in Julianapark 1 uur en 20 minuten resterend",
             "Tyranitar at Centraal Station nog 30 minuten",
