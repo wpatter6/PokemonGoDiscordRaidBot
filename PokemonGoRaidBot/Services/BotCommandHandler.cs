@@ -530,6 +530,42 @@ namespace PokemonGoRaidBot.Services
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandRaidTimespanInvalid"], string.Join(" ", Command.Skip(1))));
         }
 
+        [BotCommand("e")]
+        [BotCommand("end")]
+        private async Task End()
+        {
+            var post = GetPost(Command[1]);//GuildConfig.Posts.FirstOrDefault(x => x.UniqueId == Command[1]);
+            if (!post.IsExisting)
+            {
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[1]));// $"Raid post with Id \"{Command[1]}\" does not exist.");
+                return;
+            }
+            if (post.UserId != Message.User.Id && !Message.User.IsAdmin)//post creators or admins can delete
+            {
+                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoPostAccess"]);
+                return;
+            }
+
+            TimeSpan? ts1, ts2;
+            DateTime? dt1, dt2;
+
+            string txt = string.Join(" ", Command.Skip(1));
+
+            Parser.ParseTimespanFull(ref txt, out ts1, out ts2, out dt1, out dt2);
+
+            var endTime = dt1 ?? dt2 ?? (DateTime.Now + (ts1 ?? ts2));
+
+            if (endTime.HasValue)
+            {
+                post.EndDate = endTime.Value;
+                post.HasEndDate = true;
+                await Handler.MakePost(post, Parser);
+                Config.Save();
+            }
+            else
+                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandRaidTimespanInvalid"], string.Join(" ", Command.Skip(1))));
+        }
+
         [BotCommand("h")]
         [BotCommand("help")]
         private async Task Help()
