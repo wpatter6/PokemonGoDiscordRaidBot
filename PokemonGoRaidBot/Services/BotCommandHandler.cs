@@ -251,9 +251,7 @@ namespace PokemonGoRaidBot.Services
 
             if (joinedUser.PeopleCount <= 0) post.JoinedUsers.Remove(joinedUser);
 
-            TimeSpan? ts1, ts2;
-            DateTime? dt1, dt2;
-            Parser.ParseTimespanFull(ref time, out ts1, out ts2, out dt1, out dt2);
+            Parser.ParseTimespanFull(ref time, out TimeSpan? ts1, out TimeSpan? ts2, out DateTime? dt1, out DateTime? dt2);
 
             joinedUser.ArriveTime = dt2 ?? dt1 ?? (DateTime.Now + (ts1 ?? ts2)) ?? joinedUser.ArriveTime;
 
@@ -507,13 +505,10 @@ namespace PokemonGoRaidBot.Services
                 await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPostNotFound"], Command[1]));// $"Raid post with Id \"{Command[1]}\" does not exist.");
                 return;
             }
-
-            TimeSpan? ts1, ts2;
-            DateTime? dt1, dt2;
-
+            
             string txt = string.Join(" ", Command.Skip(1));
 
-            Parser.ParseTimespanFull(ref txt, out ts1, out ts2, out dt1, out dt2);
+            Parser.ParseTimespanFull(ref txt, out TimeSpan? ts1, out TimeSpan? ts2, out DateTime? dt1, out DateTime? dt2);
 
             var startTime = dt1 ?? dt2 ?? (DateTime.Now + (ts1 ?? ts2));
 
@@ -545,13 +540,10 @@ namespace PokemonGoRaidBot.Services
                 await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandNoPostAccess"]);
                 return;
             }
-
-            TimeSpan? ts1, ts2;
-            DateTime? dt1, dt2;
-
+            
             string txt = string.Join(" ", Command.Skip(1));
 
-            Parser.ParseTimespanFull(ref txt, out ts1, out ts2, out dt1, out dt2);
+            Parser.ParseTimespanFull(ref txt, out TimeSpan? ts1, out TimeSpan? ts2, out DateTime? dt1, out DateTime? dt2);
 
             var endTime = dt1 ?? dt2 ?? (DateTime.Now + (ts1 ?? ts2));
 

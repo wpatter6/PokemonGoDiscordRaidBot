@@ -709,7 +709,7 @@ namespace PokemonGoRaidBot.Services.Discord
 
                 var channel = bot.GetChannel(channelMessage.Key);
 
-                if (channel != null && channel is ISocketMessageChannel)
+                if (channelMessage.Value.MessageId > 0 && channel != null && channel is ISocketMessageChannel)
                 {
                     var message = await ((ISocketMessageChannel)channel).GetMessageAsync(channelMessage.Value.MessageId);
 

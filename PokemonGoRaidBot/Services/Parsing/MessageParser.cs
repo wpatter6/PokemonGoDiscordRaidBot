@@ -50,6 +50,7 @@ namespace PokemonGoRaidBot.Services.Parsing
         /// <returns>If return value is null, or property 'Pokemon' is null, raid post is invalid.</returns>
         public PokemonRaidPost ParsePost(IChatMessage message)
         {
+            CultureInfo.CurrentCulture = Language.GetCultureInfo();
             //var guild = ((SocketGuildChannel)message.Channel).Guild;
             //var guildConfig = config.GetServerConfig(message.Server.Id, message.ChatType, message.Server.Name);
 
@@ -147,9 +148,7 @@ namespace PokemonGoRaidBot.Services.Parsing
             //lat longs will break the timespan parser and are easy to identify, so get them first
             var latLong = ParseLatLong(ref unmatchedString);
             
-            TimeSpan? raidTimeSpan, joinTimeSpan;
-            DateTime? raidTime, joinTime;
-            ParseTimespanFull(ref unmatchedString, out raidTimeSpan, out joinTimeSpan, out raidTime, out joinTime);
+            ParseTimespanFull(ref unmatchedString, out TimeSpan? raidTimeSpan, out TimeSpan? joinTimeSpan, out DateTime? raidTime, out DateTime? joinTime);
 
             if (joinTimeSpan.HasValue) joinTime = DateTime.Now + joinTimeSpan.Value;
 
@@ -293,7 +292,7 @@ namespace PokemonGoRaidBot.Services.Parsing
                     return;
             }
 
-            var actualRegStart = Language.CombineRegex(" ", "timeActualStartPre", "timeActualStart");
+            var actualRegStart = Language.CombineRegex(" ?", "timeActualStartPre", "timeActualStart");
             if (actualRegStart.IsMatch(message))
             {
                 var matches = actualRegStart.Matches(message).Cast<Match>();
@@ -303,12 +302,16 @@ namespace PokemonGoRaidBot.Services.Parsing
                     var min = match.Groups[3].Value;
 
                     int hour = Convert.ToInt32(hr),
-                        minute = string.IsNullOrEmpty(min) ? 0 : Convert.ToInt32(min);
+                        minute = string.IsNullOrEmpty(min) ? 0 : Convert.ToInt32(min),
+                        currentHour = DateTime.Now.Hour;
 
-                    string part = DateTime.Now.Hour < hour ? "p" : DateTime.Now.ToString("tt").ToLower();
+                    if (currentHour > 9 && currentHour < 13)
+                    {
+                        var part = currentHour > hour ? "p" : DateTime.Now.ToString("tt").ToLower();
 
-                    if (part.First() == 'p' && hour < 12) hour += 12;
-
+                        if (part.First() == 'p' && hour < 12) hour += 12;
+                    }
+                    
                     var tsout = ParseTimeSpanBase(string.Format("{0}:{1}", hour, minute), TimeOffset * -1);
                     
                     if (tsout.HasValue)
