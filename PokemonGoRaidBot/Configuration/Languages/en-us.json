@@ -138,7 +138,7 @@
     "helpCity": "Will set the city of the current server.  This value gets appended to the location when using the Google geocoding API for better accuracy.",
     "helpChannelCity": "Will set the city of the selected channel",
     "helpCities": "Displays the city configured to the server and each channel.",
-    "helpPlace": "Allows a location to be manually added to the server's list.  Multiple places can be added with a single command by adding a carriage return between each place and its lat/long.",
+    "helpPlace": "Allows a location to be manually added to the server's list.  Multiple places can be added with a single command by adding a carriage return between each location.",
     "helpPlaces": "Displays all locations that have been added to the server's list.",
     "helpDeletePlace": "Removes specified place from the server's list.",
     "helpHelp": "Shows this message.",

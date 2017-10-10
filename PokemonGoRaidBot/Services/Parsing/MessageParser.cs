@@ -271,7 +271,7 @@ namespace PokemonGoRaidBot.Services.Parsing
                     if (part.First() == 'p')
                         hour += 12;
 
-                    var actualTime = DateTime.Today.AddHours(hour).AddMinutes(minute);
+                    var actualTime = DateTime.Today.AddHours(hour).AddMinutes(minute).AddHours(TimeOffset * -1);
                     //var tsout = ParseTimeSpanBase(string.Format("{0}:{1}", hour, minute), TimeOffset * -1);
 
                     //if (tsout.HasValue)
@@ -311,7 +311,19 @@ namespace PokemonGoRaidBot.Services.Parsing
 
                         if (part.First() == 'p' && hour < 12) hour += 12;
                     }
-                    
+
+                    var actualTime = DateTime.Today.AddHours(hour).AddMinutes(minute).AddHours(TimeOffset * -1);
+
+                    message = message.Replace(match.Groups[0].Value, matchedTimeWordReplacement);
+
+                    if (joinReg.IsMatch(message))
+                    {
+                        message = joinReg.Replace(message, matchedWordReplacement);
+                        actualJoinTime = actualTime;// = tsout.Value;
+                    }
+                    else
+                        actualRaidTime = actualTime;// = tsout.Value;
+                    /*
                     var tsout = ParseTimeSpanBase(string.Format("{0}:{1}", hour, minute), TimeOffset * -1);
                     
                     if (tsout.HasValue)
@@ -325,7 +337,7 @@ namespace PokemonGoRaidBot.Services.Parsing
                         }
                         else
                             raidTimeSpan = tsout.Value;
-                    }
+                    }*/
                 }
 
                 if (joinTimeSpan.HasValue && raidTimeSpan.HasValue)

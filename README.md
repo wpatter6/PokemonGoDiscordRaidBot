@@ -48,6 +48,7 @@
 
 ## How to install:
 1. Get the zip file for your operating system from the [Releases page](https://github.com/wpatter6/PokemonGoDiscordRaidBot/releases/latest) or by building using the below Build instructions.
+1. Required dependencies for .NET Core applications can be [found here](https://github.com/dotnet/core/blob/master/Documentation/prereqs.md).
 1. Extract the package and run the executable.  It will ask for the following values:
     1. Discord bot token.  Copy this from the bot you created [here](https://discordapp.com/developers/applications/me)
     1. Google API key to use for location geocoding.  Get this [from google](https://developers.google.com/maps/documentation/geocoding/get-api-key)

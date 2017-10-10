@@ -117,7 +117,7 @@ namespace PokemonGoRaidBot.Services.Discord
 
             var location = post.Location;
 
-            var groupStarts = string.Join(", ", post.RaidStartTimes.OrderBy(x => x.Ticks).Select(x => x.ToString("t")));
+            var groupStarts = string.Join(", ", post.RaidStartTimes.OrderBy(x => x.Ticks).Select(x => x.AddHours(TimeOffset).ToString("t")));
 
             if (!string.IsNullOrEmpty(groupStarts))
                 groupStarts = string.Format(Language.Formats["groupStartTimes"], post.RaidStartTimes.Count, groupStarts);
