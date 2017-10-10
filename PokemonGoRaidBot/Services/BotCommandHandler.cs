@@ -893,28 +893,29 @@ namespace PokemonGoRaidBot.Services
 
             var cmdstr = string.Join(" ", Command.Skip(1));
 
-            var latlng = Parser.ParseLatLong(ref cmdstr, "");
+            var strs = cmdstr.Split('\n');
 
-            var location = cmdstr.Trim();
-
-            if (!string.IsNullOrEmpty(location))
+            foreach(var s in strs)
             {
-                if(latlng == null || !latlng.HasValue)
-                    latlng = await Parser.GetLocationLatLong(location, Message.Channel, Config);
+                var mystr = s;
+                var latlng = Parser.ParseLatLong(ref mystr, "");
 
-                GuildConfig.Places[location] = latlng;
+                var location = mystr.Trim();
+
+                if (!string.IsNullOrEmpty(location))
+                {
+                    if (latlng == null || !latlng.HasValue)
+                        latlng = await Parser.GetLocationLatLong(location, Message.Channel, Config);
+
+                    GuildConfig.Places[location] = latlng;
+                    if(strs.Length == 1)
+                        await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPlaceSuccess"], location,
+                            latlng != null && latlng.HasValue ? Parser.Language.Strings["at"] + latlng.ToString() : ""));
+                }
                 Config.Save();
-                await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPlaceSuccess"], location,
-                    latlng != null && latlng.HasValue ? Parser.Language.Strings["at"] + latlng.ToString() : ""));
-            }
-            else
-            {
-                await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandInvalidNumberOfParameters"]);
-                return;
             }
         }
-
-
+        
         [BotCommand("deleteplace")]
         private async Task DeletePlace()
         {
