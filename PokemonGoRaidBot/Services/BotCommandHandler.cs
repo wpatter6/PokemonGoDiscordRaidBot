@@ -517,7 +517,7 @@ namespace PokemonGoRaidBot.Services
                 if (post.JoinedUsers.Count == 0)
                     post.JoinedUsers.Add(new PokemonRaidJoinedUser(Message.User.Id, Message.Server.Id, post.UniqueId, Message.User.Name, 1));
 
-                post.RaidStartTimes.Add(startTime.Value);
+                post.RaidStartTimes[Message.User.Id] = startTime.Value;
                 await Handler.MakePost(post, Parser);
                 Config.Save();
             }

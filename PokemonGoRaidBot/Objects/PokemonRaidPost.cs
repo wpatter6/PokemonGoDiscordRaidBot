@@ -70,7 +70,7 @@ namespace PokemonGoRaidBot.Objects
 
         public List<PokemonMessage> Responses = new List<PokemonMessage>();
 
-        public List<DateTime> RaidStartTimes = new List<DateTime>();
+        public Dictionary<ulong, DateTime> RaidStartTimes = new Dictionary<ulong, DateTime>();
 
         public ObservableCollection<PokemonRaidJoinedUser> JoinedUsers = new ObservableCollection<PokemonRaidJoinedUser>();
 
