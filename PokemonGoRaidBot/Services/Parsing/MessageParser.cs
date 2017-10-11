@@ -272,20 +272,16 @@ namespace PokemonGoRaidBot.Services.Parsing
                         hour += 12;
 
                     var actualTime = DateTime.Today.AddHours(hour).AddMinutes(minute).AddHours(TimeOffset * -1);
-                    //var tsout = ParseTimeSpanBase(string.Format("{0}:{1}", hour, minute), TimeOffset * -1);
 
-                    //if (tsout.HasValue)
-                    //{
                     message = message.Replace(match.Groups[0].Value, matchedTimeWordReplacement);
 
                     if (joinReg.IsMatch(message))
                     {
                         message = joinReg.Replace(message, matchedWordReplacement);
-                        actualJoinTime = actualTime;// = tsout.Value;
+                        actualJoinTime = actualTime;
                     }
                     else
-                        actualRaidTime = actualTime;// = tsout.Value;
-                    //}
+                        actualRaidTime = actualTime;
                 }
 
                 if (joinTimeSpan.HasValue && raidTimeSpan.HasValue)
@@ -303,10 +299,10 @@ namespace PokemonGoRaidBot.Services.Parsing
 
                     int hour = Convert.ToInt32(hr),
                         minute = string.IsNullOrEmpty(min) ? 0 : Convert.ToInt32(min),
-                        currentHour = DateTime.Now.Hour;
+                        currentHour = DateTime.Now.AddHours(TimeOffset).Hour;
 
                     if (currentHour > 9 && currentHour < 13)
-                    {
+                    {//this is tricky because someone just said like "1:30" and didn't specify that it was meant to be PM
                         var part = currentHour > hour ? "p" : DateTime.Now.ToString("tt").ToLower();
 
                         if (part.First() == 'p' && hour < 12) hour += 12;
@@ -323,21 +319,6 @@ namespace PokemonGoRaidBot.Services.Parsing
                     }
                     else
                         actualRaidTime = actualTime;// = tsout.Value;
-                    /*
-                    var tsout = ParseTimeSpanBase(string.Format("{0}:{1}", hour, minute), TimeOffset * -1);
-                    
-                    if (tsout.HasValue)
-                    {
-                        message = message.Replace(match.Groups[0].Value, matchedTimeWordReplacement);
-
-                        if (joinReg.IsMatch(message))
-                        {
-                            message = joinReg.Replace(message, matchedWordReplacement);
-                            joinTimeSpan = tsout.Value;
-                        }
-                        else
-                            raidTimeSpan = tsout.Value;
-                    }*/
                 }
 
                 if (joinTimeSpan.HasValue && raidTimeSpan.HasValue)
