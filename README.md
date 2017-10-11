@@ -2,6 +2,8 @@
 
 ##### Try it out in a sandbox environment: https://discord.gg/9SCnYAU (message wpatter6 in discord if you want to try out admin commands)
 
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=CN6DDHGYPZD9A)
+
 ##### The bot now supports Dutch as its first non-english language!  Using the command `!culture nl-NL` will now translate your bot's output, big thanks to sjaakbanaan for doing the translation.
 
 ## What it does
