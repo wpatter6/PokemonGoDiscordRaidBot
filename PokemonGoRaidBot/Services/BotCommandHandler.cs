@@ -921,7 +921,7 @@ namespace PokemonGoRaidBot.Services
 
                                 GuildConfig.Places[location] = latlng;
 
-                                success.Add(string.Format("\n{0} ({1}, {2})", location.Replace("\\", ""), latlng == null ? 0 : latlng.Latitude, latlng == null ? 0 : latlng.Longitude));
+                                success.Add(Parser.ToTitleCase(string.Format("\n{0} ({1}, {2})", location.Replace("\\", ""), latlng == null ? 0 : latlng.Latitude, latlng == null ? 0 : latlng.Longitude)));
                             }
                         }
                     }
@@ -936,7 +936,6 @@ namespace PokemonGoRaidBot.Services
                 {
                     await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPlaceMultipleExist"], exists));
                 }
-
                 if(success.Count > 0)
                 {
                     await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPlaceMultipleSuccess"], success.Count(),
