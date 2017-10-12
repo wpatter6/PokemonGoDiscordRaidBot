@@ -67,6 +67,7 @@ namespace PokemonGoRaidBot.Services.Discord
                 embed.AddField(string.Format("*{0}place", config.Prefix), Language.Strings["helpPlace"]);
                 embed.AddField(string.Format("*{0}deleteplace", config.Prefix), Language.Strings["helpDeletePlace"]);
                 embed.AddField(string.Format("*{0}places", config.Prefix), Language.Strings["helpPlaces"]);
+                embed.AddField(string.Format("*{0}clearplaces", config.Prefix), Language.Strings["helpClearPlaces"]);
             }
 
             return embed;

@@ -908,8 +908,7 @@ namespace PokemonGoRaidBot.Services
                     {
                         var mystr = s;
                         var latlng = Parser.ParseLatLong(ref mystr, "");
-
-                        var location = Regex.Replace(mystr, @"[^0-9a-zA-Z\.\-'\s]", "").Replace(".", "\\.").Replace("-", "\\-").Trim();
+                        var location = Parser.Language.RegularExpressions["placeLocationRemove"].Replace(mystr, "").Replace(".", "\\.").Replace("-", "\\-").Trim();
 
                         if (!string.IsNullOrEmpty(location))
                         {

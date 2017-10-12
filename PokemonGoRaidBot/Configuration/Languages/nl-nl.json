@@ -38,7 +38,8 @@
     "postUniqueId": "^`\\[([\\p{L}0-9]+)\\]`",
     "latLong": "\\b([-+]?)([1-8]?\\d(\\.\\d+)|90(\\.0+)) *,? *([-+]?)(180(\\.0+)|((1[0-7]\\d)|([1-9]?\\d))(\\.\\d+))\\b",
     "url": "[-a-zA-Z0-9@:%._\\+~#=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&//=]*)",
-    "sponsored": "\\b(starbucks|sprint|sponsor(ed)?)\\b"
+    "sponsored": "\\b(starbucks|sprint|sponsor(ed)?)\\b",
+    "placeLocationRemove": "[^0-9\\p{L}\\.\\-'\\s]"
   },
   "formats": { //uses discord markdown
     "time12Hour": "h:mmt",
@@ -142,8 +143,9 @@
     "helpCity": "Will set the city of the current server.  This value gets appended to the location when using the Google geocoding API for better accuracy.",
     "helpChannelCity": "Will set the city of the selected channel",
     "helpCities": "Displays the city configured to the server and each channel.",
-    "helpPlace": "Allows a location to be manually added to the server's list.",
+    "helpPlace": "Allows a location to be manually added to the server's list.  Multiple places can be added with a single command by adding a carriage return between each location.",
     "helpPlaces": "Displays all locations that have been added to the server's list.",
+    "helpClearPlaces": "Deletes all places configured on the server.",
     "helpDeletePlace": "Removes specified place from the server's list.",
     "helpHelp": "Shows this message.",
     "helpAdmin": "Requires Server Admin or Manage Server Permissions.",
