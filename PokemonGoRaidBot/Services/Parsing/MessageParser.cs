@@ -300,8 +300,8 @@ namespace PokemonGoRaidBot.Services.Parsing
                     int hour = Convert.ToInt32(hr),
                         minute = string.IsNullOrEmpty(min) ? 0 : Convert.ToInt32(min),
                         currentHour = DateTime.Now.AddHours(TimeOffset).Hour;
-
-                    if (currentHour > 9 && currentHour < 13)
+                    
+                    if (currentHour > 9 && currentHour < 13 && !CultureInfo.CurrentCulture.DateTimeFormat.ShortDatePattern.StartsWith('H'))
                     {//this is tricky because someone just said like "1:30" and didn't specify that it was meant to be PM
                         var part = currentHour > hour ? "p" : DateTime.Now.ToString("tt").ToLower();
 
