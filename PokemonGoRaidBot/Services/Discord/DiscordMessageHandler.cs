@@ -750,7 +750,19 @@ namespace PokemonGoRaidBot.Services.Discord
         /// <returns></returns>
         public async Task MakeCommandMessage(IChatChannel channel, string message)
         {
-            await channel.SendMessageAsync($"```{message}```");
+            var size = 1990;
+            if(message.Length < size)
+                await channel.SendMessageAsync($"```{message}```");
+            else
+            {
+                var strs = Enumerable.Range(0, message.Length / size).Select(i => $"```{message.Substring(i * size, size)}```");
+
+                var tasks = new List<Task>();
+                foreach(var str in strs)
+                {
+                    await channel.SendMessageAsync(str);
+                }
+            }
         }
 
         public int GetPostCount(int days, ulong serverId)

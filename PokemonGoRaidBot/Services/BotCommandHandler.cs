@@ -8,6 +8,7 @@ using PokemonGoRaidBot.Objects.Interfaces;
 using PokemonGoRaidBot.Configuration;
 using PokemonGoRaidBot.Objects;
 using PokemonGoRaidBot.Services.Discord;
+using System.Text.RegularExpressions;
 
 namespace PokemonGoRaidBot.Services
 {
@@ -885,7 +886,7 @@ namespace PokemonGoRaidBot.Services
         {
             if (!await CheckAdminAccess()) return;
 
-            if(Command.Count() < 2)
+            if (Command.Count() < 2)
             {
                 await Handler.MakeCommandMessage(Message.Channel, Parser.Language.Strings["commandInvalidNumberOfParameters"]);
                 return;
@@ -894,25 +895,60 @@ namespace PokemonGoRaidBot.Services
             var cmdstr = string.Join(" ", Command.Skip(1));
 
             var strs = cmdstr.Split('\n');
+            var success = new List<string>();
+            var fail = new List<string>();
+            var exists = 0;
 
-            foreach(var s in strs)
+            using (Message.Channel.EnterTypingState())
             {
-                var mystr = s;
-                var latlng = Parser.ParseLatLong(ref mystr, "");
-
-                var location = mystr.Trim();
-
-                if (!string.IsNullOrEmpty(location))
+                foreach (var s in strs)
                 {
-                    if (latlng == null || !latlng.HasValue)
-                        latlng = await Parser.GetLocationLatLong(location, Message.Channel, Config);
+                    if (s == "!place") continue;
+                    try
+                    {
+                        var mystr = s;
+                        var latlng = Parser.ParseLatLong(ref mystr, "");
 
-                    GuildConfig.Places[location] = latlng;
-                    if(strs.Length == 1)
-                        await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPlaceSuccess"], location,
-                            latlng != null && latlng.HasValue ? Parser.Language.Strings["at"] + latlng.ToString() : ""));
+                        var location = Regex.Replace(mystr, @"[^0-9a-zA-Z\.\-'\s]", "").Replace(".", "\\.").Replace("-", "\\-").Trim();
+
+                        if (!string.IsNullOrEmpty(location))
+                        {
+                            if (GuildConfig.Places.ContainsKey(location))
+                                exists++;
+                            else
+                            {
+                                if (latlng == null || !latlng.HasValue)
+                                    latlng = await Parser.GetLocationLatLong(location, Message.Channel, Config);
+
+                                GuildConfig.Places[location] = latlng;
+
+                                success.Add(string.Format("\n{0} ({1}, {2})", location.Replace("\\", ""), latlng == null ? 0 : latlng.Latitude, latlng == null ? 0 : latlng.Longitude));
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        fail.Add(s);
+                    }
                 }
+
                 Config.Save();
+                if(exists > 0)
+                {
+                    await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPlaceMultipleExist"], exists));
+                }
+
+                if(success.Count > 0)
+                {
+                    await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPlaceMultipleSuccess"], success.Count(),
+                        string.Join('\0', success.ToArray())));
+                }
+                if(fail.Count > 0)
+                {
+                    await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandPlaceMultipleFail"], fail.Count(),
+                        string.Join('\0', fail.ToArray())));
+                }
+
             }
         }
         
@@ -953,6 +989,17 @@ namespace PokemonGoRaidBot.Services
             }
 
             await Handler.MakeCommandMessage(Message.Channel, placestring);
+        }
+
+        [BotCommand("clearplaces")]
+        private async Task ClearPlaces()
+        {
+            if (!await CheckAdminAccess()) return;
+            var count = GuildConfig.Places.Count();
+
+            GuildConfig.Places.Clear();
+            
+            await Handler.MakeCommandMessage(Message.Channel, string.Format(Parser.Language.Formats["commandClearPlacesSuccess"], count));
         }
 
         [BotCommand("raidhelp")]
