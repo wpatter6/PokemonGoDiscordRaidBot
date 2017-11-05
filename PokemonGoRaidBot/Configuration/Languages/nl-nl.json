@@ -29,7 +29,7 @@
     "joinTime": "\\b(ben|kan) er?(daar|onderweg|start(en)?|begin(en)?|go|gaan) ((in|bij) )?(===!!!===|#\\$##\\$\\$###)", //determines if timespan is a "join" time
     "eggTime": "\\b(ei|hatch(es|en)?|spawn(s|en)?)\\b", //deterines if timespan is "egg" time
     "pokemonInvalidators": "^(nog|nodig|of|en)$", //if this comes before pokemon name, they're asking if any exist,
-    "pokemonTooShort": "^(art|gen|mac|bay)$", //these are words that often accidenatlly match with the first 3 letters of a raid boss name, so throw them out
+    "pokemonTooShort": "^(art|gen|mac|bay|nido?|ten|san|met|war|ivy)$", //these are words that often accidentally match with the first 3 letters of a raid boss name, so throw them out
     "nonAlphaNumericWithPunctuation": "[^\\p{L}0-9 ?\\.,:]",
     "smallWords": "([0-9]?[0-9]?(eerste|tweede|derde|(4|5|6|7|8|9|0|11|12|13)th))|\\b(bij?|de|en|van)\\b", //These will not be made uppercase if they're found in a location
     "discordRole": "\\<\\@\\&([0-9]+)\\>",
@@ -172,7 +172,7 @@
       "BossCP": 1165,
       "MinCP": 104,
       "MaxCP": 125,
-      "CatchRate": 0.59
+      "CatchRate": -1
     },
     {
       "Id": 153,
@@ -181,7 +181,7 @@
       "BossCP": 4375,
       "MinCP": 689,
       "MaxCP": 740,
-      "CatchRate": 0.1
+      "CatchRate": -1
     },
     {
       "Id": 156,
@@ -190,7 +190,7 @@
       "BossCP": 5085,
       "MinCP": 793,
       "MaxCP": 847,
-      "CatchRate": 0.1
+      "CatchRate": -1
     },
     {
       "Id": 159,
@@ -199,7 +199,7 @@
       "BossCP": 5207,
       "MinCP": 857,
       "MaxCP": 913,
-      "CatchRate": 0.1
+      "CatchRate": -1
     },
     {
       "Id": 89,
@@ -208,7 +208,7 @@
       "BossCP": 12269,
       "MinCP": 1474,
       "MaxCP": 1548,
-      "CatchRate": 0.17
+      "CatchRate": -1
     },
     {
       "Id": 103,
@@ -217,7 +217,7 @@
       "BossCP": 13839,
       "MinCP": 1589,
       "MaxCP": 1666,
-      "CatchRate": 0.17
+      "CatchRate": -1
     },
     {
       "Id": 110,
@@ -226,7 +226,7 @@
       "BossCP": 12318,
       "MinCP": 1180,
       "MaxCP": 1247,
-      "CatchRate": 0.17
+      "CatchRate": -1
     },
     {
       "Id": 125,
@@ -235,7 +235,7 @@
       "BossCP": 12390,
       "MinCP": 1188,
       "MaxCP": 1255,
-      "CatchRate": 0.17
+      "CatchRate": -1
     },
     {
       "Id": 126,
@@ -244,7 +244,7 @@
       "BossCP": 12718,
       "MinCP": 1220,
       "MaxCP": 1288,
-      "CatchRate": 0.17
+      "CatchRate": -1
     },
     {
       "Id": 59,
@@ -253,7 +253,7 @@
       "BossCP": 17832,
       "MinCP": 1546,
       "MaxCP": 1622,
-      "CatchRate": 0.08
+      "CatchRate": -1
     },
     {
       "Id": 65,
@@ -289,7 +289,7 @@
       "BossCP": 16696,
       "MinCP": 1724,
       "MaxCP": 1804,
-      "CatchRate": 0.1
+      "CatchRate": -1
     },
     {
       "Id": 135,
@@ -298,7 +298,7 @@
       "BossCP": 19883,
       "MinCP": 1484,
       "MaxCP": 1560,
-      "CatchRate": 0.1
+      "CatchRate": -1
     },
     {
       "Id": 136,
@@ -307,7 +307,7 @@
       "BossCP": 21155,
       "MinCP": 1581,
       "MaxCP": 1659,
-      "CatchRate": 0.1
+      "CatchRate": -1
     },
     {
       "Id": 3,
@@ -316,7 +316,7 @@
       "BossCP": 26921,
       "MinCP": 1395,
       "MaxCP": 1467,
-      "CatchRate": 0.04
+      "CatchRate": -1
     },
     {
       "Id": 6,
@@ -325,7 +325,7 @@
       "BossCP": 28485,
       "MinCP": 1461,
       "MaxCP": 1535,
-      "CatchRate": 0.04
+      "CatchRate": -1
     },
     {
       "Id": 9,
@@ -334,7 +334,7 @@
       "BossCP": 24162,
       "MinCP": 1241,
       "MaxCP": 1309,
-      "CatchRate": 0.04
+      "CatchRate": -1
     },
     {
       "Id": 112,
@@ -343,7 +343,7 @@
       "BossCP": 30512,
       "MinCP": 1804,
       "MaxCP": 1886,
-      "CatchRate": 0.04
+      "CatchRate": -1
     },
     {
       "Id": 131,
@@ -380,7 +380,7 @@
       "BossCP": 37603,
       "MinCP": 1599,
       "MaxCP": 1676,
-      "CatchRate": 0.03
+      "CatchRate": -1
     },
     {
       "Id": 145,
@@ -389,7 +389,7 @@
       "BossCP": 42691,
       "MinCP": 1820,
       "MaxCP": 1902,
-      "CatchRate": 0.03
+      "CatchRate": -1
     },
     {
       "Id": 146,
@@ -398,7 +398,7 @@
       "BossCP": 41953,
       "MinCP": 1788,
       "MaxCP": 1870,
-      "CatchRate": 0.03
+      "CatchRate": -1
     },
     {
       "Id": 150,
@@ -471,6 +471,177 @@
       "MinCP": -1,
       "MaxCP": 1766,
       "CatchRate": -1
+    },
+    {
+      "Id": 2,
+      "Tier": 1,
+      "Name": "Ivysaur",
+      "BossCP": 5238,
+      "MinCP": 831,
+      "MaxCP": 886,
+      "CatchRate": 0.1
+    },
+    {
+      "Id": 5,
+      "Tier": 1,
+      "Name": "Charmeleon",
+      "BossCP": 5085,
+      "MinCP": 793,
+      "MaxCP": 847,
+      "CatchRate": 0.1
+    },
+    {
+      "Id": 8,
+      "Tier": 1,
+      "Name": "Wartortle",
+      "BossCP": 4503,
+      "MinCP": 705,
+      "MaxCP": 756,
+      "CatchRate": 0.1
+    },
+    {
+      "Id": 11,
+      "Tier": 1,
+      "Name": "Metapod",
+      "BossCP": 1534,
+      "MinCP": 209,
+      "MaxCP": 239,
+      "CatchRate": 0.1
+    },
+    {
+      "Id": 28,
+      "Tier": 2,
+      "Name": "Sandslash",
+      "BossCP": 12312,
+      "MinCP": 1262,
+      "MaxCP": 1330,
+      "CatchRate": 0.1
+    },
+    {
+      "Id": 73,
+      "Tier": 2,
+      "Name": "Tentacruel",
+      "BossCP": 12190,
+      "MinCP": 1287,
+      "MaxCP": 1356,
+      "CatchRate": 0.1
+    },
+    {
+      "Id": 82,
+      "Tier": 2,
+      "Name": "Magneton",
+      "BossCP": 14172,
+      "MinCP": 1208,
+      "MaxCP": 1278,
+      "CatchRate": 0.1
+    },
+    {
+      "Id": 91,
+      "Tier": 2,
+      "Name": "Cloyster",
+      "BossCP": 15678,
+      "MinCP": 1338,
+      "MaxCP": 1414,
+      "CatchRate": 0.1
+    },
+    {
+      "Id": 105,
+      "Tier": 2,
+      "Name": "Marowak",
+      "BossCP": 9891,
+      "MinCP": 908,
+      "MaxCP": 966,
+      "CatchRate": 0.1
+    },
+    {
+      "Id": 302,
+      "Tier": 2,
+      "Name": "Sableye",
+      "BossCP": 8266,
+      "MinCP": 694,
+      "MaxCP": 745,
+      "CatchRate": 0.1
+    },
+    {
+      "Id": 38,
+      "Tier": 3,
+      "Name": "Ninetales",
+      "BossCP": 14914,
+      "MinCP": 1167,
+      "MaxCP": 1233,
+      "CatchRate": 0.1
+    },
+    {
+      "Id": 123,
+      "Tier": 3,
+      "Name": "Scyther",
+      "BossCP": 17358,
+      "MinCP": 1337,
+      "MaxCP": 1408,
+      "CatchRate": 0.1
+    },
+    {
+      "Id": 137,
+      "Tier": 3,
+      "Name": "Porygon",
+      "BossCP": 11419,
+      "MinCP": 840,
+      "MaxCP": 895,
+      "CatchRate": 0.1
+    },
+    {
+      "Id": 139,
+      "Tier": 3,
+      "Name": "Omastar",
+      "BossCP": 18915,
+      "MinCP": 1460,
+      "MaxCP": 1534,
+      "CatchRate": 0.1
+    },
+    {
+      "Id": 31,
+      "Tier": 4,
+      "Name": "Nidoqueen",
+      "BossCP": 23216,
+      "MinCP": 1267,
+      "MaxCP": 1336,
+      "CatchRate": 0.1
+    },
+    {
+      "Id": 34,
+      "Tier": 4,
+      "Name": "Nidoking",
+      "BossCP": 24873,
+      "MinCP": 1294,
+      "MaxCP": 1363,
+      "CatchRate": 0.1
+    },
+    {
+      "Id": 62,
+      "Tier": 4,
+      "Name": "Poliwrath",
+      "BossCP": 24247,
+      "MinCP": 1325,
+      "MaxCP": 1395,
+      "CatchRate": 0.1
+    },
+    {
+      "Id": 71,
+      "Tier": 4,
+      "Name": "Victreebel",
+      "BossCP": 23780,
+      "MinCP": 1228,
+      "MaxCP": 1296,
+      "CatchRate": 0.1
+    },
+    {
+      "Id": 76,
+      "Tier": 4,
+      "Name": "Golem",
+      "BossCP": 30572,
+      "MinCP": 1589,
+      "MaxCP": 1666,
+      "CatchRate": 0.1
     }
   ]
 }

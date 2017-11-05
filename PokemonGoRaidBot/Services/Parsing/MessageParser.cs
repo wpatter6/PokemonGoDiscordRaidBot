@@ -19,8 +19,8 @@ namespace PokemonGoRaidBot.Services.Parsing
         public ParserLanguage Language;
 
         private const int latLongComparisonMaxMeters = 80;
-        private const int eggMinutes = 60;
-        private const int maxRaidMinutes = 120;
+        private const int eggMinutes = 45;
+        private const int maxRaidMinutes = 105;
         private const int defaultRaidMinutes = 60;
         private const string matchedWordReplacement = "#|#|#|#";//when trying to match location, replace pokemon names and time spans with this string
         private const string matchedPokemonWordReplacement = "#$##$$###";
@@ -225,13 +225,13 @@ namespace PokemonGoRaidBot.Services.Parsing
 
             if (cleanedName.Length < 3 || Language.RegularExpressions["pokemonTooShort"].IsMatch(name)) return null;
             
-            var result = Language.Pokemon.FirstOrDefault(x => serverConfig.PokemonAliases.Where(xx => xx.Value.Contains(name.ToLower())).Count() > 0);
+            var result = Language.Pokemon.FirstOrDefault(x => x.CatchRate > -1 && serverConfig.PokemonAliases.Where(xx => xx.Value.Contains(name.ToLower())).Count() > 0);
             if (result != null && result.CatchRate > 0) return result;
 
-            result = Language.Pokemon.FirstOrDefault(x => x.Aliases.Contains(cleanedName));
+            result = Language.Pokemon.FirstOrDefault(x => x.CatchRate > -1 && x.Aliases.Contains(cleanedName));
             if (result != null && result.CatchRate > 0) return result;
 
-            result = Language.Pokemon.OrderByDescending(x => x.Id).FirstOrDefault(x => x.Name.ToLower().StartsWith(cleanedName));
+            result = Language.Pokemon.OrderByDescending(x => x.Id).FirstOrDefault(x => x.CatchRate > -1 && x.Name.ToLower().StartsWith(cleanedName));
             if (result != null && result.CatchRate > 0) return result;
 
             return null;

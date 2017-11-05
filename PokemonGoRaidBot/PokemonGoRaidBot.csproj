@@ -47,7 +47,7 @@
   </ItemGroup>
   
   <PropertyGroup>
-    <VersionPrefix>1.4.3</VersionPrefix>
+    <VersionPrefix>1.4.4</VersionPrefix>
   </PropertyGroup>
   
   <PropertyGroup>
