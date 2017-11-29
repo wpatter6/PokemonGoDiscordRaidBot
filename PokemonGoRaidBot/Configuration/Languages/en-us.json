@@ -455,15 +455,6 @@
       "CatchRate": 0.02
     },
     {
-      "Id": 250,
-      "Tier": 5,
-      "Name": "Ho-Oh",
-      "BossCP": 55251,
-      "MinCP": -1,
-      "MaxCP": 2657,
-      "CatchRate": -1
-    },
-    {
       "Id": 251,
       "Tier": 5,
       "Name": "Celebi",
@@ -650,7 +641,8 @@
       "BossCP": 55251,
       "MinCP": 2133,
       "MaxCP": 2222,
-      "CatchRate": 0.02
+      "CatchRate": 0.02,
+      "Aliases": [ "hooh", "ho oh" ]
     }
   ]
 }
