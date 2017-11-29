@@ -506,7 +506,7 @@
       "BossCP": 1534,
       "MinCP": 209,
       "MaxCP": 239,
-      "CatchRate": 0.1
+      "CatchRate": 0.25
     },
     {
       "Id": 28,
@@ -515,7 +515,7 @@
       "BossCP": 12312,
       "MinCP": 1262,
       "MaxCP": 1330,
-      "CatchRate": 0.1
+      "CatchRate": 0.2
     },
     {
       "Id": 73,
@@ -524,7 +524,7 @@
       "BossCP": 12190,
       "MinCP": 1287,
       "MaxCP": 1356,
-      "CatchRate": 0.1
+      "CatchRate": 0.2
     },
     {
       "Id": 82,
@@ -533,7 +533,7 @@
       "BossCP": 14172,
       "MinCP": 1208,
       "MaxCP": 1278,
-      "CatchRate": 0.1
+      "CatchRate": 0.2
     },
     {
       "Id": 91,
@@ -542,7 +542,7 @@
       "BossCP": 15678,
       "MinCP": 1338,
       "MaxCP": 1414,
-      "CatchRate": 0.1
+      "CatchRate": 0.2
     },
     {
       "Id": 105,
@@ -551,7 +551,7 @@
       "BossCP": 9891,
       "MinCP": 908,
       "MaxCP": 966,
-      "CatchRate": 0.1
+      "CatchRate": 0.15
     },
     {
       "Id": 302,
@@ -560,7 +560,7 @@
       "BossCP": 8266,
       "MinCP": 694,
       "MaxCP": 745,
-      "CatchRate": 0.1
+      "CatchRate": 0.2
     },
     {
       "Id": 38,
@@ -578,7 +578,7 @@
       "BossCP": 17358,
       "MinCP": 1337,
       "MaxCP": 1408,
-      "CatchRate": 0.1
+      "CatchRate": 0.3
     },
     {
       "Id": 137,
@@ -587,7 +587,7 @@
       "BossCP": 11419,
       "MinCP": 840,
       "MaxCP": 895,
-      "CatchRate": 0.1
+      "CatchRate": 0.05
     },
     {
       "Id": 139,
@@ -596,7 +596,7 @@
       "BossCP": 18915,
       "MinCP": 1460,
       "MaxCP": 1534,
-      "CatchRate": 0.1
+      "CatchRate": 0.15
     },
     {
       "Id": 31,
@@ -605,7 +605,7 @@
       "BossCP": 23216,
       "MinCP": 1267,
       "MaxCP": 1336,
-      "CatchRate": 0.1
+      "CatchRate": 0.125
     },
     {
       "Id": 34,
@@ -614,7 +614,7 @@
       "BossCP": 24873,
       "MinCP": 1294,
       "MaxCP": 1363,
-      "CatchRate": 0.1
+      "CatchRate": 0.125
     },
     {
       "Id": 62,
@@ -623,7 +623,7 @@
       "BossCP": 24247,
       "MinCP": 1325,
       "MaxCP": 1395,
-      "CatchRate": 0.1
+      "CatchRate": 0.125
     },
     {
       "Id": 71,
@@ -632,7 +632,7 @@
       "BossCP": 23780,
       "MinCP": 1228,
       "MaxCP": 1296,
-      "CatchRate": 0.1
+      "CatchRate": 0.125
     },
     {
       "Id": 76,
@@ -641,7 +641,16 @@
       "BossCP": 30572,
       "MinCP": 1589,
       "MaxCP": 1666,
-      "CatchRate": 0.1
+      "CatchRate": 0.125
+    },
+    {
+      "Id": 250,
+      "Tier": 5,
+      "Name": "Ho-Oh",
+      "BossCP": 55251,
+      "MinCP": 2133,
+      "MaxCP": 2222,
+      "CatchRate": 0.02
     }
   ]
 }
