@@ -652,6 +652,24 @@
       "MinCP": 2236,
       "MaxCP": 2328,
       "CatchRate": 0.02
+    },
+    {
+      "Id": 359,
+      "Tier": 4,
+      "Name": "Absol",
+      "BossCP": 26262,
+      "MinCP": 1232,
+      "MaxCP": 1303,
+      "CatchRate": 0.5
+    },
+    {
+      "Id": 303,
+      "Tier": 2,
+      "Name": "Mawile",
+      "BossCP": 9403,
+      "MinCP": 793,
+      "MaxCP": 848,
+      "CatchRate": 0.5
     }
   ]
 }
