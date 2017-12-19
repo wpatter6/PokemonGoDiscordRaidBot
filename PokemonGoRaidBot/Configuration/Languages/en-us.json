@@ -643,6 +643,15 @@
       "MaxCP": 2222,
       "CatchRate": 0.02,
       "Aliases": [ "hooh", "ho oh" ]
+    },
+    {
+      "Id": 383,
+      "Tier": 5,
+      "Name": "Groudon",
+      "BossCP": 59505,
+      "MinCP": 2236,
+      "MaxCP": 2328,
+      "CatchRate": 0.02
     }
   ]
 }
