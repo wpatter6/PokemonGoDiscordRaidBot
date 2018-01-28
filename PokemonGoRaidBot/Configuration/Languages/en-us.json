@@ -670,6 +670,24 @@
       "MinCP": 793,
       "MaxCP": 848,
       "CatchRate": 0.5
+    },
+    {
+      "Id": 382,
+      "Tier": 2,
+      "Name": "Kyogre",
+      "BossCP": 51968,
+      "MinCP": 2236,
+      "MaxCP": 2328,
+      "CatchRate": 0.02
+    },
+    {
+      "Id": 382,
+      "Tier": 2,
+      "Name": "Aggron",
+      "BossCP": 33458,
+      "MinCP": 1636,
+      "MaxCP": 1716,
+      "CatchRate": 0.125
     }
   ]
 }
