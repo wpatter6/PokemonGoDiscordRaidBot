@@ -1,5 +1,7 @@
 # PokemonGoRaidBot
 
+# THIS PROJECT IS DEAD.  FEEL FREE TO FORK IT BUT THERE'S PROBABLY BETTER STUFF OUT THERE AT THIS POINT
+
 ##### Try it out in a sandbox environment: https://discord.gg/9SCnYAU (message wpatter6 in discord if you want to try out admin commands)
 
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=CN6DDHGYPZD9A)
